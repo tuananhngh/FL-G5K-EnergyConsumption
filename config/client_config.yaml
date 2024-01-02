@@ -1,0 +1,12 @@
+params :
+  client_id : 1
+  num_classes : 10
+  num_clients : 10
+  batch_size : 64
+  validation_split : 10
+  root_data : ${hydra:runtime.cwd}/data
+comm :
+  host : 172.16.39.7
+  port : 8080
+
+
