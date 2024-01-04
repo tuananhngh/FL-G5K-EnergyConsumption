@@ -1,7 +1,6 @@
 import os
 import torch
 import torch.nn as nn
-import argparse
 import flwr as fl
 import utils
 import hydra
