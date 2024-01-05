@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import flwr as fl
 import utils
+import models
 from omegaconf import DictConfig
 from typing import Callable, Dict, Tuple, List
 from flwr.common import Metrics, NDArray, Scalar, ndarrays_to_parameters, FitIns, EvaluateRes
@@ -26,12 +27,13 @@ def get_evaluate_fn(testloader, cfg: Dict[str, Scalar])->Callable:
     def evaluate_fn(server_round:int, parameters:NDArray, config):
         num_classes = cfg["num_classes"]
         steps = len(testloader)
-        model = utils.Net(num_classes=num_classes)
+        model = models.ResNet18()
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         model.to(device)
-        params_dict = zip(model.state_dict().keys(),parameters)
-        state_dict = OrderedDict({k: torch.Tensor(v) for k, v in params_dict})
-        model.load_state_dict(state_dict, strict=True)
+        # params_dict = zip(model.state_dict().keys(),parameters)
+        # state_dict = OrderedDict({k: torch.Tensor(v) for k, v in params_dict})
+        # model.load_state_dict(state_dict, strict=True)
+        utils.set_parameters(model, parameters)
         loss, accuracy = utils.test(model, testloader, device, verbose=False)
         return float(loss), {"accuracy": float(accuracy)}
     return evaluate_fn

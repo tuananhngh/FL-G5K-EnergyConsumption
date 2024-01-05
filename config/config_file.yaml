@@ -1,10 +1,10 @@
 params : 
   num_classes : 10
-  num_rounds : 10
-  num_clients : 10
+  num_rounds : 5
+  num_clients : 2
   batch_size : 64
   validation_split : 10
-  root_data : ${hydra:runtime.cwd}/data
+  root_data : ${hydra:runtime.cwd}./data
 
 client_params:
   lr : 0.01
