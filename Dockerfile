@@ -1,14 +1,13 @@
 
-FROM python:3.8.5
+FROM nvcr.io/nvidia/pytorch:23.12-py3
 
-#RUN mkdir -p /fl_app
 
-WORKDIR /fl_app
+WORKDIR /client
 
-COPY . /fl_app
+ADD config /client/config
+ADD client.py /client/client.py
+ADD utils.py /client/utils.py
+ADD requirements.txt /client/requirements.txt
 
-RUN python -m pip install --upgrade pip
-
+RUN pip3 install --upgrade pip
 RUN pip3 install --no-cache-dir -r requirements.txt
-
-

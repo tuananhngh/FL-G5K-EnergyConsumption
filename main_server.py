@@ -4,23 +4,26 @@ import flwr as fl
 import utils
 import torch
 import pickle 
+import models
 from pathlib import Path
 from omegaconf import DictConfig, OmegaConf
 from hydra.core.hydra_config import HydraConfig
 from flwr.common import NDArrays, Scalar, ndarrays_to_parameters
 
-@hydra.main(config_path="config", config_name="server_config")
+@hydra.main(config_path="config", config_name="config_file")
 def main(cfg:DictConfig):
     print(OmegaConf.to_yaml(cfg))
-    server_address = cfg.comm.server_address
-    server_port = cfg.comm.server_port
-    output_dir = HydraConfig.get().runtime.output_dir
+    server_address = cfg.comm.host
+    server_port = cfg.comm.port
+    output_dir = HydraConfig.get().runtime.cwd
+    print(output_dir)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
-    model = utils.Net(num_classes=10)
+    #model = utils.Net(num_classes=10)
+    model = models.ResNet18()
     model_parameters = utils.get_parameters(model)
     initial_parameters = ndarrays_to_parameters(model_parameters)
-    _,_,testloader = utils.load_dataset(cfg.client_params)
+    _,_,testloader = utils.load_dataset(cfg.params)
     #_,_, testloader = utils.load_dataloader(1, cfg.params.path_to_data)
     
     strategy = fl.server.strategy.FedAvg(
@@ -38,7 +41,7 @@ def main(cfg:DictConfig):
     hist = fl.server.start_server(
         server_address=str(server_address)+":"+str(server_port),
         config=fl.server.ServerConfig(num_rounds=cfg.params.num_rounds),
-        strategy=strategy,
+        strategy=strategy
     )
     results_path = Path(output_dir)/"results.pkl"
     with open(results_path, "wb") as f:

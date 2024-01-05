@@ -1,10 +1,10 @@
 import os
 import torch
 import torch.nn as nn
-import argparse
 import flwr as fl
 import utils
 import hydra
+import models
 from flwr.common import NDArrays, Scalar
 from omegaconf import DictConfig
 from collections import OrderedDict
@@ -21,7 +21,8 @@ class Client(fl.client.NumPyClient):
     
     def set_parameters(self, parameters:NDArrays)->None:
         params_dict = zip(self.model.state_dict().keys(), parameters)
-        state_dict = OrderedDict({k:torch.Tensor(v) for k,v in params_dict})
+        #state_dict = OrderedDict({k:torch.Tensor(v) for k,v in params_dict})
+        state_dict = OrderedDict({k:torch.Tensor(v) if v.shape != torch.Size([]) else torch.Tensor([0]) for k,v in params_dict})
         self.model.load_state_dict(state_dict, strict = True)
         
     def get_parameters(self, config: Dict[str, Scalar]) -> NDArrays:
@@ -46,11 +47,11 @@ class Client(fl.client.NumPyClient):
         loss, accuracy = utils.test(self.model, self.valloader, steps, self.device)
         return float(loss), len(self.valloader.dataset), {"accuracy": accuracy}
 
-@hydra.main(config_path="config", config_name="client_config")
+@hydra.main(config_path="config", config_name="config_file")
 def main(cfg:DictConfig):
     print(OmegaConf.to_yaml(cfg))
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    client_id = cfg.params.client_id
+    client_id = cfg.client_params.client_id
     num_classes = cfg.params.num_classes
     host = cfg.comm.host
     port = cfg.comm.port
@@ -58,7 +59,7 @@ def main(cfg:DictConfig):
     trainloaders, valloaders, testloader = utils.load_dataset(cfg.params)
     
     #trainloader, valloader, testloader = utils.load_dataloader(client_id, path_to_data)
-    model = utils.Net(num_classes=num_classes)
+    model = models.ResNet18()
     client = Client(model, trainloaders[client_id], valloaders[client_id])
     fl.client.start_numpy_client(server_address=server_address, client=client)
     

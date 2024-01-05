@@ -1,6 +1,5 @@
 from json import load
 import os
-from sympy import N
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -8,6 +7,7 @@ import torchvision.transforms as transforms
 import logging
 import numpy as np
 import random
+import models
 from flwr.common import NDArray, Scalar
 from typing import Dict, Tuple, List
 from collections import OrderedDict
@@ -70,26 +70,7 @@ def load_dataset(config:Dict[str,Scalar])->Tuple[List[data.DataLoader], List[dat
     #torch.save(testloader, os.path.join(partition_data_path,"testloader.pt"))
     print("Dataset loaded and partitioned")
     return trainloaders, valloaders, testloader
-    
 
-class Net(nn.Module):
-    def __init__(self, num_classes = 10):
-        super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=3,out_channels=6,kernel_size=5,stride=1)
-        self.pool = nn.MaxPool2d(kernel_size=2,stride=2)
-        self.conv2 = nn.Conv2d(in_channels=6,out_channels=16,kernel_size=5,stride=1)
-        self.fc1 = nn.Linear(in_features=16*5*5,out_features=120)
-        self.fc2 = nn.Linear(in_features=120,out_features=84)
-        self.fc3 = nn.Linear(in_features=84,out_features=num_classes)
-        
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x))) 
-        x = x.view(-1,16*5*5)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
 
 def train(model, trainloader, valloader, epochs, optimizer, device):
     model.to(device)
@@ -163,7 +144,8 @@ def test(model, testloader, device, steps=None, verbose=True):
 
 def set_parameters(net, parameters:NDArray) -> None:
     params_dict = zip(net.state_dict().keys(), parameters)
-    state_dict = OrderedDict({k:torch.Tensor(v) for k,v in params_dict})
+    #state_dict = OrderedDict({k:torch.Tensor(v) for k,v in params_dict})
+    state_dict = OrderedDict({k:torch.Tensor(v) if v.shape != torch.Size([]) else torch.Tensor([0]) for k,v in params_dict})
     net.load_state_dict(state_dict, strict = True)
     
 def get_parameters(net) -> List[NDArray]:
