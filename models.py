@@ -2,7 +2,6 @@ from typing import OrderedDict
 import torch 
 import torch.nn as nn
 import torch.nn.functional as F
-from torchsummary import summary
 
 # Basic CNN Model
 class Net(nn.Module):

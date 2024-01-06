@@ -15,20 +15,25 @@ def main(cfg:DictConfig):
     print(OmegaConf.to_yaml(cfg))
     server_address = cfg.comm.host
     server_port = cfg.comm.port
-    output_dir = HydraConfig.get().runtime.cwd
+    output_dir = HydraConfig.get().runtime.output_dir
     print(output_dir)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    
+    print("Device: {}", device)
     #model = utils.Net(num_classes=10)
+    
+    # Get initial parameters
     model = models.ResNet18()
+    #model.to(device)
     model_parameters = utils.get_parameters(model)
     initial_parameters = ndarrays_to_parameters(model_parameters)
+    
+    #Load TestData
     _,_,testloader = utils.load_dataset(cfg.params)
     #_,_, testloader = utils.load_dataloader(1, cfg.params.path_to_data)
     
     strategy = fl.server.strategy.FedAvg(
         initial_parameters=initial_parameters,
-        evaluate_fn=server.get_evaluate_fn(testloader, cfg.params),
+        evaluate_fn=server.get_evaluate_fn(model, testloader,device,cfg.params),
         evaluate_metrics_aggregation_fn=server.weighted_average,
         on_fit_config_fn=server.get_on_fit_config(cfg.client_params),
         fraction_fit = 1.0,
@@ -48,5 +53,6 @@ def main(cfg:DictConfig):
         pickle.dump(hist, f, protocol=pickle.HIGHEST_PROTOCOL)
 if __name__ == "__main__":
     main()
+    
     
     

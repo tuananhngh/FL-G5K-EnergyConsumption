@@ -1,0 +1,24 @@
+[2024-01-06 15:52:52,101][flwr][INFO] - Starting Flower server, config: ServerConfig(num_rounds=2, round_timeout=None)
+[2024-01-06 15:52:52,130][flwr][INFO] - Flower ECE: gRPC server running (2 rounds), SSL is disabled
+[2024-01-06 15:52:52,131][flwr][INFO] - Initializing global parameters
+[2024-01-06 15:52:52,131][flwr][INFO] - Using initial parameters provided by strategy
+[2024-01-06 15:52:52,131][flwr][INFO] - Evaluating initial parameters
+[2024-01-06 15:53:00,949][flwr][INFO] - initial parameters (loss, other metrics): 0.018196570038795472, {'accuracy': 0.1}
+[2024-01-06 15:53:00,950][flwr][INFO] - FL starting
+[2024-01-06 15:53:00,950][flwr][DEBUG] - fit_round 1: strategy sampled 2 clients (out of 2)
+[2024-01-06 15:54:36,718][flwr][DEBUG] - fit_round 1 received 2 results and 0 failures
+[2024-01-06 15:54:36,956][flwr][WARNING] - No fit_metrics_aggregation_fn provided
+[2024-01-06 15:54:40,153][flwr][INFO] - fit progress: (1, 39746817386.0864, {'accuracy': 0.1}, 99.20280039699992)
+[2024-01-06 15:54:40,153][flwr][DEBUG] - evaluate_round 1: strategy sampled 2 clients (out of 2)
+[2024-01-06 15:54:45,659][flwr][DEBUG] - evaluate_round 1 received 2 results and 0 failures
+[2024-01-06 15:54:45,660][flwr][DEBUG] - fit_round 2: strategy sampled 2 clients (out of 2)
+[2024-01-06 15:56:18,838][flwr][DEBUG] - fit_round 2 received 2 results and 0 failures
+[2024-01-06 15:56:22,128][flwr][INFO] - fit progress: (2, 1234090319255.9617, {'accuracy': 0.1}, 201.17821592200016)
+[2024-01-06 15:56:22,129][flwr][DEBUG] - evaluate_round 2: strategy sampled 2 clients (out of 2)
+[2024-01-06 15:56:26,899][flwr][DEBUG] - evaluate_round 2 received 2 results and 0 failures
+[2024-01-06 15:56:26,900][flwr][INFO] - FL finished in 205.94962802600003
+[2024-01-06 15:56:26,901][flwr][INFO] - app_fit: losses_distributed [(1, 40433555456.0), (2, 1257142681600.0)]
+[2024-01-06 15:56:26,901][flwr][INFO] - app_fit: metrics_distributed_fit {}
+[2024-01-06 15:56:26,901][flwr][INFO] - app_fit: metrics_distributed {'accuracy': [(1, 0.0934), (2, 0.0934)]}
+[2024-01-06 15:56:26,901][flwr][INFO] - app_fit: losses_centralized [(0, 0.018196570038795472), (1, 39746817386.0864), (2, 1234090319255.9617)]
+[2024-01-06 15:56:26,901][flwr][INFO] - app_fit: metrics_centralized {'accuracy': [(0, 0.1), (1, 0.1), (2, 0.1)]}
