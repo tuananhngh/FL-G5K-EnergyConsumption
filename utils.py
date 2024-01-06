@@ -1,5 +1,6 @@
 from json import load
 import os
+from tabnanny import check
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -7,7 +8,7 @@ import torchvision.transforms as transforms
 import logging
 import numpy as np
 import random
-import models
+from tqdm import tqdm
 from flwr.common import NDArray, Scalar
 from typing import Dict, Tuple, List
 from collections import OrderedDict
@@ -71,13 +72,21 @@ def load_dataset(config:Dict[str,Scalar])->Tuple[List[data.DataLoader], List[dat
     print("Dataset loaded and partitioned")
     return trainloaders, valloaders, testloader
 
+def check_device(neural_net):
+    is_model_on_gpu = next(neural_net.parameters()).is_cuda
+    if is_model_on_gpu:
+        print("Model is on GPU")
+    else:
+        print("Model is on CPU")
 
 def train(model, trainloader, valloader, epochs, optimizer, device):
     model.to(device)
+    check_device(model)
     model.train()
     criterion = nn.CrossEntropyLoss()
-    for _ in range(epochs):
-        epoch_loss, total_samples, correct_prediction = 0., 0., 0.
+    total_samples = len(trainloader.dataset)
+    for _ in tqdm(range(epochs)):
+        epoch_loss, correct_prediction = 0, 0
         for dt,lb in trainloader:
             dt, lb = dt.to(device), lb.to(device)
             optimizer.zero_grad()
@@ -88,9 +97,9 @@ def train(model, trainloader, valloader, epochs, optimizer, device):
             
             # Metrics
             epoch_loss += losses.item()
-            total_samples += lb.size(0)
+            #total_samples += lb.size(0)
             correct_prediction += (torch.max(outputs.data, 1)[1] == lb).sum().item()
-        epoch_loss /= len(trainloader.dataset)
+        epoch_loss = epoch_loss/total_samples
         epoch_acc = correct_prediction / total_samples
         # Validation metrics
         val_loss, val_acc = validation(model, valloader, device)
@@ -100,11 +109,12 @@ def train(model, trainloader, valloader, epochs, optimizer, device):
             "val_loss": val_loss,
             "val_acc": val_acc,
         }
+    model.to("cpu")
+    check_device(model)
     return results
 
 def validation(model, valloader, device):
     criterion = nn.CrossEntropyLoss()
-    model.to(device)
     model.eval()
     with torch.no_grad():
         val_loss, total_samples, correct_prediction = 0., 0., 0.
@@ -117,7 +127,6 @@ def validation(model, valloader, device):
             correct_prediction += (torch.max(outputs.data, 1)[1] == lb).sum().item()
     avg_loss = val_loss/len(valloader.dataset)
     accuracy = correct_prediction / total_samples
-    model.to("cpu")
     return avg_loss, accuracy
 
 def test(model, testloader, device, steps=None, verbose=True):
