@@ -3,7 +3,7 @@
 BASE_IMAGE_PT=nvcr.io/nvidia/pytorch:23.12-py3
 BASE_IMAGE_JETSON=nvcr.io/nvidia/l4t-pytorch:r35.1.0-pth1.13-py3
 
-while getopts "b:" opt; do
+while getopts "b:r:" opt; do
   case $opt in
     b)
         case $OPTARG in 
@@ -21,6 +21,22 @@ while getopts "b:" opt; do
                 ;;
         esac
         ;;
+    r)
+        case $OPTARG in 
+            server)
+                echo "Running Flower server"
+                ROLE="server"
+                ;;
+            client)
+                echo "Running Flower client"
+                ROLE="client"
+                ;;
+            *)
+                echo "Invalid role option: $OPTARG" >&2
+                exit 1
+                ;;
+        esac
+        ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
       ;;
@@ -28,7 +44,7 @@ while getopts "b:" opt; do
 done
 
 # Build the Docker image
-docker build -t flower_client:latest --build-arg BASE_IMAGE=$BASE_IMAGE .
+docker build -t flower_client:latest --build-arg BASE_IMAGE=$BASE_IMAGE --build-arg ROLE=$ROLE .
 
 # Check if the build was successful
 if [ $? -eq 0 ]; then
