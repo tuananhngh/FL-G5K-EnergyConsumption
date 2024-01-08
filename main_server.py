@@ -10,6 +10,21 @@ from omegaconf import DictConfig, OmegaConf
 from hydra.core.hydra_config import HydraConfig
 from flwr.common import NDArrays, Scalar, ndarrays_to_parameters
 
+
+# Check if CUDA (GPU support) is available
+if torch.cuda.is_available():
+    # Get the number of available GPUs
+    num_gpus = torch.cuda.device_count()
+    print(f"Number of available GPUs: {num_gpus}")
+
+    # Get information about each GPU
+    for i in range(num_gpus):
+        gpu_name = torch.cuda.get_device_name(i)
+        print(f"GPU {i + 1}: {gpu_name}")
+else:
+    print("CUDA (GPU support) is not available on this system.")
+
+
 @hydra.main(config_path="config", config_name="config_file")
 def main(cfg:DictConfig):
     print(OmegaConf.to_yaml(cfg))
@@ -18,7 +33,7 @@ def main(cfg:DictConfig):
     output_dir = HydraConfig.get().runtime.output_dir
     print(output_dir)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print("Device: {}", device)
+    print("Device: ", device)
     #model = utils.Net(num_classes=10)
     
     # Get initial parameters

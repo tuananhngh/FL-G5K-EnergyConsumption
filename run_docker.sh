@@ -1,7 +1,7 @@
 #!/bin/bash
 
 BASE_IMAGE_PT=nvcr.io/nvidia/pytorch:23.12-py3
-BASE_IMAGE_JETSON=nvcr.io/nvidia/l4t-pytorch:r35.1.0-pth1.13-py3
+BASE_IMAGE_JETSON=nvcr.io/nvidia/l4t-pytorch:r35.2.1-pth2.0-py3
 
 while getopts "b:r:" opt; do
   case $opt in
@@ -50,7 +50,7 @@ docker build -t flower_client:latest --build-arg BASE_IMAGE=$BASE_IMAGE --build-
 if [ $? -eq 0 ]; then
   echo "Docker image built successfully."
   # Run the Docker container with the --rm option to remove it after exit
-  docker run --rm -it flower_client:latest
+  docker run --rm --network host -it flower_client:latest
 else
   echo "Error: Docker image build failed."
 fi

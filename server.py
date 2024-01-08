@@ -35,11 +35,3 @@ def get_evaluate_fn(model, testloader, device, cfg: Dict[str, Scalar])->Callable
         return float(loss), {"accuracy": float(accuracy)}
     return evaluate_fn
         
-#strategy = fl.server.strategy.FedAvg(evaluate_metrics_aggregation_fn=weighted_average)
-
-# fl.server.start_server(server_address="192.168.1.110:8080",
-#                        config=fl.server.ServerConfig(num_rounds=5), 
-#                        strategy=FedAvg(evaluate_metrics_aggregation_fn=weighted_average,
-#                                        evaluate_fn=get_evaluate_fn(utils.load_dataloader("server", "data"), utils.get_config("config/server_config.yaml")),
-#                                        initial_parameters=ndarrays_to_parameters(utils.get_parameters(utils.Net(num_classes=10))))
-# )
