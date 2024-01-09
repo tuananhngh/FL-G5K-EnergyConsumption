@@ -31,7 +31,7 @@ node-server$ conda activate fl
 node-server$ hostname -I (ou IP_SERVER=`hostname -I` puis echo $IP_SERVER)
 ```
 This returns the server ID. 
-Copy it into the host parameter in [[/home/mjay/FL-G5K-Test/config/config_file.yaml]].
+Copy it into the host parameter in [config.yaml](./config/config_file.yaml).
 ```
 node-server$ python main_server.py comm.host=$IP_SERVER
 ```
@@ -50,7 +50,7 @@ Install docker on your node:
 ```
 g5k-setup-docker -t
 ```
-To build and run the docker image on machine similar to chifflot:
+To build and run the client docker image on machine similar to chifflot:
 ```
 bash run_docker.sh -b pt
 ```
