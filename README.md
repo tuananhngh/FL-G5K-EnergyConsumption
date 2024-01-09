@@ -15,6 +15,15 @@ flyon$ oarsub -l host=3 -p chifflot -I
 flyon$ module load conda
 flyon$ conda env create -f environment.yml
 ```
+
+### Install without yaml file
+```
+flyon$ module load conda
+flyon$ conda create --name your_environment_name
+flyon$ conda activate your_environment_name
+flyon$ conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
+flyon$ pip3 install flwr tqdm matplotlib hydra-core
+```
 ### Lanch server and clients on same node
 ```
 flyon$ ssh node-server (for exemple chifflot-2)
