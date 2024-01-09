@@ -15,8 +15,15 @@ flyon$ oarsub -l host=3 -p chifflot -I
 flyon$ module load conda
 flyon$ conda env create -f environment.yml
 ```
+### Lanch server and clients on same node
+```
+flyon$ ssh node-server (for exemple chifflot-2)
+node-server$ module load conda
+node-server$ conda activate fl
+node-server$ bash run_server.sh
+```
 
-### Launch server
+### Launch server and clients on different nodes
 ```
 flyon$ ssh node-server (for exemple chifflot-2)
 node-server$ module load conda
@@ -37,3 +44,17 @@ node-client$ cd FL-G5K-Test
 node-client$ python client.py comm.host=$IP_SERVER client_params.client_id=0
 ```
 The server will start when enough client are connected (as defined in the config file).
+
+### Using docker
+Install docker on your node:
+```
+g5k-setup-docker -t
+```
+To build and run the docker image on machine similar to chifflot:
+```
+bash run_docker.sh -b pt
+```
+To build and run the docker image on machine similar to a Jetson:
+```
+bash run_docker.sh -b jetson
+```
