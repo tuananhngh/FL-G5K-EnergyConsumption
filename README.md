@@ -2,7 +2,7 @@
 The goal if this project is to study the energy consumption of Federated Learning.
 
 ## FL on Grid'5000
-We use the French experimental platform wall Grid'5000 which contains a variety of machines from A100 clusters to Jetson Xavier AGX.
+We use the French experimental platform called Grid'5000 which contains a variety of machines from A100 clusters to Jetson Xavier AGX.
 Below are the steps required to execute the FL algorithm on Grid'5000 using the Flower framework.
 
 ### Book as many nodes as needed
@@ -12,8 +12,10 @@ flyon$ oarsub -l host=3 -p chifflot -I
 
 ### Create a conda environment (no need if using docker)
 ```
-flyon$ module load conda
-flyon$ conda env create -f environment.yml
+module load conda
+conda create --name fl
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+pip3 install -q flwr[simulation] flwr_datasets[vision] matplotlib hydra-core
 ```
 ### Lanch server and clients on same node
 ```
@@ -41,14 +43,14 @@ flyon$ ssh node-client (for exemple chifflot-4)
 node-client$ module load conda
 node-client$ conda activate fl
 node-client$ cd FL-G5K-Test
-node-client$ python client.py comm.host=$IP_SERVER client_params.client_id=0
+node-client$ python client.py client_params.client_id=1 comm.host=$IP_SERVER 
 ```
 The server will start when enough client are connected (as defined in the config file).
 
 ### Using docker
 Install docker on your node:
 ```
-g5k-setup-docker -t
+g5k-setup-nvidia-docker -t
 ```
 To build and run the client docker image on machine similar to chifflot:
 ```

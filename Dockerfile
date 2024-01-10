@@ -12,4 +12,5 @@ ADD models.py /client/models.py
 ADD requirements.txt /client/requirements.txt
 
 RUN pip3 install --upgrade pip
-RUN pip3 install --no-cache-dir -r requirements.txt
+# RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install -q flwr[simulation] flwr_datasets[vision] matplotlib
