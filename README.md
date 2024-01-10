@@ -18,14 +18,6 @@ pip3 install torch torchvision torchaudio --index-url https://download.pytorch.o
 pip3 install -q flwr[simulation] flwr_datasets[vision] matplotlib hydra-core
 ```
 
-### Install without yaml file
-```
-flyon$ module load conda
-flyon$ conda create --name your_environment_name
-flyon$ conda activate your_environment_name
-flyon$ conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
-flyon$ pip3 install flwr tqdm matplotlib hydra-core
-```
 ### Lanch server and clients on same node
 ```
 flyon$ ssh node-server (for exemple chifflot-2)
