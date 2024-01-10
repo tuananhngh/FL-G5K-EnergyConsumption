@@ -6,6 +6,7 @@ echo "Starting server"
 server_ip=$(hostname -I)
 echo "Server IP: $server_ip"
 ip4=$(echo $server_ip | awk '{print $1}')
+echo "Server IP4: $ip4"
 python3 main_server.py comm.host=$(echo $ip4)&
 sleep 3  # Sleep for 3s to give the server enough time to start
 
