@@ -21,6 +21,7 @@ while getopts "b:" opt; do
                 ;;
         esac
         ;;
+    \?)
       echo "Invalid option: -$OPTARG" >&2
       ;;
   esac
@@ -31,9 +32,9 @@ docker build -t flower_client:latest --build-arg BASE_IMAGE=$BASE_IMAGE .
 
 # Check if the build was successful
 if [ $? -eq 0 ]; then
-  echo "Docker image built successfully."
-  # Run the Docker container with the --rm option to remove it after exit
-  docker run --rm --network host flower_client:latest
+    echo "Docker image built successfully."
+    # Run the Docker container with the --rm option to remove it after exit
+    docker run --runtime nvidia --rm --network host flower_client:latest
 else
   echo "Error: Docker image build failed."
 fi
