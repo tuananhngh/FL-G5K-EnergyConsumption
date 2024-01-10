@@ -21,14 +21,14 @@ for host in $hostnames; do
     echo "Deploying to host $host"
     ssh root@$host << EOF
       echo "Installing Docker on $host"
-      docker pull tuanngh/fl-jetson:latest &&\
+      docker pull tuanngh/fl-jetson:latest &&
       docker run -d --runtime nvidia --rm --network host -it tuanngh/fl-jetson:latest
 EOF
   } &
 done
 
 
-
+# docker run -d --runtime nvidia --rm --network host -it tuanngh/fl-jetson:latest
 # Assuming there's only one node, extract the first element
 # echo "Extract the first element of the list"
 # hostname=$(echo $hostnames | awk '{print $1}')
