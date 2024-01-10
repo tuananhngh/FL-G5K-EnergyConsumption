@@ -6,7 +6,7 @@
 #oarsub -t deploy -t exotic -q testing -p estats -l host=1,walltime=1 -I
 
 # Deploy the environment on all reserved nodes
-#kadeploy3 -a ~/public/ubuntu-estats.dsc 
+kadeploy3 -a ~/public/ubuntu-estats.dsc 
 
 # Get IP address and hostname of deployed nodes
 echo "Get Hostname and IP address of deployed nodes"
@@ -21,8 +21,8 @@ for host in $hostnames; do
     echo "Deploying to host $host"
     ssh root@$host << EOF
       echo "Installing Docker on $host"
-      docker pull slatonnguyen410/flower-client-jetson:1.0 &&\
-      docker run -d --runtime nvidia --rm --network host -it slatonnguyen410/flower-client-jetson:1.0
+      docker pull tuanngh/fl-jetson:latest &&\
+      docker run -d --runtime nvidia --rm --network host -it tuanngh/fl-jetson:latest
 EOF
   } &
 done
