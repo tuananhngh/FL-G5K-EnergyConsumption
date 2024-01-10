@@ -8,6 +8,9 @@ WORKDIR /fl_training
 # Copy role-specific files based on ROLE
 COPY server.py /fl_training/server.py
 COPY main_server.py /fl_training/main_server.py
+COPY client.py /fl_training/client.py
+COPY run_client.sh /fl_training/run_client.sh
+COPY run_server.sh /fl_training/run_server.sh
 
 ADD config /fl_training/config
 COPY utils.py /fl_training/utils.py
