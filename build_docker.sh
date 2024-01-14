@@ -34,7 +34,7 @@ docker build -t flower_client:latest --build-arg BASE_IMAGE=$BASE_IMAGE .
 if [ $? -eq 0 ]; then
     echo "Docker image built successfully."
     # Run the Docker container with the --rm option to remove it after exit
-    docker run --runtime nvidia --rm --network host flower_client:latest
+    docker run --rm --network host flower_client:latest
 else
   echo "Error: Docker image build failed."
 fi
