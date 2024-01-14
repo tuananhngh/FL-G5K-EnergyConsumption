@@ -11,6 +11,7 @@ from omegaconf import DictConfig
 from collections import OrderedDict
 from typing import Dict, Tuple, List
 from omegaconf import DictConfig, OmegaConf
+from hydra.utils import instantiate
 
 
 class Client(fl.client.NumPyClient):
@@ -34,6 +35,7 @@ class Client(fl.client.NumPyClient):
         self.set_parameters(parameters)
         local_epochs :int = config["local_epochs"]
         lr = config["lr"]
+        
         optim = torch.optim.Adam(self.model.parameters(), lr=lr)
         result = utils.train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device)
         num_samples = len(self.trainloader.dataset)
@@ -60,8 +62,8 @@ class Client(fl.client.NumPyClient):
 def main(cfg:DictConfig):
     print(OmegaConf.to_yaml(cfg))
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    client_id = cfg.client_params.client_id
-    dry_run = cfg.client_params.dry_run
+    client_id = cfg.client.cid
+    dry_run = cfg.client.dry_run
     num_classes = cfg.params.num_classes
     host = cfg.comm.host
     port = cfg.comm.port
@@ -69,7 +71,7 @@ def main(cfg:DictConfig):
     trainloaders, valloaders, testloader = utils.load_dataset(cfg.params)
     
     #trainloader, valloader, testloader = utils.load_dataloader(client_id, path_to_data)
-    model = models.ResNet18()
+    model = instantiate(cfg.neuralnet)
     client = Client(model, trainloaders[client_id], valloaders[client_id], device)
     if dry_run:
         res = client.client_dry_run(model, client_id, trainloaders, valloaders, cfg.client_params, device)
