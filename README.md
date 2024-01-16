@@ -13,7 +13,6 @@ This repository provides resources and scripts to set up a Federated Learning en
     ```bash
     kadeploy3 -a  ~/public/ubuntu-estats.dsc (change the path to your image)
     ```
-
 3. **In another terminal, reserve nodes for clients:**
     ```bash
     oarsub -I -t deploy -t exotic -q testing -p estats -l nodes=$num_client,walltime=3
@@ -25,11 +24,14 @@ This repository provides resources and scripts to set up a Federated Learning en
     ```
 
 5. **After deployment, on the server side:**
+   
+    In the file ```estats_deploy_server.sh```, change the path in ```scp``` command to ```your_g5k_username@toulouse.grid5000.fr``` to save experiments results.
+   Then run :
      ```bash
      bash estats_deploy_server.sh $num_clients
      ```
 
-6. **On the client side, run with the server's IP address:**
+7. **On the client side, run with the server's IP address:**
      ```bash
      bash estats_deploy_clients.sh $SERVER_IP $num_clients
      ```
