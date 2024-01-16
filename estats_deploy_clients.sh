@@ -79,7 +79,7 @@ do
         ssh root@"$c_host" <<HERE2
             echo "---EXECUTE DOCKER ON CLIENT $c_host---"
             docker run -d --runtime nvidia --rm --network host --name client_"$key" -it $docker_image &&
-            docker exec client_"$key" bash -c "python3 client.py comm.host=$server_ip client_params.client_id=$key params.num_rounds=10 params.num_clients=2"  
+            docker exec client_"$key" bash -c "python3 client.py comm.host=$server_ip client.cid=$key client.local_epochs=5 params.num_rounds=10 params.num_clients=$num_clients"  
 HERE2
     ) &
 done
@@ -92,7 +92,7 @@ do
         #echo "---CONNECTING TO CLIENT $c_host---"
         ssh root@"$c_host" <<HERE3
             echo "---REMOVE CONTAINER ON CLIENT $c_host---"
-            docker stop $(docker ps -a -q) 
+            docker ps -aq | xargs docker stop
             echo "---REMOVED---"
 HERE3
     ) &

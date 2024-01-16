@@ -31,14 +31,20 @@ echo "RUNNING SERVER"
 ssh root@$server_host << EOF2
     echo "EXECUTE DOCKER ON SERVER"
     docker run -d --runtime nvidia --rm --network host --name server -it $docker_image &&
-    docker exec server bash -c "python3 main_server.py comm.host=$server_ip params.num_rounds=10 params.num_clients=$num_clients"
+    docker exec server bash -c "python3 main_server.py comm.host=$server_ip params.num_rounds=10 params.num_clients=$num_clients client.local_epochs=5"
 EOF2
+
 
 echo "SAVE SERVER LOGS TO HOST"
 ssh root@$server_host << EOF3
-    docker cp server:/fl_training/outputs ./results
-    scp -r ./results tunguyen@toulouse.grid5000.fr:result
+    # Copy all contents of the "outputs" folder to the local "results" directory
+    docker cp server:/fl_training/outputs/ ./results
+    echo "COPY TO HOST SUCCESSFULLY"
 EOF3
+
+
+rsync -avzP root@$server_host:./results/ ../results/
+
 
 
 
