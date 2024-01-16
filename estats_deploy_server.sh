@@ -1,6 +1,6 @@
 # Deploy the environment on all reserved nodes
 # kadeploy3 -a ~/public/ubuntu-estats.dsc 
-# sleep 20
+# sleep 60
 
 # Get IP address and hostname of deployed nodes
 echo "Get Hostname of server"
@@ -13,6 +13,8 @@ declare -p -a hosts_array
 server_host=${hosts_array[0]}
 server_ip=$(host $server_host | awk '{print $4}')
 echo "Server: $server_host, IP_SERVER: $server_ip"
+
+num_clients="$1"
 
 docker_image="tuanngh/fl-jetson:latest"
 
@@ -29,11 +31,21 @@ echo "RUNNING SERVER"
 ssh root@$server_host << EOF2
     echo "EXECUTE DOCKER ON SERVER"
     docker run -d --runtime nvidia --rm --network host --name server -it $docker_image &&
-    docker exec server bash -c "python3 main_server.py comm.host=$server_ip params.num_rounds=10 params.num_clients=2"
+    docker exec server bash -c "python3 main_server.py comm.host=$server_ip params.num_rounds=10 params.num_clients=$num_clients"
 EOF2
+
+echo "SAVE SERVER LOGS TO HOST"
+ssh root@$server_host << EOF3
+    docker cp server:/fl_training/outputs ./results
+    scp -r ./results tunguyen@toulouse.grid5000.fr:result
+EOF3
+
+
 
 
 # Enable CTRL+C to stop all background processes
 trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM
 # Wait for all background processes to complete
 wait
+
+# RUN CMD : bash estats_deploy_server.sh $num_clients

@@ -7,11 +7,12 @@
 
 # Deploy the environment on all reserved nodes
 # kadeploy3 -a ~/public/ubuntu-estats.dsc 
-# sleep 10
+# sleep 60
 
 # Get IP address and hostname of deployed nodes
 echo "Get Hostname and IP address of deployed nodes"
 hostnames=$(oarprint host)
+# job_id=$(oarstat --array | grep "2" | awk '{print $1}')
 ips=$(oarprint ip)
 
 IFS=$'\n' hosts_array=($(echo "$hostnames" | tr -s '[:space:]'))
@@ -20,14 +21,30 @@ declare -p -a hosts_array
 
 server_host=${hosts_array[0]}
 # server_ip=$(host $server_host | awk '{print $4}')
-clients_host=(${hosts_array[@]:1})
-
+clients_host=(${hosts_array[@]})
+echo "JOB ID: $job_id"
 echo "Clients: ${clients_host[@]}"
+
 
 
 docker_image="tuanngh/fl-jetson:latest"
 server_ip="$1"
+num_clients="$2"
+#job_id="$2"
 echo "Server IP: $server_ip"
+
+# FIREWALL RULES FOR CONNECTION WITH SERVER OUTSIDE GRID5000
+# COMMENT THESE LINES IF YOU DON'T NEED TO CONNECT TO SERVER OUTSIDE GRID5000
+# SERVER SHOULD HAVE IPv6 ADDRESS
+# for key in "${!clients_host[@]}";
+# do  
+#     echo "Add firewall rule for client $key"
+#     c_host=${clients_host[$key]}
+#     ipv6_host=$(echo "$c_host" | sed 's/\./-ipv6./')
+#     echo "IPv6: $ipv6_host"
+#     curl -i "https://api.grid5000.fr/stable/sites/toulouse/firewall/$job_id" -d '[{"addr":"'$ipv6_host'", "port":22}]'
+# done
+
 
 # SSH connect to the CLIENTS in parallel
 # Array to store background PIDs
@@ -67,6 +84,19 @@ HERE2
     ) &
 done
 
+wait
+
+for key in "${!clients_host[@]}";
+do
+    (   c_host=${clients_host[$key]}
+        #echo "---CONNECTING TO CLIENT $c_host---"
+        ssh root@"$c_host" <<HERE3
+            echo "---REMOVE CONTAINER ON CLIENT $c_host---"
+            docker stop $(docker ps -a -q) 
+            echo "---REMOVED---"
+HERE3
+    ) &
+done
 
 # Enable CTRL+C to stop all background processes
 trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM
@@ -74,27 +104,5 @@ trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM
 wait
 
 
-#docker context create server --docker "host=ssh://root@$server_host"
-# docker --context server run --runtime nvidia --rm --network host -it $docker_image
-# docker --context server exec 
 
-# for key in "${!clients_host[@]}"
-# do  
-#     echo "$key : ${clients_host[$key]}"
-    
-#     #docker context create "client_$c_host" --docker "host=ssh://root@$c_host"
-# done
-
-
-# for host in $hostnames; do
-#     ssh root@$host << EOF
-#       echo "Installing Docker on $host"
-#       docker pull $docker_image && 
-#       docker run --runtime nvidia --rm --network host -it $docker_image
-# EOF
-# done
-
-
-
-
-
+# RUN CMD : bash estats_deploy_clients.sh $SERVER_IP $num_clients
