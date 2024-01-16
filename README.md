@@ -24,13 +24,11 @@ This repository provides resources and scripts to set up a Federated Learning en
     ```
 
 5. **After deployment, on the server side:**
-   
-    In the file ```estats_deploy_server.sh```, change the path in ```scp``` command to ```your_g5k_username@toulouse.grid5000.fr``` to save experiments results.
-   Then run :
+
      ```bash
      bash estats_deploy_server.sh $num_clients
      ```
-
+    The experiment results will be saved in the folder ```./results``` of your frontend
 7. **On the client side, run with the server's IP address:**
      ```bash
      bash estats_deploy_clients.sh $SERVER_IP $num_clients
