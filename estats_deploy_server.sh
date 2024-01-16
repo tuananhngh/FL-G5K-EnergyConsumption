@@ -31,7 +31,7 @@ echo "RUNNING SERVER"
 ssh root@$server_host << EOF2
     echo "EXECUTE DOCKER ON SERVER"
     docker run -d --runtime nvidia --rm --network host --name server -it $docker_image &&
-    docker exec server bash -c "python3 main_server.py comm.host=$server_ip params.num_rounds=10 params.num_clients=$num_clients client.local_epochs=5"
+    docker exec server bash -c "python3 main_server.py comm.host=$server_ip params.num_rounds=10 params.num_clients=$num_clients client.local_epochs=10"
 EOF2
 
 

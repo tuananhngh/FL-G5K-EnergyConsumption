@@ -79,7 +79,7 @@ do
         ssh root@"$c_host" <<HERE2
             echo "---EXECUTE DOCKER ON CLIENT $c_host---"
             docker run -d --runtime nvidia --rm --network host --name client_"$key" -it $docker_image &&
-            docker exec client_"$key" bash -c "python3 client.py comm.host=$server_ip client.cid=$key client.local_epochs=5 params.num_rounds=10 params.num_clients=$num_clients"  
+            docker exec client_"$key" bash -c "python3 client.py comm.host=$server_ip client.cid=$key client.local_epochs=10 params.num_rounds=10 params.num_clients=$num_clients"  
 HERE2
     ) &
 done
