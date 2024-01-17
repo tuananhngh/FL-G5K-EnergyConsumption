@@ -8,8 +8,9 @@ import models
 from pathlib import Path
 from omegaconf import DictConfig, OmegaConf
 from hydra.core.hydra_config import HydraConfig
-from flwr.common import NDArrays, Scalar, ndarrays_to_parameters
 from hydra.utils import instantiate
+from flwr.common import NDArrays, Scalar, ndarrays_to_parameters
+
 
 # Check if CUDA (GPU support) is available
 if torch.cuda.is_available():
@@ -33,11 +34,11 @@ def main(cfg:DictConfig):
     output_dir = HydraConfig.get().runtime.output_dir
     print(output_dir)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print("Device:", device)
-    #model = utils.Net(num_classes=10)
+    print("Device: ", device)
     
     # Get initial parameters
-    model = models.ResNet18()
+    model = instantiate(cfg.neuralnet)
+    #model = models.Net()
     #model.to(device)
     model_parameters = utils.get_parameters(model)
     initial_parameters = ndarrays_to_parameters(model_parameters)
@@ -46,19 +47,23 @@ def main(cfg:DictConfig):
     _,_,testloader = utils.load_dataset(cfg.params)
     #_,_, testloader = utils.load_dataloader(1, cfg.params.path_to_data)
     
-    
-    
-    strategy = fl.server.strategy.FedAvg(
-        initial_parameters=initial_parameters,
-        evaluate_fn=server.get_evaluate_fn(model, testloader,device,cfg.params),
-        evaluate_metrics_aggregation_fn=server.weighted_average,
-        on_fit_config_fn=server.get_on_fit_config(cfg.client_params),
-        fraction_fit = 1.0,
-        fraction_evaluate = 1.0,
-        min_fit_clients = 2,
-        min_evaluate_clients =2,
-        min_available_clients=2        
-    )
+    strategy = instantiate(cfg.strategy,
+                           initial_parameters=initial_parameters,
+                           on_fit_config_fn=server.get_on_fit_config(cfg.client),
+                           evaluate_metrics_aggregation_fn=server.weighted_average,
+                           evaluate_fn=server.get_evaluate_fn(model, testloader,device,cfg.params),
+                           )
+    # strategy = fl.server.strategy.FedAvg(
+    #     initial_parameters=initial_parameters,
+    #     evaluate_fn=server.get_evaluate_fn(model, testloader,device,cfg.params),
+    #     evaluate_metrics_aggregation_fn=server.weighted_average,
+    #     on_fit_config_fn=server.get_on_fit_config(cfg.client_params),
+    #     fraction_fit = 1.0,
+    #     fraction_evaluate = 1.0,
+    #     min_fit_clients = 2,
+    #     min_evaluate_clients =2,
+    #     min_available_clients=2        
+    # )
     
     hist = fl.server.start_server(
         server_address=str(server_address)+":"+str(server_port),

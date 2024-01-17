@@ -1,6 +1,8 @@
 from json import load
 import os
 from tabnanny import check
+import hydra
+from requests import patch
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -14,6 +16,7 @@ from typing import Dict, Tuple, List
 from collections import OrderedDict
 from torchvision.datasets import CIFAR10
 from torch.utils import data
+
 
 
 def seed_worker(worker_id):
@@ -37,7 +40,10 @@ def seed_everything(seed_value):
 seed = 2024
 seed_everything(seed)
 
+    
+
 def load_dataset(config:Dict[str,Scalar])->Tuple[List[data.DataLoader], List[data.DataLoader], data.DataLoader]:
+#def load_dataset(num_clients,batch_size,validation_split,root_path):
     num_clients = config["num_clients"]
     batch_size = config["batch_size"]
     validation_split = config["validation_split"]
@@ -50,10 +56,17 @@ def load_dataset(config:Dict[str,Scalar])->Tuple[List[data.DataLoader], List[dat
     trainset = CIFAR10(root=root_path, train=True, download=True, transform=transform)
     testsset = CIFAR10(root=root_path, train=False, download=True, transform=transform)
 
+    # print(len(trainset))
     partition_size = len(trainset) // num_clients
     lengths = [partition_size] * num_clients
-    datasets = data.random_split(dataset=trainset, lengths=lengths,generator=torch.Generator().manual_seed(seed))
-    
+    # print(lengths)
+    # if sum(lengths) != len(trainset):
+    #     print("Sum of partionned data is not equal to original data")
+    datasets = []
+    for i in range(num_clients):
+        datasetidx = [i * partition_size + t for t in range(partition_size)]
+        datasets.append(data.Subset(trainset, datasetidx))
+    logging.info("{} DataSamples Per Clients".format(partition_size))
     trainloaders = []
     valloaders = []
     for (it,ds) in enumerate(datasets):
@@ -72,12 +85,15 @@ def load_dataset(config:Dict[str,Scalar])->Tuple[List[data.DataLoader], List[dat
     print("Dataset loaded and partitioned")
     return trainloaders, valloaders, testloader
 
+#trainl,vall,testl=load_dataset(12,64,10,"./")
+
 def check_device(neural_net):
     is_model_on_gpu = next(neural_net.parameters()).is_cuda
     if is_model_on_gpu:
         print("Model is on GPU")
     else:
         print("Model is on CPU")
+
 
 def train(model, trainloader, valloader, epochs, optimizer, device):
     model.to(device)

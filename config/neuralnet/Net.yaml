@@ -1,0 +1,3 @@
+_target_ : models.Net
+num_classes : 10
+
