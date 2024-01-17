@@ -4,7 +4,8 @@ import torch
 import flwr as fl
 import hydra
 import logging
-from utils.training import load_dataset, train, test
+
+from utils.training import load_dataset, train, test, DataSetHandler
 from pathlib import Path
 from flwr.common import NDArrays, Scalar
 from omegaconf import DictConfig
@@ -105,7 +106,9 @@ def main(cfg:DictConfig):
     port = cfg.comm.port
     output_dir = HydraConfig.get().runtime.output_dir
     server_address = str(host)+":"+str(port)
-    trainloaders, valloaders, testloader = load_dataset(cfg.params)
+    
+    dataconfig = DataSetHandler(cfg.data)
+    trainloaders, valloaders, testloader = dataconfig()
     
     #trainloader, valloader, testloader = load_dataloader(client_id, path_to_data)
     model = instantiate(cfg.neuralnet)

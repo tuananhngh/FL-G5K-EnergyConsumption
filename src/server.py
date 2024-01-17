@@ -1,4 +1,4 @@
-from utils.training import load_dataset, get_parameters, test
+from utils.training import load_dataset, get_parameters, test, DataSetHandler
 import hydra
 import flwr as fl
 import logging
@@ -66,13 +66,12 @@ def main(cfg:DictConfig):
     
     # Get initial parameters
     model = instantiate(cfg.neuralnet)
-    #model = Net()
-    #model.to(device)
     model_parameters = get_parameters(model)
     initial_parameters = ndarrays_to_parameters(model_parameters)
     
     #Load TestData
-    _,_,testloader = load_dataset(cfg.params)
+    dataconfig = DataSetHandler(cfg.data)
+    _,_,testloader = dataconfig()
     #_,_, testloader = utils.load_dataloader(1, cfg.params.path_to_data)
     
     strategy = instantiate(cfg.strategy,

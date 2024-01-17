@@ -1,0 +1,6 @@
+[2024-01-17 11:36:26,710][root][INFO] - 25000 DataSamples Per Clients
+[2024-01-17 11:36:26,752][flwr][INFO] - Starting Flower server, config: ServerConfig(num_rounds=3, round_timeout=None)
+[2024-01-17 11:36:26,775][flwr][INFO] - Flower ECE: gRPC server running (3 rounds), SSL is disabled
+[2024-01-17 11:36:26,776][flwr][INFO] - Initializing global parameters
+[2024-01-17 11:36:26,776][flwr][INFO] - Using initial parameters provided by strategy
+[2024-01-17 11:36:26,776][flwr][INFO] - Evaluating initial parameters

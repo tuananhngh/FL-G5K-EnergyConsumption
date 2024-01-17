@@ -1,26 +1,28 @@
 params : 
   num_classes : 10
-  num_rounds : 3
-  num_clients : 3
-  batch_size : 128
-  validation_split : 10
+  num_rounds : 5
   num_clients_per_round_fit : 2
   num_clients_per_round_eval : 2
-  fraction_fit : 1.0  
-  fraction_evaluate: 1.0
-  min_fit_clients : 2
-  root_data : ${hydra:runtime.cwd}/data
+
+data :
+  data_name : CIFAR10 # (possible_value : CelebA, CIFAR10, CIFAR100, MNIST, FashionMNIST, TinyImageNet)
+  data_dir : ${hydra:runtime.cwd}/data/${data.data_name}
+  batch_size : 128
+  validation_split : 10
+  num_clients : 100
+  alpha : 0.1
+  partition : label_skew  # (possible_value : label_skew, iid, sample_skew)
 
 client:
-  lr : 0.01
-  local_epochs : 1
+  lr : 0.1
+  local_epochs : 5
   cid : 0
   dry_run : False
-  decay_rate : 0.1
+  decay_rate : 0.5 #decay=1 equal constant
   decay_steps : 10
 
 comm :
-  host : 172.16.121.1
+  host : '[::]'
   port : 8080
 
 
@@ -30,10 +32,10 @@ defaults:
   - optimizer : SGD
   - _self_ 
 
-# hydra:
-#   run:
-#     dir: ./outputs/${hydra.job.name}_${client.cid}/${now:%Y-%m-%d}/${now:%H-%M-%S}
-
+hydra:
+  run:
+    dir: ./outputs/${now:%Y-%m-%d}_${now:%H-%M-%S}/${hydra.job.name}_${client.cid}/
+  
   
 
   

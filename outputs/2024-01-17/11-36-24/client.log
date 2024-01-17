@@ -1,0 +1,12 @@
+[2024-01-17 11:36:26,617][root][INFO] - 25000 DataSamples Per Clients
+[2024-01-17 11:36:26,626][root][INFO] - 25000 DataSamples Per Clients
+[2024-01-17 11:36:26,682][flwr][INFO] - Opened insecure gRPC connection (no certificates were passed)
+[2024-01-17 11:36:26,684][flwr][DEBUG] - ChannelConnectivity.IDLE
+[2024-01-17 11:36:26,684][flwr][DEBUG] - ChannelConnectivity.CONNECTING
+[2024-01-17 11:36:26,687][flwr][INFO] - Opened insecure gRPC connection (no certificates were passed)
+[2024-01-17 11:36:26,688][flwr][DEBUG] - ChannelConnectivity.TRANSIENT_FAILURE
+[2024-01-17 11:36:26,688][flwr][DEBUG] - ChannelConnectivity.IDLE
+[2024-01-17 11:36:26,689][flwr][DEBUG] - ChannelConnectivity.CONNECTING
+[2024-01-17 11:36:26,690][flwr][DEBUG] - ChannelConnectivity.TRANSIENT_FAILURE
+[2024-01-17 11:36:26,891][flwr][DEBUG] - gRPC channel closed
+[2024-01-17 11:36:26,893][flwr][DEBUG] - gRPC channel closed
