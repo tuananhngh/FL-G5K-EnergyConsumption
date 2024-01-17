@@ -1,1 +1,2 @@
 _target_ : models.ResNet18
+num_classes : ${params.num_classes}

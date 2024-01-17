@@ -1,8 +1,8 @@
 params : 
   num_classes : 10
-  num_rounds : 3
-  num_clients : 3
-  batch_size : 54
+  num_rounds : 10
+  num_clients : 5
+  batch_size : 64
   validation_split : 10
   num_clients_per_round_fit : 2
   num_clients_per_round_eval : 2
@@ -16,12 +16,12 @@ client:
   dry_run : False
 
 comm :
-  host : 192.168.1.22
+  host : '[::]'
   port : 8080
 
 
 defaults:
-  - neuralnet : ResNet18
+  - neuralnet : MobileNetV3
   - strategy : fedavg
   
   
