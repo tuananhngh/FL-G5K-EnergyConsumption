@@ -40,3 +40,5 @@ if [ $? -eq 0 ]; then
 else
   echo "Error: Docker image build failed."
 fi
+
+

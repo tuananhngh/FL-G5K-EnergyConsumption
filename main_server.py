@@ -9,6 +9,7 @@ from pathlib import Path
 from omegaconf import DictConfig, OmegaConf
 from hydra.core.hydra_config import HydraConfig
 from flwr.common import NDArrays, Scalar, ndarrays_to_parameters
+from hydra.utils import instantiate
 
 # Check if CUDA (GPU support) is available
 if torch.cuda.is_available():
@@ -44,6 +45,8 @@ def main(cfg:DictConfig):
     #Load TestData
     _,_,testloader = utils.load_dataset(cfg.params)
     #_,_, testloader = utils.load_dataloader(1, cfg.params.path_to_data)
+    
+    
     
     strategy = fl.server.strategy.FedAvg(
         initial_parameters=initial_parameters,
