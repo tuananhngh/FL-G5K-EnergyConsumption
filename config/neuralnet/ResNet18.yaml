@@ -1,2 +1,2 @@
-_target_ : models.ResNet18
+_target_ : torchvision.models.resnet.resnet18
 num_classes : ${params.num_classes}

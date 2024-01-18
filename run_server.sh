@@ -4,14 +4,31 @@ cd "$( cd "$( dirname "$0" )" >/dev/null 2>&1 && pwd )"/
 
 server_ip="$1"
 
-echo "Starting server"
-python3 main_server.py comm.host=$server_ip &
-sleep 3  # Sleep for 3s to give the server enough time to start
+NVML_SENSOR_DIR="$(pwd)/nvml_sensor"
+JETSON_SENSOR="$(pwd)/jetson_monitoring_energy.py"
+mkdir "$(pwd)/monitoring_energy/"
+RESULT_DIR="$(pwd)/monitoring_energy/$(date '+%Y/%m/%dT%H:%M:%S.%6N')"
+PERIOD=0.5
+sleep_before=30
+sleep_after=30
+# bash ${JETSON_SENSOR} ${RESULT_DIR} &
+# jetson_pid=$!
+# echo "Jetson sensor running with pid $jetson_pid"
+echo ${NVML_SENSOR_DIR}
+sudo ${NVML_SENSOR_DIR} --result-dir ${RESULT_DIR} --period-seconds ${PERIOD} &
+sensor_pid=$!
+echo "Intenal sensors running with pid $sensor_pid"
 
-# for cid in $(seq 0 1); do
-#     echo "Starting client $cid"
-#     python3 client.py client.cid=$cid comm.host=$server_ip &
-# done
+sleep $sleep_before
+echo "start_server DATE $(date '+%Y/%m/%dT%H:%M:%S.%6N')"
+
+python3 main_server.py comm.host=$server_ip
+
+echo "end_Server DATE $(date '+%Y/%m/%dT%H:%M:%S.%6N')"
+sleep $sleep_after
+
+# kill $jetson_pid
+sudo pkill nvml_sensor
 
 rm -rf /data/ # Remove old data
 # Enable CTRL+C to stop all background processes

@@ -62,6 +62,9 @@ def main(cfg:DictConfig):
     results_path = Path(output_dir)/"results.pkl"
     with open(results_path, "wb") as f:
         pickle.dump(hist, f, protocol=pickle.HIGHEST_PROTOCOL)
+        
+    return output_dir
+
 if __name__ == "__main__":
     main()
     
