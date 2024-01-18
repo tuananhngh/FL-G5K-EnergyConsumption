@@ -1,6 +1,5 @@
 # Description: This file contains the code for the server. 
 from collections import OrderedDict
-from numpy import ndarray
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

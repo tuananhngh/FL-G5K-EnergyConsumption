@@ -1,0 +1,6 @@
+_target_ : flwr.server.strategy.FedAdam
+fraction_evaluate : 1
+fraction_fit : 1
+min_fit_clients : ${params.num_clients_per_round_fit}
+min_available_clients : ${params.num_clients}
+min_evaluate_clients : ${params.num_clients_per_round_eval}
