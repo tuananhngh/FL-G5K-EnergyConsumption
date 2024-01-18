@@ -9,14 +9,13 @@ params :
   root_data : ${hydra:runtime.cwd}/data
 
 client:
-  lr : 0.01
+  lr : 0.001
   local_epochs : 3
-  lr_decay : 0.99
   cid : 0
   dry_run : False
 
 comm :
-  host : '[::]'
+  host : 172.16.36.6
   port : 8080
 
 

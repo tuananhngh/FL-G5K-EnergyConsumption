@@ -22,7 +22,8 @@ class Client(fl.client.NumPyClient):
         self.device = device
     
     def set_parameters(self, parameters:NDArrays)->None:
-        params_dict = zip(self.model.state_dict().keys(), parameters)
+        key = [k for k in self.model.state_dict().keys()]
+        params_dict = zip(key, parameters)
         #state_dict = OrderedDict({k:torch.Tensor(v) for k,v in params_dict})
         state_dict = OrderedDict({k:torch.Tensor(v) if v.shape != torch.Size([]) else torch.Tensor([0]) for k,v in params_dict})
         self.model.load_state_dict(state_dict, strict = True)
@@ -33,7 +34,7 @@ class Client(fl.client.NumPyClient):
     def fit(self, parameters, config:Dict[str,Scalar]=None) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         """Train the model on the locally held training set."""
         self.set_parameters(parameters)
-        local_epochs :int = config["local_epochs"]
+        local_epochs = config["local_epochs"]
         lr = config["lr"]
         
         optim = torch.optim.Adam(self.model.parameters(), lr=lr)
@@ -44,10 +45,9 @@ class Client(fl.client.NumPyClient):
     
     def evaluate(self, parameters: NDArrays, config: Dict[str, Scalar]) -> Tuple[float, int, Dict[str, Scalar]]:
         """Evaluate the locally held test dataset."""
-        #print(f"[Client evaluating, config: {config}")
         steps = None #config["test_steps"]
         self.set_parameters(parameters)
-        loss, accuracy = utils.test(self.model, self.valloader, steps, self.device)
+        loss, accuracy = utils.test(self.model, self.valloader, self.device, steps=steps)
         return float(loss), len(self.valloader.dataset), {"accuracy": accuracy}
     
     def client_dry_run(self, model, client_id, trainloaders, valloaders, config, device):

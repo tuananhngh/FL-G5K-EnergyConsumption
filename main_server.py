@@ -53,17 +53,6 @@ def main(cfg:DictConfig):
                            evaluate_metrics_aggregation_fn=server.weighted_average,
                            evaluate_fn=server.get_evaluate_fn(model, testloader,device,cfg.params),
                            )
-    # strategy = fl.server.strategy.FedAvg(
-    #     initial_parameters=initial_parameters,
-    #     evaluate_fn=server.get_evaluate_fn(model, testloader,device,cfg.params),
-    #     evaluate_metrics_aggregation_fn=server.weighted_average,
-    #     on_fit_config_fn=server.get_on_fit_config(cfg.client_params),
-    #     fraction_fit = 1.0,
-    #     fraction_evaluate = 1.0,
-    #     min_fit_clients = 2,
-    #     min_evaluate_clients =2,
-    #     min_available_clients=2        
-    # )
     
     hist = fl.server.start_server(
         server_address=str(server_address)+":"+str(server_port),

@@ -1,9 +1,9 @@
 #!/bin/bash
-#server_ip="$1"
+server_ip="$1"
 
 for cid in $(seq 0 4); do
     echo "Starting client $cid"
-    python3 client.py client.cid=$cid & #comm.host=$server_ip &
+    python3 client.py client.cid=$cid comm.host=$server_ip &
 done
 
 rm -rf /data/ # Remove old data

@@ -1,9 +1,9 @@
 from typing import OrderedDict
-from sympy import Ne
 import torch 
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.models.mobilenet import mobilenet_v3_small
+from torchvision.models.resnet import resnet18
 from torchinfo import summary
 # Basic CNN Model
 class Net(nn.Module):
@@ -86,15 +86,18 @@ class ResNet(nn.Module):
         out = self.linear(out)
         return out
     
-def ResNet18():
-    return ResNet(BasicBlock, [2,2,2,2])
+def ResNet18(num_classes=10):
+    return ResNet(BasicBlock, [2,2,2,2], num_classes=num_classes)
+
+
 
 # resnet18 = ResNet18()
 # basic = Net()
 
-# sample = torch.randn(2,3,32,32)
+sample = torch.randn(2,3,32,32)
 # model = mobilenet_v3_small(num_classes=10)
-
+model = resnet18(num_classes=10)
+res = model(sample)
 # summary(model, (60,3, 32, 32), device='cpu')
 # summary(resnet18, (60, 3, 32, 32), device='cpu')
 # summary(basic, (60, 3, 32, 32), device='cpu')
