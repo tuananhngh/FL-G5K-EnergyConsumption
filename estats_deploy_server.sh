@@ -1,6 +1,6 @@
 # Deploy the environment on all reserved nodes
-# kadeploy3 -a ~/public/ubuntu-estats.dsc 
-# sleep 60
+kadeploy3 -a ~/public/ubuntu-estats.dsc 
+sleep 60
 
 # Get IP address and hostname of deployed nodes
 echo "Get Hostname of server"
