@@ -2,26 +2,25 @@ params :
   num_classes : 10
   num_rounds : 3
   num_clients : 3
-  batch_size : 54
+  batch_size : 64
   validation_split : 10
   num_clients_per_round_fit : 2
   num_clients_per_round_eval : 2
   root_data : ${hydra:runtime.cwd}/data
 
 client:
-  lr : 0.01
+  lr : 0.001
   local_epochs : 3
-  lr_decay : 0.99
   cid : 0
   dry_run : False
 
 comm :
-  host : 192.168.1.22
+  host : 172.16.121.9
   port : 8080
 
 
 defaults:
-  - neuralnet : ResNet18
+  - neuralnet : MobileNetV3Small
   - strategy : fedavg
   
   

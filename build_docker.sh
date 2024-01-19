@@ -38,3 +38,7 @@ if [ $? -eq 0 ]; then
 else
   echo "Error: Docker image build failed."
 fi
+
+
+                
+# OPENCV_DEB=OpenCV-4.5.0-aarch64.tar.gz OPENCV_URL=https://nvidia.box.com/shared/static/2hssa5g3v28ozvo3tc3qwxmn78yerca9.gz PYTORCH_URL=https://nvidia.box.com/shared/static/rehpfc4dwsxuhpv4jgqv8u6rzpgb64bq.whl PYTORCH_WHL=torch-2.0.0a0+ec3941ad.nv23.2-cp38-cp38-linux_aarch64.whl TORCHAUDIO_VERSION=v0.13.1 TORCHVISION_VERSION=v0.14.1 TORCH_CUDA_ARCH_LIST="7.2;8.7" pip3 install --no-cache-dir --verbose pycuda six

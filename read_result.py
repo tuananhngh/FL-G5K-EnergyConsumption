@@ -4,6 +4,7 @@ import os
 import matplotlib.pyplot as plt
 from flwr.server import strategy
 from torch import mul
+from pathlib import Path
 # Function read results from path
 def read_pkl(path_to_pkl):
     with open(path_to_pkl, "rb") as f:
@@ -49,7 +50,7 @@ def plot_results_multirun(result_file:Dict, metrics)->None:
     
     
 
-path_to_multirun = "/Users/Slaton/Documents/grenoble-code/fl-flower/network-sim/outputs/2024-01-06/16-01-01/"
+path_to_multirun = "/home/tunguyen/federated-learning/network-sim/outputs/2024-01-17/22-22-44/"
 ok = read_result(path_to_multirun, multirun=False)
-plot_results_multirun(ok, "metrics_centralized")
+plot_results_multirun(ok, "losses_centralized")
 

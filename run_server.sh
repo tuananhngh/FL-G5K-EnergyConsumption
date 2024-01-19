@@ -2,19 +2,33 @@
 set -e
 cd "$( cd "$( dirname "$0" )" >/dev/null 2>&1 && pwd )"/
 
-echo "Starting server"
-server_ip=$(hostname -I)
-echo "Server IP: $server_ip"
-ip4=$(echo $server_ip | awk '{print $1}')
-echo "Server IP4: $ip4"
-model=$1
-python3 main_server.py comm.host=$(echo $ip4) neuralnet=$model&
-sleep 3  # Sleep for 3s to give the server enough time to start
+server_ip="$1"
 
-# for cid in $(seq 0 1); do
-#     echo "Starting client $cid"
-#     python3 client.py client_params.client_id=$cid &
-# done
+NVML_SENSOR_DIR="$(pwd)/nvml_sensor"
+JETSON_SENSOR="$(pwd)/jetson_monitoring_energy.py"
+mkdir "$(pwd)/monitoring_energy/"
+RESULT_DIR="$(pwd)/monitoring_energy/$(date '+%Y/%m/%dT%H:%M:%S.%6N')"
+PERIOD=0.5
+sleep_before=30
+sleep_after=30
+# bash ${JETSON_SENSOR} ${RESULT_DIR} &
+# jetson_pid=$!
+# echo "Jetson sensor running with pid $jetson_pid"
+echo ${NVML_SENSOR_DIR}
+sudo ${NVML_SENSOR_DIR} --result-dir ${RESULT_DIR} --period-seconds ${PERIOD} &
+sensor_pid=$!
+echo "Intenal sensors running with pid $sensor_pid"
+
+sleep $sleep_before
+echo "start_server DATE $(date '+%Y/%m/%dT%H:%M:%S.%6N')"
+
+python3 main_server.py comm.host=$server_ip
+
+echo "end_Server DATE $(date '+%Y/%m/%dT%H:%M:%S.%6N')"
+sleep $sleep_after
+
+# kill $jetson_pid
+sudo pkill nvml_sensor
 
 rm -rf /data/ # Remove old data
 # Enable CTRL+C to stop all background processes
@@ -22,4 +36,3 @@ trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM
 # Wait for all background processes to complete
 wait
 
-# Run CMD : bash_run_server.sh Net

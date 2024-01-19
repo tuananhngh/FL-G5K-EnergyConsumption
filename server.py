@@ -19,7 +19,7 @@ def weighted_average(metrics:List[Tuple[int, Metrics]]) -> Metrics:
 
 def get_on_fit_config(config: Dict[str, Scalar])->Callable:
     def fit_config_fn(server_round:int)->FitIns:
-        return {'lr': config.lr, 'local_epochs': config.local_epochs, 'lr_decay': config.lr_decay}
+        return {'lr': config.lr, 'local_epochs': config.local_epochs}
     return fit_config_fn
 
 def get_evaluate_fn(model, testloader, device, cfg: Dict[str, Scalar])->Callable:
