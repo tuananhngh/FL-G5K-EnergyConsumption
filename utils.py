@@ -1,8 +1,7 @@
 from json import load
 import os
-from tabnanny import check
 import hydra
-from requests import patch
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -16,6 +15,8 @@ from typing import Dict, Tuple, List
 from collections import OrderedDict
 from torchvision.datasets import CIFAR10
 from torch.utils import data
+from flwr.server.strategy import FedAdam, FedAvg, FedProx
+
 
 
 
@@ -125,46 +126,47 @@ def train(model, trainloader, valloader, epochs, optimizer, device):
             "val_loss": val_loss,
             "val_acc": val_acc,
         }
-    model.to("cpu")
-    check_device(model)
     return results
 
-def validation(model, valloader, device):
+def validation(model, dataloader, device):
     criterion = nn.CrossEntropyLoss()
+    model.to(device)
     model.eval()
+    total_samples = len(dataloader.dataset)
+    #logging.info("VALIDATION DEVICE : {}".format(device))
     with torch.no_grad():
-        val_loss, total_samples, correct_prediction = 0., 0., 0.
-        for dt,lb in valloader:
+        val_loss, correct_prediction = 0.,0.
+        for dt,lb in dataloader:
             dt, lb = dt.to(device), lb.to(device)
             outputs = model(dt)
             losses = criterion(outputs, lb)
             val_loss += losses.item()
-            total_samples += lb.size(0)
             correct_prediction += (torch.max(outputs.data, 1)[1] == lb).sum().item()
-    avg_loss = val_loss/len(valloader.dataset)
+    avg_loss = val_loss/total_samples
     accuracy = correct_prediction / total_samples
     return avg_loss, accuracy
 
-def test(model, testloader, device, steps=None, verbose=True):
+def test(model, dataloader, device, steps=None, verbose=True):
     criterion = nn.CrossEntropyLoss()
     model.to(device)
     model.eval()
+    total_samples=len(dataloader.dataset)
     with torch.no_grad():
-        val_loss, total_sample, correct = 0., 0., 0.
-        for batch_idx, (images, labels) in enumerate(testloader):
+        val_loss, correct= 0., 0.
+        for batch_idx, (images, labels) in enumerate(dataloader):
             images, labels = images.to(device), labels.to(device)
             outputs = model(images)
-            loss = criterion(outputs, labels)
-            val_loss += loss.item()
-            total_sample += labels.size(0)
+            losses = criterion(outputs, labels)
+            val_loss += losses.item()
             correct += (torch.max(outputs.data, 1)[1] == labels).sum().item()
             if steps is not None and batch_idx == steps:
                 break
-    avg_loss = val_loss/len(testloader.dataset)
-    accuracy = correct/total_sample
+        #logging.info("TOTAL TEST SAMPLES : {}".format(tt))
+    avg_loss = val_loss/total_samples
+    accuracy = correct/total_samples
     if verbose:
         logging.info("Loss: {} | Accuracy: {}".format(avg_loss, accuracy))
-    model.to("cpu")
+    #model.to("cpu")
     return avg_loss, accuracy
 
 def set_parameters(net, parameters:NDArray) -> None:

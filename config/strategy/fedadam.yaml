@@ -2,5 +2,14 @@ _target_ : flwr.server.strategy.FedAdam
 fraction_evaluate : 1
 fraction_fit : 1
 min_fit_clients : ${params.num_clients_per_round_fit}
+<<<<<<< HEAD
 min_available_clients : ${params.num_clients}
 min_evaluate_clients : ${params.num_clients_per_round_eval}
+=======
+min_available_clients : 2
+min_evaluate_clients : ${params.num_clients_per_round_eval}
+eta : 0.1
+eta_l : ${client.lr}
+beta_1 : 0.9
+beta_2 : 0.999
+>>>>>>> other1/lille-g5k

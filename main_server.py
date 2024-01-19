@@ -10,6 +10,8 @@ from omegaconf import DictConfig, OmegaConf
 from hydra.core.hydra_config import HydraConfig
 from hydra.utils import instantiate
 from flwr.common import NDArrays, Scalar, ndarrays_to_parameters
+from hydra.utils import instantiate
+
 
 # Check if CUDA (GPU support) is available
 if torch.cuda.is_available():
@@ -48,8 +50,7 @@ def main(cfg:DictConfig):
     output_dir = HydraConfig.get().runtime.output_dir
     print(output_dir)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print("Device:", device)
-    #model = utils.Net(num_classes=10)
+    print("Device: ", device)
     
     # Get initial parameters
     model = instantiate(cfg.neuralnet)
@@ -68,17 +69,6 @@ def main(cfg:DictConfig):
                            evaluate_metrics_aggregation_fn=server.weighted_average,
                            evaluate_fn=server.get_evaluate_fn(model, testloader,device,cfg.params),
                            )
-    # strategy = fl.server.strategy.FedAvg(
-    #     initial_parameters=initial_parameters,
-    #     evaluate_fn=server.get_evaluate_fn(model, testloader,device,cfg.params),
-    #     evaluate_metrics_aggregation_fn=server.weighted_average,
-    #     on_fit_config_fn=server.get_on_fit_config(cfg.client_params),
-    #     fraction_fit = 1.0,
-    #     fraction_evaluate = 1.0,
-    #     min_fit_clients = 2,
-    #     min_evaluate_clients =2,
-    #     min_available_clients=2        
-    # )
     
     hist = fl.server.start_server(
         server_address=str(server_address)+":"+str(server_port),
@@ -88,6 +78,9 @@ def main(cfg:DictConfig):
     results_path = Path(output_dir)/"results.pkl"
     with open(results_path, "wb") as f:
         pickle.dump(hist, f, protocol=pickle.HIGHEST_PROTOCOL)
+        
+    return output_dir
+
 if __name__ == "__main__":
     main()
     
