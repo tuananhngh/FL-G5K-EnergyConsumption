@@ -1,59 +1,26 @@
 params : 
   num_classes : 10
-<<<<<<< HEAD
-<<<<<<< HEAD
   num_rounds : 3
   num_clients : 3
-  batch_size : 54
-=======
-  num_rounds : 10
-  num_clients : 5
   batch_size : 64
->>>>>>> other1/lille-g5k
-=======
-  num_rounds : 10
-  num_clients : 2
-  batch_size : 64
->>>>>>> b8b5fb0 (WIP: 1a3fe10 add jetson config)
   validation_split : 10
   num_clients_per_round_fit : 2
   num_clients_per_round_eval : 2
   root_data : ${hydra:runtime.cwd}/data
 
 client:
-<<<<<<< HEAD
-<<<<<<< HEAD
-  lr : 0.01
-  local_epochs : 3
-  lr_decay : 0.99
-=======
   lr : 0.001
   local_epochs : 3
->>>>>>> other1/lille-g5k
   cid : 0
-=======
-  lr : 0.01
-  local_epochs : 3
-  lr_decay : 0.99
-  cid : 1
->>>>>>> b8b5fb0 (WIP: 1a3fe10 add jetson config)
   dry_run : False
 
 comm :
-<<<<<<< HEAD
-  host : 192.168.1.22
-=======
-  host : 172.16.36.6
->>>>>>> other1/lille-g5k
+  host : 172.16.121.9
   port : 8080
 
 
 defaults:
-<<<<<<< HEAD
-  - neuralnet : ResNet18
-=======
-  - neuralnet : MobileNetV3
->>>>>>> other1/lille-g5k
+  - neuralnet : MobileNetV3Small
   - strategy : fedavg
   
   
