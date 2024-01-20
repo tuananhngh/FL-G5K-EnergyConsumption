@@ -16,18 +16,18 @@ from omegaconf import DictConfig, OmegaConf
 from hydra.utils import instantiate, HydraConfig
 from logging import INFO, DEBUG
 from flwr.common.logger import log
-import jetson_monitoring_energy
 
 
 
 class Client(fl.client.NumPyClient):
-    def __init__(self, model, trainloader, valloader, device, outputdir, cid) -> None:
+    def __init__(self, model, trainloader, valloader, device, outputdir, cid, optimizer) -> None:
         self.trainloader = trainloader
         self.model = model
         self.valloader = valloader
         self.device = device
         self.outputdir = outputdir
         self.cid=cid
+        self.optim = optimizer
     
     def set_parameters(self, parameters:NDArrays)->None:
         key = [k for k in self.model.state_dict().keys()]
@@ -45,7 +45,8 @@ class Client(fl.client.NumPyClient):
         local_epochs = config["local_epochs"]
         lr = config["lr"]
         server_round= config["server_round"]
-        optim = torch.optim.Adam(self.model.parameters(), lr=lr)
+        optim = instantiate(self.optim, self.model.parameters(), lr=lr)
+        #optim = torch.optim.SGD(self.model.parameters(), lr=lr)
         
         path = Path(self.outputdir, 'fittimes.csv')
         with open(path, 'a', newline='') as f:
@@ -110,7 +111,8 @@ def main(cfg:DictConfig):
     
     #trainloader, valloader, testloader = utils.load_dataloader(client_id, path_to_data)
     model = instantiate(cfg.neuralnet)
-    client = Client(model, trainloaders[client_id], valloaders[client_id], device, output_dir, client_id)
+    optimizer = cfg.optimizer
+    client = Client(model, trainloaders[client_id], valloaders[client_id], device, output_dir, client_id, optimizer)
     if dry_run:
         res = client.client_dry_run(model, client_id, trainloaders, valloaders, cfg.client_params, device)
         print(res)
