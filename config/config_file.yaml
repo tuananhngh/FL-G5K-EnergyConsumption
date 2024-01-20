@@ -1,6 +1,6 @@
 params : 
   num_classes : 10
-  num_rounds : 10
+  num_rounds : 2
   num_clients : 2
   batch_size : 64
   validation_split : 10
@@ -15,12 +15,12 @@ client:
   dry_run : False
 
 comm :
-  host : 172.16.121.5
+  host : '[::]'
   port : 8080
 
 
 defaults:
-  - neuralnet : MobileNetV3Small
+  - neuralnet : Net
   - strategy : fedavg
 
 hydra:

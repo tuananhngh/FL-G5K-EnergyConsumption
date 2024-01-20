@@ -50,7 +50,7 @@ def plot_results_multirun(result_file:Dict, metrics)->None:
     
     
 
-path_to_multirun = "/home/tunguyen/federated-learning/network-sim/outputs/2024-01-17/22-22-44/"
+path_to_multirun = "/Users/Slaton/Documents/grenoble-code/fl-flower/jetson-tl/01-04-19"
 ok = read_result(path_to_multirun, multirun=False)
-plot_results_multirun(ok, "losses_centralized")
+plot_results_multirun(ok, "losses_distributed")
 

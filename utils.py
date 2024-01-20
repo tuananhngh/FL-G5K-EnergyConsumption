@@ -116,16 +116,16 @@ def train(model, trainloader, valloader, epochs, optimizer, device):
             epoch_loss += losses.item()
             #total_samples += lb.size(0)
             correct_prediction += (torch.max(outputs.data, 1)[1] == lb).sum().item()
-        epoch_loss = epoch_loss/total_samples
+        epoch_loss = epoch_loss/len(trainloader)
         epoch_acc = correct_prediction / total_samples
-        # Validation metrics
-        val_loss, val_acc = validation(model, valloader, device)
-        results = {
-            "train_loss": epoch_loss,
-            "train_acc": epoch_acc,
-            "val_loss": val_loss,
-            "val_acc": val_acc,
-        }
+    # Validation metrics
+    val_loss, val_acc = validation(model, valloader, device)
+    results = {
+        "train_loss": epoch_loss,
+        "train_acc": epoch_acc,
+        "val_loss": val_loss,
+        "val_acc": val_acc,
+    }
     return results
 
 def validation(model, dataloader, device):
@@ -142,7 +142,7 @@ def validation(model, dataloader, device):
             losses = criterion(outputs, lb)
             val_loss += losses.item()
             correct_prediction += (torch.max(outputs.data, 1)[1] == lb).sum().item()
-    avg_loss = val_loss/total_samples
+    avg_loss = val_loss/len(dataloader)
     accuracy = correct_prediction / total_samples
     return avg_loss, accuracy
 
@@ -162,7 +162,7 @@ def test(model, dataloader, device, steps=None, verbose=True):
             if steps is not None and batch_idx == steps:
                 break
         #logging.info("TOTAL TEST SAMPLES : {}".format(tt))
-    avg_loss = val_loss/total_samples
+    avg_loss = val_loss/len(dataloader)
     accuracy = correct/total_samples
     if verbose:
         logging.info("Loss: {} | Accuracy: {}".format(avg_loss, accuracy))

@@ -13,9 +13,11 @@ cid=$1
 
 USER="tunguyen"
 JETSON_SENSOR="$(pwd)/jetson_monitoring_energy.py"
-RESULT_DIR="/home/${USER}/FL-G5K-Test/monitoring_energy/$(date '+%Y_%m_%d/%H_%M_%S')/client_$cid/"
+#RESULT_DIR="/home/${USER}/FL-G5K-Test/monitoring_energy/$(date '+%Y_%m_%d/%H_%M_%S')/client_$cid/"
+RESULT_DIR="$(pwd)/outputs/client_$cid/monitoring_energy/"
 mkdir -p $RESULT_DIR
-TMP_RESULT_DIR="/tmp/results_energy/$(date '+%Y_%m_%d/%H_%M_%S')/"
+#TMP_RESULT_DIR="/tmp/results_energy/$(date '+%Y_%m_%d/%H_%M_%S')/"
+TMP_RESULT_DIR="/tmp/results_energy/${now:%Y-%m-%d}/${now:%H-%M-%S}"
 mkdir -p $TMP_RESULT_DIR
 RESULT_ENERGY_CSV="energy.csv"
 LOG_FILE="logs.log"

@@ -69,6 +69,7 @@ def main(cfg:DictConfig):
                            on_fit_config_fn=server.get_on_fit_config(cfg.client),
                            evaluate_metrics_aggregation_fn=server.weighted_average,
                            evaluate_fn=server.get_evaluate_fn(model, testloader,device,cfg.params),
+                           on_evaluate_config_fn=server.get_on_evaluate_config(cfg.client)
                            )
     
     hist = fl.server.start_server(
