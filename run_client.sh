@@ -14,10 +14,10 @@ cid=$1
 USER="tunguyen"
 JETSON_SENSOR="$(pwd)/jetson_monitoring_energy.py"
 #RESULT_DIR="/home/${USER}/FL-G5K-Test/monitoring_energy/$(date '+%Y_%m_%d/%H_%M_%S')/client_$cid/"
-RESULT_DIR="$(pwd)/outputs/client_$cid/monitoring_energy/"
+RESULT_DIR="$(pwd)/outputs/client_$cid/$(date '+%Y-%m-%d')/$(date '+%H-%M-%S')/"
 mkdir -p $RESULT_DIR
 #TMP_RESULT_DIR="/tmp/results_energy/$(date '+%Y_%m_%d/%H_%M_%S')/"
-TMP_RESULT_DIR="/tmp/results_energy/${now:%Y-%m-%d}/${now:%H-%M-%S}"
+TMP_RESULT_DIR="/tmp/results_energy/$(date '+%Y-%m-%d')/$(date '+%H-%M-%S')/"
 mkdir -p $TMP_RESULT_DIR
 RESULT_ENERGY_CSV="energy.csv"
 LOG_FILE="logs.log"
@@ -30,7 +30,7 @@ function cleanup()
     echo "end_server DATE $(date '+%Y/%m/%dT%H:%M:%S.%6N')" 2>&1 | tee -a "${TMP_RESULT_DIR}${LOG_FILE}"
     sleep $sleep_after
 
-    cp -r $TMP_RESULT_DIR $RESULT_DIR
+    cp -r $TMP_RESULT_DIR/* $RESULT_DIR
     rm -rf $TMP_RESULT_DIR
 
     echo "Copied and rm tmp file to ${RESULT_DIR}"
@@ -52,7 +52,7 @@ echo "start_client DATE $(date '+%Y/%m/%dT%H:%M:%S.%6N')" 2>&1 | tee -a "${TMP_R
 
 # START SERVER AND ENABLE CLEANUP FOR CTRL-C 
 trap cleanup SIGINT
-python3 client.py client.cid=$cid
+python3 client.py client.cid=$cid hydra.run.dir=$RESULT_DIR
 cleanup
 
 # rm -rf /data/ # Remove old data

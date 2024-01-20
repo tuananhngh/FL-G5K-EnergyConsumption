@@ -1,5 +1,6 @@
 import datetime
 import os
+import csv
 import torch
 import torch.nn as nn
 import flwr as fl
@@ -45,14 +46,27 @@ class Client(fl.client.NumPyClient):
         lr = config["lr"]
         server_round= config["server_round"]
         optim = torch.optim.Adam(self.model.parameters(), lr=lr)
-        log(INFO, "CLIENT {} FIT ROUND {}".format(self.cid,server_round))
-        result = utils.train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device)
-        log(INFO, "CLIENT {} END FIT ROUND {}".format(self.cid,server_round))
+        
+        path = Path(self.outputdir, 'fittimes.csv')
+        with open(path, 'a', newline='') as f:
+            writer = csv.writer(f)
+            if f.tell()==0:
+                writer.writerow(["Client ID", "Server Round", "Start Time", "End Time"])
+            start_time = datetime.datetime.now()
+            log(INFO, "CLIENT {} FIT ROUND {}".format(self.cid,server_round))
+            result = utils.train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device)
+            end_time = datetime.datetime.now()
+            log(INFO, "CLIENT {} END FIT ROUND {}".format(self.cid,server_round))
+            writer.writerow([self.cid, server_round, start_time.strftime("%Y-%m-%d %H:%M:%S"), end_time.strftime("%Y-%m-%d %H:%M:%S")])
+            
         # Write result to file with current date and time
-        path = Path(self.outputdir, 'fitresult.txt')
-        with open(path, 'a') as f:
+        path = Path(self.outputdir, 'fitresult.csv')
+        with open(path, 'a', newline='') as f:
+            writer = csv.writer(f)
+            if f.tell() == 0:
+                writer.writerow(["time", "server_round", "train_loss", "train_acc", "val_loss", "val_acc"])
             now = datetime.datetime.now()
-            f.write(f'\n{now.strftime("%Y-%m-%d %H:%M:%S")} - Result Round {server_round}: {result}')
+            writer.writerow([now.strftime("%Y-%m-%d %H:%M:%S"), server_round, result["train_loss"], result["train_acc"], result["val_loss"], result["val_acc"]])
         num_samples = len(self.trainloader.dataset)
         parameters_prime = self.get_parameters(config)
         return parameters_prime, num_samples, result
@@ -63,10 +77,14 @@ class Client(fl.client.NumPyClient):
         server_round = config["server_round"]
         self.set_parameters(parameters)
         loss, accuracy = utils.test(self.model, self.valloader, self.device, steps=steps,verbose=True) 
-        path = Path(self.outputdir, 'evalresult.txt')
-        with open(path, 'a') as f:
+        
+        path = Path(self.outputdir, 'evalresult.csv')
+        with open(path, 'a', newline='') as f:
+            writer = csv.writer(f)
+            if f.tell() == 0:
+                writer.writerow(["time", "server_round", "loss", "accuracy"])
             now = datetime.datetime.now()
-            f.write(f'\n{now.strftime("%Y-%m-%d %H:%M:%S")} - Round {server_round}, Loss : {loss}, Accuracy : {accuracy}')
+            writer.writerow([now.strftime("%Y-%m-%d %H:%M:%S"), server_round, loss, accuracy])
         return float(loss), len(self.valloader.dataset), {"accuracy": accuracy}
     
     def client_dry_run(self, model, client_id, trainloaders, valloaders, config, device):
