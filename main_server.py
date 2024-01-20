@@ -42,6 +42,7 @@ else:
     print("CUDA (GPU support) is not available on this system.")
 
 
+
 @hydra.main(config_path="config", config_name="config_file")
 def main(cfg:DictConfig):
     print(OmegaConf.to_yaml(cfg))

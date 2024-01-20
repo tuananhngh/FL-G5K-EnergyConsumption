@@ -1,7 +1,7 @@
 params : 
   num_classes : 10
-  num_rounds : 3
-  num_clients : 3
+  num_rounds : 10
+  num_clients : 2
   batch_size : 64
   validation_split : 10
   num_clients_per_round_fit : 2
@@ -15,13 +15,17 @@ client:
   dry_run : False
 
 comm :
-  host : 172.16.121.9
+  host : 172.16.121.5
   port : 8080
 
 
 defaults:
   - neuralnet : MobileNetV3Small
   - strategy : fedavg
+
+hydra:
+  run:
+    dir: ./outputs/${hydra.job.name}_${client.cid}/${now:%Y-%m-%d}/${now:%H-%M-%S}
   
   
 

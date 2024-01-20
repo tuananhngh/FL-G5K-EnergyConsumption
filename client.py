@@ -47,7 +47,8 @@ class Client(fl.client.NumPyClient):
         """Evaluate the locally held test dataset."""
         steps = None #config["test_steps"]
         self.set_parameters(parameters)
-        loss, accuracy = utils.test(self.model, self.valloader, self.device, steps=steps)
+        loss, accuracy = utils.test(self.model, self.valloader, self.device, steps=steps,verbose=True) 
+        
         return float(loss), len(self.valloader.dataset), {"accuracy": accuracy}
     
     def client_dry_run(self, model, client_id, trainloaders, valloaders, config, device):

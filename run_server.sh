@@ -2,7 +2,7 @@
 set -e
 cd "$( cd "$( dirname "$0" )" >/dev/null 2>&1 && pwd )"/
 
-USER="mjay"
+USER="tunguyen"
 JETSON_SENSOR="$(pwd)/jetson_monitoring_energy.py"
 RESULT_DIR="/home/${USER}/FL-G5K-Test/monitoring_energy/$(date '+%Y_%m_%d/%H_%M_%S')/"
 mkdir -p $RESULT_DIR
