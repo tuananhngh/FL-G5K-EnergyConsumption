@@ -17,9 +17,15 @@ def weighted_average(metrics:List[Tuple[int, Metrics]]) -> Metrics:
     examples = [num_examples for num_examples, _ in metrics]
     return {"accuracy": sum(accuracies) / sum(examples)}
 
+
+def learning_rate_scheduler(lr, epoch, decay_rate=0.9, decay_steps=1000):
+    lr = lr * (decay_rate ** (epoch // decay_steps))
+    return lr
+
 def get_on_fit_config(config: Dict[str, Scalar])->Callable:
     def fit_config_fn(server_round:int)->FitIns:
-        return {'lr': config.lr, 'local_epochs': config.local_epochs, 'server_round': server_round}
+        lr = learning_rate_scheduler(config.lr, server_round)
+        return {'lr': lr, 'local_epochs': config.local_epochs, 'server_round': server_round}
     return fit_config_fn
 
 def get_on_evaluate_config(config: Dict[str, Scalar])->Callable:
