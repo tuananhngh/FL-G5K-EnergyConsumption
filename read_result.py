@@ -13,13 +13,13 @@ from omegaconf import OmegaConf
 energy_cols = ['timestamp',
  'RAM%',
  'GPU%',
- 'GPU inst power',
- 'GPU avg power',
+ 'GPU inst power (mW)',
+ 'GPU avg power (mW)',
  'CPU%',
- 'CPU inst power',
- 'CPU avg power',
- 'tot inst power',
- 'tot avg power']
+ 'CPU inst power (mW)',
+ 'CPU avg power (mW)',
+ 'tot inst power (mW)',
+ 'tot avg power (mW)']
 
 evalresult_cols = ['time', 'server_round', 'loss', 'accuracy']
 fitresult_cols = ['time', 'server_round', 'train_loss', 'train_acc', 'val_loss', 'val_acc']
@@ -90,7 +90,7 @@ class EnergyResult:
         Returns:
             SimpleNamespace[pd.DataFrame]: Contains energy, results as DataFrames
         """
-        path_to_server = self.path_to_output/self.datatime/"server"
+        path_to_server = self.path_to_output/self.datetime/"server"
         energy = pd.read_csv(path_to_server/"energy.csv", parse_dates=["timestamp"])
         energy["timestamp"] = energy["timestamp"].dt.round("1s") # Rounding to 1s
         energy.columns = [col.strip() for col in energy.columns]
@@ -196,10 +196,10 @@ if __name__ == "__main__":
     result_plot = {"loss": ["results","server_round","loss","losses_centralized","losses_distributed"],
                     "accuracy": ["results","server_round","accuracy","acc_centralized","acc_distributed"]}
         
-    result = EnergyResult("./outputs/", 6, "2024-01-22_19-31-34")
-    mycsv = result._read_client(5)
+    result = EnergyResult("../outputs_from_tl1/", 4, "2024-01-22_19-31-34")
+    #mycsv = result._read_client(5)
     server = result._read_server()
-    result.make_energy_plot("energy",'timestamp',"tot inst power")
+    result.make_energy_plot("energy",'timestamp',"tot avg power (mW)")
     result.make_result_plot(**result_plot)
 
 # def read_result(path_to_last_run, multirun=True):
