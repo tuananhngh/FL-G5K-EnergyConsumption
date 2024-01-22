@@ -25,9 +25,16 @@ def learning_rate_scheduler(lr, epoch, decay_rate=0.9, decay_steps=1000):
 
 def get_on_fit_config(config: Dict[str, Scalar])->Callable:
     def fit_config_fn(server_round:int)->FitIns:
-        lr = learning_rate_scheduler(config.lr, server_round)
-        return {'lr': lr, 'local_epochs': config.local_epochs, 'server_round': server_round}
+        config.lr = learning_rate_scheduler(config.lr, server_round)
+        if server_round > 10:
+            config.local_epochs = 1
+        return {'lr': config.lr, 'local_epochs': config.local_epochs, 'server_round': server_round}
     return fit_config_fn
+
+def get_on_evaluate_config(config: Dict[str, Scalar])->Callable:
+    def evaluate_config_fn(server_round:int)->EvaluateRes:
+        return {'server_round': server_round}
+    return evaluate_config_fn
 
 def get_evaluate_fn(model, testloader, device, cfg: Dict[str, Scalar])->Callable:
     def evaluate_fn(server_round:int, parameters:NDArray, config):
