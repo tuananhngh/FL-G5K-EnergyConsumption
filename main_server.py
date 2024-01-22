@@ -1,3 +1,5 @@
+import csv
+from tracemalloc import start
 import server
 import hydra
 import flwr as fl
@@ -5,6 +7,7 @@ import utils
 import torch
 import pickle 
 import models
+import datetime
 from pathlib import Path
 from omegaconf import DictConfig, OmegaConf
 from hydra.core.hydra_config import HydraConfig
@@ -76,7 +79,8 @@ def main(cfg:DictConfig):
         server_address=str(server_address)+":"+str(server_port),
         config=fl.server.ServerConfig(num_rounds=cfg.params.num_rounds),
         strategy=strategy
-    )
+        )
+    
     results_path = Path(output_dir)/"results.pkl"
     with open(results_path, "wb") as f:
         pickle.dump(hist, f, protocol=pickle.HIGHEST_PROTOCOL)

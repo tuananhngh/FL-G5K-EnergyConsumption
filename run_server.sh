@@ -2,10 +2,13 @@
 set -e
 cd "$( cd "$( dirname "$0" )" >/dev/null 2>&1 && pwd )"/
 
+datetime=$1
+
 USER="tunguyen"
 JETSON_SENSOR="$(pwd)/jetson_monitoring_energy.py"
 #RESULT_DIR="/home/${USER}/FL-G5K-Test/monitoring_energy/$(date '+%Y_%m_%d/%H_%M_%S')/"
-RESULT_DIR="$(pwd)/outputs/main_server_0/$(date '+%Y-%m-%d')/$(date '+%H-%M-%S')/"
+#RESULT_DIR="$(pwd)/outputs/main_server_0/$(date '+%Y-%m-%d')/$(date '+%H-%M-%S')/"
+RESULT_DIR="$(pwd)/outputs/$datetime/server/"
 mkdir -p $RESULT_DIR
 #TMP_RESULT_DIR="/tmp/results_energy/$(date '+%Y_%m_%d/%H_%M_%S')/"
 TMP_RESULT_DIR="/tmp/results_energy/$(date '+%Y-%m-%d')/$(date '+%H-%M-%S')/"
@@ -44,6 +47,7 @@ echo "start_server DATE $(date '+%Y/%m/%dT%H:%M:%S.%6N')" 2>&1 | tee -a "${TMP_R
 # START SERVER AND ENABLE CLEANUP FOR CTRL-C 
 trap cleanup SIGINT
 python3 main_server.py hydra.run.dir=$RESULT_DIR
+sleep 5
 cleanup
 
 # rm -rf /data/ # Remove old data

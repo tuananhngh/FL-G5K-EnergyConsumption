@@ -52,22 +52,22 @@ class Client(fl.client.NumPyClient):
         with open(path, 'a', newline='') as f:
             writer = csv.writer(f)
             if f.tell()==0:
-                writer.writerow(["Client ID", "Server Round", "Start Time", "End Time"])
+                writer.writerow(["Client ID", "Server Round", "Start Time", "End Time","LR", "Local Epochs"])
             start_time = datetime.datetime.now()
             log(INFO, "CLIENT {} FIT ROUND {}".format(self.cid,server_round))
             result = utils.train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device)
             end_time = datetime.datetime.now()
             log(INFO, "CLIENT {} END FIT ROUND {}".format(self.cid,server_round))
-            writer.writerow([self.cid, server_round, start_time.strftime("%Y-%m-%d %H:%M:%S"), end_time.strftime("%Y-%m-%d %H:%M:%S")])
+            writer.writerow([self.cid, server_round, start_time.strftime("%Y-%m-%d %H:%M:%S"), end_time.strftime("%Y-%m-%d %H:%M:%S"), lr, local_epochs])
             
         # Write result to file with current date and time
         path = Path(self.outputdir, 'fitresult.csv')
         with open(path, 'a', newline='') as f:
             writer = csv.writer(f)
             if f.tell() == 0:
-                writer.writerow(["time", "server_round", "train_loss", "train_acc", "val_loss", "val_acc"])
+                writer.writerow(["time", "server_round", "train_loss", "train_acc", "val_loss", "val_acc", "lr", "local_epochs"])
             now = datetime.datetime.now()
-            writer.writerow([now.strftime("%Y-%m-%d %H:%M:%S"), server_round, result["train_loss"], result["train_acc"], result["val_loss"], result["val_acc"]])
+            writer.writerow([now.strftime("%Y-%m-%d %H:%M:%S"), server_round, result["train_loss"], result["train_acc"], result["val_loss"], result["val_acc"]], lr, local_epochs)
         num_samples = len(self.trainloader.dataset)
         parameters_prime = self.get_parameters(config)
         return parameters_prime, num_samples, result

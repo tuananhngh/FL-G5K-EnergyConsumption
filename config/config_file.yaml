@@ -1,16 +1,17 @@
 params : 
   num_classes : 10
   num_rounds : 30
-  num_clients : 6
+  num_clients : 4
   batch_size : 128
   validation_split : 10
+  num_clients_per_round_fit : 2
+  num_clients_per_round_eval : 2
   root_data : ${hydra:runtime.cwd}/data
 
 client:
-  lr : 0.1
+  lr : 0.01
   local_epochs : 3
-  lr_decay : 0.99
-  cid : 1
+  cid : 0
   dry_run : False
 
 comm :

@@ -46,7 +46,7 @@ def read_yaml_file(path_to_yaml):
 #ok = read_yaml_file(pathyaml)
 
 class EnergyResult:
-    def __init__(self, path_to_output:str, nb_clients:int, date:str,client_time:str,server_time:str)->None:
+    def __init__(self, path_to_output:str, nb_clients:int, datetime:str)->None:
         """Read results from path
         Args:
             path_to_output (str): Path to output folder
@@ -56,9 +56,7 @@ class EnergyResult:
         """
         self.path_to_output = Path(path_to_output)
         self.nb_clients = nb_clients
-        self.date = date
-        self.client_time = client_time
-        self.server_time = server_time
+        self.datetime = datetime
         self.cids = [i for i in range(nb_clients)]
         self.date_time_format = "%Y-%m-%d %H:%M:%S"
         
@@ -72,7 +70,7 @@ class EnergyResult:
             SimpleNamespace: Contains energy, evalresult, fitresult, fittimes as DataFrames
             To access an element: SimpleNamespace.element
         """
-        path_to_client = self.path_to_output/f"client_{cid}"/self.date/self.client_time
+        path_to_client = self.path_to_output/self.datetime/f"client_{cid}"
         
         energy = pd.read_csv(path_to_client/"energy.csv", parse_dates=["timestamp"])
         # energy["timestamp"] = energy["timestamp"].dt.round("1s") # Rounding to 1s
@@ -92,7 +90,7 @@ class EnergyResult:
         Returns:
             SimpleNamespace[pd.DataFrame]: Contains energy, results as DataFrames
         """
-        path_to_server = self.path_to_output/f"main_server_0"/self.date/self.server_time
+        path_to_server = self.path_to_output/self.datatime/"server"
         energy = pd.read_csv(path_to_server/"energy.csv", parse_dates=["timestamp"])
         energy["timestamp"] = energy["timestamp"].dt.round("1s") # Rounding to 1s
         energy.columns = [col.strip() for col in energy.columns]
@@ -198,8 +196,7 @@ if __name__ == "__main__":
     result_plot = {"loss": ["results","server_round","loss","losses_centralized","losses_distributed"],
                     "accuracy": ["results","server_round","accuracy","acc_centralized","acc_distributed"]}
         
-            
-    result = EnergyResult("./results/outputs_from_tl/", 6, "2024-01-20","23-35-20","23-35-19")
+    result = EnergyResult("./outputs/", 6, "2024-01-22_19-31-34")
     mycsv = result._read_client(5)
     server = result._read_server()
     result.make_energy_plot("energy",'timestamp',"tot inst power")

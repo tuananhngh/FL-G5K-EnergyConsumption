@@ -3,18 +3,20 @@ set -e
 cd "$( cd "$( dirname "$0" )" >/dev/null 2>&1 && pwd )"/
 
 # Check if the required arguments are provided
-if [ "$#" -ne 1 ]; then
-  echo "Usage: $0 <client_id>"
+if [ "$#" -ne 2 ]; then
+  echo "Usage: $0 <client_id> <datetime>"
   exit 1
 fi
 
 #server_ip=$1
 cid=$1
+datetime=$2
 
 USER="tunguyen"
 JETSON_SENSOR="$(pwd)/jetson_monitoring_energy.py"
 #RESULT_DIR="/home/${USER}/FL-G5K-Test/monitoring_energy/$(date '+%Y_%m_%d/%H_%M_%S')/client_$cid/"
-RESULT_DIR="$(pwd)/outputs/client_$cid/$(date '+%Y-%m-%d')/$(date '+%H-%M-%S')/"
+#RESULT_DIR="$(pwd)/outputs/client_$cid/$(date '+%Y-%m-%d')/$(date '+%H-%M-%S')/"
+RESULT_DIR="$(pwd)/outputs/$datetime/client_$cid/"
 mkdir -p $RESULT_DIR
 #TMP_RESULT_DIR="/tmp/results_energy/$(date '+%Y_%m_%d/%H_%M_%S')/"
 TMP_RESULT_DIR="/tmp/results_energy/$(date '+%Y-%m-%d')/$(date '+%H-%M-%S')/"
