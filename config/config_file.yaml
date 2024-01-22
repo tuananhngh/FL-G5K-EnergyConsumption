@@ -4,14 +4,13 @@ params :
   num_clients : 6
   batch_size : 128
   validation_split : 10
-  num_clients_per_round_fit : 2
-  num_clients_per_round_eval : 2
   root_data : ${hydra:runtime.cwd}/data
 
 client:
   lr : 0.1
   local_epochs : 3
-  cid : 0
+  lr_decay : 0.99
+  cid : 1
   dry_run : False
 
 comm :

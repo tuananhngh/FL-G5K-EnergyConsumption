@@ -1,5 +1,6 @@
 from json import load
 import os
+import sched
 import hydra
 
 import torch
@@ -9,6 +10,7 @@ import torchvision.transforms as transforms
 import logging
 import numpy as np
 import random
+from torch.optim.lr_scheduler import LinearLR, ExponentialLR
 from tqdm import tqdm
 from flwr.common import NDArray, Scalar
 from typing import Dict, Tuple, List
