@@ -1,12 +1,12 @@
 from typing import Dict, List
 from types import SimpleNamespace
 import pickle as pkl
-import os
-import yaml
+# import os
+import yaml # pip install PyYAML
 import matplotlib.pyplot as plt
 import pandas as pd
-from flwr.server import strategy
-from torch import mul
+# from flwr.server import strategy
+# from torch import mul
 from pathlib import Path
 from omegaconf import OmegaConf
 
@@ -75,7 +75,7 @@ class EnergyResult:
         path_to_client = self.path_to_output/f"client_{cid}"/self.date/self.client_time
         
         energy = pd.read_csv(path_to_client/"energy.csv", parse_dates=["timestamp"])
-        energy["timestamp"] = energy["timestamp"].dt.round("1s") # Rounding to 1s
+        # energy["timestamp"] = energy["timestamp"].dt.round("1s") # Rounding to 1s
         energy.columns = [col.strip() for col in energy.columns]
         
         evalresult = pd.read_csv(path_to_client/"evalresult.csv", parse_dates=["time"], date_format=self.date_time_format)
@@ -193,17 +193,17 @@ class EnergyResult:
                     
         
 
-        
+if __name__ == "__main__":  
     
-result_plot = {"loss": ["results","server_round","loss","losses_centralized","losses_distributed"],
-                "accuracy": ["results","server_round","accuracy","acc_centralized","acc_distributed"]}
-     
+    result_plot = {"loss": ["results","server_round","loss","losses_centralized","losses_distributed"],
+                    "accuracy": ["results","server_round","accuracy","acc_centralized","acc_distributed"]}
         
-result = EnergyResult("../outputs_from_tl/", 6, "2024-01-20","23-35-20","23-35-19")
-mycsv = result._read_client(5)
-server = result._read_server()
-result.make_energy_plot("energy",'timestamp',"tot inst power")
-result.make_result_plot(**result_plot)
+            
+    result = EnergyResult("./results/outputs_from_tl/", 6, "2024-01-20","23-35-20","23-35-19")
+    mycsv = result._read_client(5)
+    server = result._read_server()
+    result.make_energy_plot("energy",'timestamp',"tot inst power")
+    result.make_result_plot(**result_plot)
 
 # def read_result(path_to_last_run, multirun=True):
 #     ls_results = {}

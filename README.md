@@ -33,4 +33,3 @@ This repository provides resources and scripts to set up a Federated Learning en
      ```bash
      bash estats_deploy_clients.sh $SERVER_IP $num_clients
      ```
->>>>>>> 56e21959063be58cb7d27053c9eda7d5644b0bcd

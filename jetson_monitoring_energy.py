@@ -4,18 +4,18 @@ import logging
 import os
 
 
-def main():
+def main(args):
     with jtop() as jetson:
-        logging.info("Starting monitoring energy using jtop")
+        logging.info("Starting monitoring energy using jtop.")
         result_file = args.log_dir+args.log_csv
         with open(result_file,"w+") as f:
-            f.write(f"timestamp, RAM%, GPU%, GPU inst power, GPU avg power, CPU%, CPU inst power, CPU avg power, tot inst power, tot avg power\n")
+            f.write(f"timestamp,RAM%,GPU%,GPU inst power (mW),GPU avg power (mW),CPU%,CPU inst power (mW),CPU avg power (mW),tot inst power (mW),tot avg power (mW)\n")
             logging.info("Saving the power data in %s", result_file)
             while jetson.ok():
                 stats = jetson.stats
                 power = jetson.power
                 cpu = sum([stats['CPU'+str(i)] for i in range(1,9)])/8
-                line = f"{stats['time']}, {stats['RAM']}, {stats['GPU']}, {power['rail']['GPU']['power']/100}, {power['rail']['GPU']['avg']/100}, {cpu}, {power['rail']['CPU']['power']/100}, {power['rail']['CPU']['avg']/100},{power['tot']['power']/100}, {power['tot']['avg']/100}\n"
+                line = f"{stats['time']}, {int(stats['RAM']*100)}, {int(stats['GPU']*100)}, {power['rail']['GPU']['power']}, {power['rail']['GPU']['avg']}, {int(cpu*100)}, {power['rail']['CPU']['power']}, {power['rail']['CPU']['avg']},{power['tot']['power']}, {power['tot']['avg']}\n"
                 f.write(line)
                 f.flush()
                 
@@ -37,6 +37,6 @@ if __name__ == "__main__":
         )
     
     try:
-        main()
+        main(args)
     except Exception as err:
         logging.error(err)
