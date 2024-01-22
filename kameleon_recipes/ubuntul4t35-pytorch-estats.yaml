@@ -1,0 +1,71 @@
+#==============================================================================
+#
+# DESCRIPTION: Recipe to build a customized ARM64 ubuntu 20.04 L4T system
+#
+#==============================================================================
+# This recipe extends another. To look at the step involed, run:
+#   kameleon build -d ubuntu-estats.yaml
+# To see the variables that you can override, use the following command:
+#   kameleon info ubuntu-estats.yaml
+---
+extend: grid5000/from_grid5000_environment/ubuntul4t200435-arm64-custom.yaml
+
+global:
+  grid5000_environment_import_name: ubuntul4t200435-big
+  grid5000_environment_import_version: 2024011717
+  grid5000_environment_export_name: "ubuntul4t35-pytorch-estats"
+  grid5000_environment_export_alias: ""
+  grid5000_environment_export_author: "tunguyen"
+  # To install additional Ubuntu packages, just uncomment and modify the following line.
+  extra_deb_packages: "python3-pip libopenblas-dev"
+  # To install some Python packages from pipy, just uncomment and modify the following line.
+  # extra_pip3_packages: "setuptools==59.5.0 flwr"
+  # To set the default L4T nvp model, uncomment and modify the following line.
+  l4t_nvp_model: 3
+
+bootstrap:
+  # This section should not be modified.
+  - "@base"
+
+setup:
+  # This section does not need to be modified if you just want to install additional Ubuntu or pip packages or set the nvp model.
+  # Just keep "@base" and set the variables above.
+  - "@base"
+  # If other customizations are needed, additional recipe steps can be added below this line.
+  - install_python_tools:
+    - install_python3_venv:
+      - apt-get_in: install python3-venv
+    - install_venv:
+      - exec_in: python3 -m venv /venv-fl
+    - upgrade_pip:
+      - exec_in: | 
+          . /venv-fl/bin/activate
+          pip install --upgrade pip
+    - install_torch:
+      - exec_in: | 
+          . /venv-fl/bin/activate
+          pip install --no-cache https://developer.download.nvidia.cn/compute/redist/jp/v511/pytorch/torch-2.0.0+nv23.05-cp38-cp38-linux_aarch64.whl
+    - install_torchvision:
+      - exec_in: | 
+          . /venv-fl/bin/activate
+          pip install torchvision==0.15.1
+    - install torchinfo:
+      - exec_in: | 
+          . /venv-fl/bin/activate
+          pip install torchinfo
+    - install_flwr:
+      - exec_in: | 
+          . /venv-fl/bin/activate
+          pip install flwr
+    - install_hydra:
+      - exec_in: | 
+          . /venv-fl/bin/activate
+          pip install hydra-core
+    - install_tqm:
+      - exec_in: | 
+          . /venv-fl/bin/activate
+          pip install tqdm
+      #- breakpoint
+export:
+  # This section should not be modified.
+  - "@base"
