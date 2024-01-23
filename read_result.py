@@ -1,7 +1,8 @@
+from re import split
 from typing import Dict, List
 from types import SimpleNamespace
 import pickle as pkl
-# import os
+import re
 import yaml # pip install PyYAML
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -42,8 +43,98 @@ def read_yaml_file(path_to_yaml):
             print(exc)
     return result
 
-#pathyaml = Path("../outputs_from_tl/main_server_0/2024-01-20/23-35-19/.hydra/config.yaml")
-#ok = read_yaml_file(pathyaml)
+
+def read_flwr_logfile(file_path):
+    # Read log file
+    with open(file_path, 'r') as file:
+        log_lines = file.readlines()
+
+    # Define a regex pattern to extract relevant information
+    pattern = re.compile(r'\[(.*?)\]\[(.*?)\]\[(.*?)\]\s*-\s*(.*)')
+
+    timestamps = []
+    log_sources = []
+    message_types = []
+    messages = []
+
+    # Process each log line
+    for line in log_lines:
+        match = pattern.search(line)
+        if match:
+            timestamp, logsource, logtype ,message = match.groups()
+            timestamps.append(timestamp)
+            log_sources.append(logsource)
+            message_types.append(logtype)
+            messages.append(message.strip())
+
+    # Create a DataFrame
+    log_data = {'timestamp': timestamps, 'logsource': log_sources, 'logtype': message_types, 'message': messages}
+    df = pd.DataFrame(log_data)
+
+    df['timestamp'] = pd.to_datetime(df['timestamp'], format='%Y-%m-%d %H:%M:%S,%f')
+
+    return df
+
+class ReadFlowerLog:
+    def __init__(self, path_to_log):
+        self.path_to_log = path_to_log
+    
+    def _log_to_pd(self) -> None:
+        with open(self.path_to_log, 'r') as file:
+            log_lines = file.readlines()
+
+        # Define a regex pattern to extract relevant information
+        pattern = re.compile(r'\[(.*?)\]\[(.*?)\]\[(.*?)\]\s*-\s*(.*)')
+
+        timestamps = []
+        log_sources = []
+        message_types = []
+        messages = []
+
+        # Process each log line
+        for line in log_lines:
+            match = pattern.search(line)
+            if match:
+                timestamp, logsource, logtype ,message = match.groups()
+                timestamps.append(timestamp)
+                log_sources.append(logsource)
+                message_types.append(logtype)
+                messages.append(message.strip())
+
+        # Create a DataFrame
+        log_data = {'timestamp': timestamps, 'logsource': log_sources, 'logtype': message_types, 'message': messages}
+        self.df = pd.DataFrame(log_data)
+
+        self.df['timestamp'] = pd.to_datetime(self.df['timestamp'], format='%Y-%m-%d %H:%M:%S,%f')
+
+    def _get_fit_message(self) -> List[str]:
+        self._log_to_pd()
+        fit_message = []
+        for index,row in self.df.iterrows():
+            if "fit_round" in row['message']:
+                fit_message.append(index)
+        return self.df.iloc[fit_message].reset_index(drop=True)
+    
+    def get_server_fit_time(self):
+        fit_msg = self._get_fit_message()
+        concatmsg = pd.concat([fit_msg[::2].reset_index(drop=True),fit_msg[1::2].reset_index(drop=True)], axis=1, keys=['Start', 'End'])
+        server_round = [i for i in range(1,len(concatmsg)+1)]
+        server_fit_time = pd.DataFrame(
+            {"server_round": server_round,
+             "starttime": concatmsg.Start.timestamp,
+             "endtime": concatmsg.End.timestamp,}
+        )
+        server_fit_time["fittime"] = (server_fit_time.endtime - server_fit_time.starttime).dt.total_seconds()
+        
+        return server_fit_time
+
+
+log_file_path = '../outputs_from_tl1/2024-01-22_19-31-34/server/main_server.log'
+log_dataframe = ReadFlowerLog(log_file_path)
+msg = log_dataframe._get_fit_message()
+fitmess = log_dataframe.get_server_fit_time()
+
+        
 
 class EnergyResult:
     def __init__(self, path_to_output:str, nb_clients:int, datetime:str)->None:
@@ -191,16 +282,16 @@ class EnergyResult:
                     
         
 
-if __name__ == "__main__":  
+# if __name__ == "__main__":  
     
-    result_plot = {"loss": ["results","server_round","loss","losses_centralized","losses_distributed"],
-                    "accuracy": ["results","server_round","accuracy","acc_centralized","acc_distributed"]}
+#     result_plot = {"loss": ["results","server_round","loss","losses_centralized","losses_distributed"],
+#                     "accuracy": ["results","server_round","accuracy","acc_centralized","acc_distributed"]}
         
-    result = EnergyResult("../outputs_from_tl1/", 4, "2024-01-22_19-31-34")
-    #mycsv = result._read_client(5)
-    server = result._read_server()
-    result.make_energy_plot("energy",'timestamp',"tot avg power (mW)")
-    result.make_result_plot(**result_plot)
+#     result = EnergyResult("../outputs_from_tl1/", 4, "2024-01-22_19-31-34")
+#     #mycsv = result._read_client(5)
+#     server = result._read_server()
+#     result.make_energy_plot("energy",'timestamp',"tot avg power (mW)")
+#     result.make_result_plot(**result_plot)
 
 # def read_result(path_to_last_run, multirun=True):
 #     ls_results = {}
