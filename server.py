@@ -19,16 +19,19 @@ def weighted_average(metrics:List[Tuple[int, Metrics]]) -> Metrics:
     return {"accuracy": sum(accuracies) / sum(examples)}
 
 
-def learning_rate_scheduler(lr, epoch, decay_rate=0.9, decay_steps=1000):
+def learning_rate_scheduler(lr, epoch, decay_rate, decay_steps):
     lr = lr * (decay_rate ** (epoch // decay_steps))
     return lr
 
 def get_on_fit_config(config: Dict[str, Scalar])->Callable:
     def fit_config_fn(server_round:int)->FitIns:
-        config.lr = learning_rate_scheduler(config.lr, server_round)
-        if server_round > 10:
-            config.local_epochs = 1
-        return {'lr': config.lr, 'local_epochs': config.local_epochs, 'server_round': server_round}
+        decay_rate = config.decay_rate
+        decay_steps = config.decay_steps
+        lr = learning_rate_scheduler(config.lr, server_round, decay_rate, decay_steps)
+        local_epochs = config.local_epochs
+        if server_round%5==0 and local_epochs>1:
+            local_epochs = local_epochs-1
+        return {'lr': lr, 'local_epochs': local_epochs, 'server_round': server_round}
     return fit_config_fn
 
 def get_on_evaluate_config(config: Dict[str, Scalar])->Callable:

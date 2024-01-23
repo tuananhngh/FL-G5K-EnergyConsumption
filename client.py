@@ -67,7 +67,7 @@ class Client(fl.client.NumPyClient):
             if f.tell() == 0:
                 writer.writerow(["time", "server_round", "train_loss", "train_acc", "val_loss", "val_acc", "lr", "local_epochs"])
             now = datetime.datetime.now()
-            writer.writerow([now.strftime("%Y-%m-%d %H:%M:%S"), server_round, result["train_loss"], result["train_acc"], result["val_loss"], result["val_acc"]], lr, local_epochs)
+            writer.writerow([now.strftime("%Y-%m-%d %H:%M:%S"), server_round, result["train_loss"], result["train_acc"], result["val_loss"], result["val_acc"], lr, local_epochs])
         num_samples = len(self.trainloader.dataset)
         parameters_prime = self.get_parameters(config)
         return parameters_prime, num_samples, result

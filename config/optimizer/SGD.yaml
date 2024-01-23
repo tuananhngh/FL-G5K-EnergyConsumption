@@ -1,3 +1,4 @@
 _target_ : torch.optim.SGD
 lr : ${client.lr}
+#weight_decay : 
 momentum : 0.9
