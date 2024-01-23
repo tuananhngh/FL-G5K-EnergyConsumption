@@ -1,0 +1,31 @@
+neuralnet:
+  _target_: torchvision.models.mobilenet.mobilenet_v3_small
+  num_classes: ${params.num_classes}
+strategy:
+  _target_: flwr.server.strategy.FedAvg
+  fraction_fit: 1.0
+  fraction_evaluate: 1.0
+  min_fit_clients: 2
+  min_available_clients: ${params.num_clients_per_round_fit}
+  min_evaluate_clients: ${params.num_clients_per_round_eval}
+optimizer:
+  _target_: torch.optim.SGD
+  lr: ${client.lr}
+  momentum: 0.9
+params:
+  num_classes: 10
+  num_rounds: 20
+  num_clients: 6
+  batch_size: 64
+  validation_split: 10
+  num_clients_per_round_fit: 2
+  num_clients_per_round_eval: 2
+  root_data: ${hydra:runtime.cwd}/data
+client:
+  lr: 0.001
+  local_epochs: 3
+  cid: 4
+  dry_run: false
+comm:
+  host: 172.16.121.1
+  port: 8080

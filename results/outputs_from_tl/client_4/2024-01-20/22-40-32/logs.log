@@ -1,0 +1,5 @@
+DEBUG - 2024-01-20 22:40:33,068 - jtop.py - 133 : Loaded jetson_variables variables
+INFO - 2024-01-20 22:40:33,358 - jetson_monitoring_energy.py - 9 : Starting monitoring energy using jtop
+INFO - 2024-01-20 22:40:33,359 - jetson_monitoring_energy.py - 13 : Saving the power data in /tmp/results_energy/2024-01-20/22-40-32/energy.csv
+start_client DATE 2024/01/20T22:40:35.464775
+end_server DATE 2024/01/20T22:51:07.621844
