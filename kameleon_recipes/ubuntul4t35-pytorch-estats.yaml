@@ -45,11 +45,10 @@ setup:
       - exec_in: | 
           . /venv-fl/bin/activate
           pip install --no-cache https://developer.download.nvidia.cn/compute/redist/jp/v511/pytorch/torch-2.0.0+nv23.05-cp38-cp38-linux_aarch64.whl
-    - install_torchvision_torchtext:
+    - install_torchvision:
       - exec_in: | 
           . /venv-fl/bin/activate
           pip install torchvision==0.15.1
-          pip install torchtext==0.15.1
     - install torchinfo:
       - exec_in: | 
           . /venv-fl/bin/activate
@@ -58,12 +57,6 @@ setup:
       - exec_in: | 
           . /venv-fl/bin/activate
           pip install flwr
-    - install_flwr_dependencies:
-      - exec_in: |
-          . /venv-fl/bin/activate
-          pip install flwr-datasets
-          pip install flwr-datasets[vision]
-          pip install flwr-datasets[audio]
     - install_hydra:
       - exec_in: | 
           . /venv-fl/bin/activate
@@ -72,7 +65,7 @@ setup:
       - exec_in: | 
           . /venv-fl/bin/activate
           pip install tqdm
-      - breakpoint
+      #- breakpoint
 export:
   # This section should not be modified.
   - "@base"
