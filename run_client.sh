@@ -14,11 +14,8 @@ datetime=$2
 
 USER="tunguyen"
 JETSON_SENSOR="$(pwd)/jetson_monitoring_energy.py"
-#RESULT_DIR="/home/${USER}/FL-G5K-Test/monitoring_energy/$(date '+%Y_%m_%d/%H_%M_%S')/client_$cid/"
-#RESULT_DIR="$(pwd)/outputs/client_$cid/$(date '+%Y-%m-%d')/$(date '+%H-%M-%S')/"
 RESULT_DIR="$(pwd)/outputs/$datetime/client_$cid/"
 mkdir -p $RESULT_DIR
-#TMP_RESULT_DIR="/tmp/results_energy/$(date '+%Y_%m_%d/%H_%M_%S')/"
 TMP_RESULT_DIR="/tmp/results_energy/$(date '+%Y-%m-%d')/$(date '+%H-%M-%S')/"
 mkdir -p $TMP_RESULT_DIR
 RESULT_ENERGY_CSV="energy.csv"
@@ -56,6 +53,9 @@ echo "start_client DATE $(date '+%Y/%m/%dT%H:%M:%S.%6N')" 2>&1 | tee -a "${TMP_R
 trap cleanup SIGINT
 python3 client.py client.cid=$cid hydra.run.dir=$RESULT_DIR
 cleanup
+
+# create csv file for sweep parameters
+# replace $Result_dir by $TMP_RESULT_DIR
 
 # rm -rf /data/ # Remove old data
 # # Enable CTRL+C to stop all background processes

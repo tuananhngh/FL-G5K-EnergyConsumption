@@ -6,11 +6,8 @@ datetime=$1
 
 USER="tunguyen"
 JETSON_SENSOR="$(pwd)/jetson_monitoring_energy.py"
-#RESULT_DIR="/home/${USER}/FL-G5K-Test/monitoring_energy/$(date '+%Y_%m_%d/%H_%M_%S')/"
-#RESULT_DIR="$(pwd)/outputs/main_server_0/$(date '+%Y-%m-%d')/$(date '+%H-%M-%S')/"
 RESULT_DIR="$(pwd)/outputs/$datetime/server/"
 mkdir -p $RESULT_DIR
-#TMP_RESULT_DIR="/tmp/results_energy/$(date '+%Y_%m_%d/%H_%M_%S')/"
 TMP_RESULT_DIR="/tmp/results_energy/$(date '+%Y-%m-%d')/$(date '+%H-%M-%S')/"
 mkdir -p $TMP_RESULT_DIR
 RESULT_ENERGY_CSV="energy.csv"

@@ -28,10 +28,10 @@ def get_on_fit_config(config: Dict[str, Scalar])->Callable:
         decay_rate = config.decay_rate
         decay_steps = config.decay_steps
         lr = learning_rate_scheduler(config.lr, server_round, decay_rate, decay_steps)
-        local_epochs = config.local_epochs
-        if server_round%5==0 and local_epochs>1:
-            local_epochs = local_epochs-1
-        return {'lr': lr, 'local_epochs': local_epochs, 'server_round': server_round}
+        if config.local_epochs_decay : 
+            if server_round%5==0 and config.local_epochs>1:
+                config.local_epochs-=1
+        return {'lr': lr, 'local_epochs': config.local_epochs, 'server_round': server_round}
     return fit_config_fn
 
 def get_on_evaluate_config(config: Dict[str, Scalar])->Callable:
