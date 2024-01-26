@@ -129,10 +129,10 @@ class ReadFlowerLog:
         return server_fit_time
 
 
-log_file_path = '../outputs_from_tl1/2024-01-22_19-31-34/server/main_server.log'
-log_dataframe = ReadFlowerLog(log_file_path)
-msg = log_dataframe._get_fit_message()
-fitmess = log_dataframe.get_server_fit_time()
+# log_file_path = '../outputs_from_tl1/2024-01-22_19-31-34/server/main_server.log'
+# log_dataframe = ReadFlowerLog(log_file_path)
+# msg = log_dataframe._get_fit_message()
+# fitmess = log_dataframe.get_server_fit_time()
 
         
 

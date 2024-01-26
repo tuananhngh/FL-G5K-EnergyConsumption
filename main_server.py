@@ -3,6 +3,7 @@ from tracemalloc import start
 import server
 import hydra
 import flwr as fl
+import logging
 import utils
 import torch
 import pickle 
@@ -16,45 +17,15 @@ from flwr.common import NDArrays, Scalar, ndarrays_to_parameters
 from hydra.utils import instantiate
 
 
-# Check if CUDA (GPU support) is available
-if torch.cuda.is_available():
-    # Get the number of available GPUs
-    num_gpus = torch.cuda.device_count()
-    print(f"Number of available GPUs: {num_gpus}")
-
-    # Get information about each GPU
-    for i in range(num_gpus):
-        gpu_name = torch.cuda.get_device_name(i)
-        print(f"GPU {i + 1}: {gpu_name}")
-else:
-    print("CUDA (GPU support) is not available on this system.")
-
-
-
-# Check if CUDA (GPU support) is available
-if torch.cuda.is_available():
-    # Get the number of available GPUs
-    num_gpus = torch.cuda.device_count()
-    print(f"Number of available GPUs: {num_gpus}")
-
-    # Get information about each GPU
-    for i in range(num_gpus):
-        gpu_name = torch.cuda.get_device_name(i)
-        print(f"GPU {i + 1}: {gpu_name}")
-else:
-    print("CUDA (GPU support) is not available on this system.")
-
-
-
 @hydra.main(config_path="config", config_name="config_file")
 def main(cfg:DictConfig):
-    print(OmegaConf.to_yaml(cfg))
+    logging.info(OmegaConf.to_yaml(cfg))
     server_address = cfg.comm.host
     server_port = cfg.comm.port
     output_dir = HydraConfig.get().runtime.output_dir
-    print(output_dir)
+    logging.info(output_dir)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print("Device: ", device)
+    logging.info("Device: ", device)
     
     # Get initial parameters
     model = instantiate(cfg.neuralnet)
@@ -87,8 +58,46 @@ def main(cfg:DictConfig):
         
     return output_dir
 
+
 if __name__ == "__main__":
-    main()
+        
+    logging.basicConfig(
+        # filename=args.log_dir + args.log_file, 
+        level=logging.DEBUG,
+        format='%(levelname)s - %(asctime)s - %(filename)s - %(lineno)d : %(message)s',
+        )
+    
+    # Check if CUDA (GPU support) is available
+    if torch.cuda.is_available():
+        # Get the number of available GPUs
+        num_gpus = torch.cuda.device_count()
+        logging.info(f"Number of available GPUs: {num_gpus}")
+
+        # Get information about each GPU
+        for i in range(num_gpus):
+            gpu_name = torch.cuda.get_device_name(i)
+            logging.info(f"GPU {i + 1}: {gpu_name}")
+    else:
+        logging.info("CUDA (GPU support) is not available on this system.")
+
+    # Check if CUDA (GPU support) is available
+    if torch.cuda.is_available():
+        # Get the number of available GPUs
+        num_gpus = torch.cuda.device_count()
+        logging.info(f"Number of available GPUs: {num_gpus}")
+
+        # Get information about each GPU
+        for i in range(num_gpus):
+            gpu_name = torch.cuda.get_device_name(i)
+            logging.info(f"GPU {i + 1}: {gpu_name}")
+    else:
+        logging.info("CUDA (GPU support) is not available on this system.")
+    
+    
+    try:
+        main()
+    except Exception as err:
+        logging.error(err)
     
     
     

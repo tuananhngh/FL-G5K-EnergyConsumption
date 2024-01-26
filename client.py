@@ -6,6 +6,7 @@ import torch.nn as nn
 import flwr as fl
 import utils
 import hydra
+import logging
 import models
 from pathlib import Path
 from flwr.common import NDArrays, Scalar
@@ -92,13 +93,13 @@ class Client(fl.client.NumPyClient):
         local_epochs= config["local_epochs"]
         lr = config["lr"]
         optim = torch.optim.Adam(model.parameters(), lr=lr)
-        print(len(self.trainloader.dataset))
+        logging.info(len(self.trainloader.dataset))
         result = utils.train(model, self.trainloader, self.valloader, local_epochs, optim, self.device)
         return result
 
 @hydra.main(config_path="config", config_name="config_file")
 def main(cfg:DictConfig):
-    print(OmegaConf.to_yaml(cfg))
+    logging.info(OmegaConf.to_yaml(cfg))
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     client_id = cfg.client.cid
     dry_run = cfg.client.dry_run
@@ -115,10 +116,19 @@ def main(cfg:DictConfig):
     client = Client(model, trainloaders[client_id], valloaders[client_id], device, output_dir, client_id, optimizer)
     if dry_run:
         res = client.client_dry_run(model, client_id, trainloaders, valloaders, cfg.client_params, device)
-        print(res)
+        logging.info(res)
     else:
         fl.client.start_numpy_client(server_address=server_address, client=client)
         
 if __name__ == "__main__":
-    main()
+    logging.basicConfig(
+        # filename=args.log_dir + args.log_file, 
+        level=logging.DEBUG,
+        format='%(levelname)s - %(asctime)s - %(filename)s - %(lineno)d : %(message)s',
+        )
+    
+    try:
+        main()
+    except Exception as err:
+        logging.error(err)
     

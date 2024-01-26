@@ -20,8 +20,6 @@ from torch.utils import data
 from flwr.server.strategy import FedAdam, FedAvg, FedProx
 
 
-
-
 def seed_worker(worker_id):
     worker_seed = torch.initial_seed() % 2**32
     np.random.seed(worker_seed)
