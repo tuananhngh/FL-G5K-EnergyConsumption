@@ -9,7 +9,6 @@ from datetime import datetime
 from typing import Any, Dict, Tuple, List
 from pathlib import Path
 from box import Box
-from pytest import Instance
 from experiments import execute_command_on_server_and_clients, concat_dict
 import pandas as pd
 import yaml
@@ -55,8 +54,7 @@ class MyExperiment(Engine):
     
     def __getattr__(self, __name: str) -> Any:
         return super().__getattr__(__name)
-    
-    
+
     def _get_kwargs(self, name):
         if name not in self.extra_args:
             self.extra_args.name = None
@@ -86,6 +84,12 @@ class MyExperiment(Engine):
         return SimpleNamespace(result_folder=result_folder, tmp_result_folder=tmp_result_folder, exp_datetime=exp_datetime, energy_file=energy_file)
     
     def _get_hyperparams(self) -> Dict:
+        """
+        Define experiment parameters
+        Returns:
+            Box : Wrapper of Dictionary. Access to dictionary keys as attributes. 
+            Example: hyperparams.server
+        """
         run_dir = self._run_dir_setup()
         hyperparams = Box({})
         hyperparams.update(**run_dir.__dict__)
@@ -110,7 +114,11 @@ class MyExperiment(Engine):
         
     def _cmd_args(self, params)->str:
         """
-        Convert a dictionary of parameters to a string of command line arguments
+        Convert a dictionary of parameters to a string of command-line arguments
+        Args:
+            params : Sweeper parameters of type Dict
+        Returns:
+            str: command-line arguments
         """
         params_set = " ".join(f"{k}={v}" for k, v in params.items())
         return params_set
@@ -202,6 +210,10 @@ class MyExperiment(Engine):
         logger.info("ALL PROCESSES KILLED")
     
     def frontend_dry_run(self):
+        """
+        Run experiments without SSH connection. 
+        For testing purpose only
+        """
         sweeper = sweep(self.params)
         sweep_dir = os.path.join(self.repository_dir,self.sweep_name)
         self.sweeper = ParamSweeper(persistence_dir=sweep_dir, sweeps=sweeper)
@@ -228,6 +240,9 @@ class MyExperiment(Engine):
     
             
     def run(self):
+        """
+        Run experiments
+        """
         sweeper = sweep(self.params)
         sweep_dir = os.path.join(self.repository_dir,self.sweep_name)
         self.sweeper = ParamSweeper(persistence_dir=sweep_dir, sweeps=sweeper) 
@@ -295,7 +310,7 @@ class MyExperiment(Engine):
             # SAVE HYPERPARAMS
             logger.info("SAVE HYPERPARAMS TO CSV")
 
-            debug_hp = self._hyperparams_to_csv(hparams)
+            self._hyperparams_to_csv(hparams)
 
             logger.info("EXPERIMENT {} DONE".format(exp_count))
             
@@ -309,20 +324,20 @@ class MyExperiment(Engine):
         #return debug_hp
         
 
-nodes = get_oar_job_nodes(448524, "toulouse")
+# nodes = get_oar_job_nodes(448524, "toulouse")
 
-test_params = {
-    "client.lr" : [1e-1,1e-2,1e-3],
-    "client.local_epochs": [1],
-    "client.decay_rate": [0.1],
-    "client.decay_steps": [10],
+# test_params = {
+#     "client.lr" : [1e-1,1e-2,1e-3],
+#     "client.local_epochs": [1],
+#     "client.decay_rate": [0.1],
+#     "client.decay_steps": [10],
     
-    "neuralnet":["MobileNetV3Small"],
-    "strategy": ["fedavg"],
-    "optimizer": ["SGD"],
-}
+#     "neuralnet":["MobileNetV3Small"],
+#     "strategy": ["fedavg"],
+#     "optimizer": ["SGD"],
+# }
 
-to_remove = ["client.cid","client.dry_run","params.root_data","tmp_result_folder","energy_file","exp_datetime"]
+# to_remove = ["client.cid","client.dry_run","params.root_data","tmp_result_folder","energy_file","exp_datetime"]
 
-Exps = MyExperiment(params=test_params,nodes=nodes,key_to_remove=to_remove)
-Exps.run()
+# Exps = MyExperiment(params=test_params,nodes=nodes,key_to_remove=to_remove)
+# Exps.run()
