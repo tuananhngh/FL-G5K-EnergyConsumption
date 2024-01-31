@@ -1,7 +1,7 @@
 _target_ : flwr.server.strategy.FedAvg
-fraction_fit : 1.0
-fraction_evaluate: 1.0
-min_fit_clients : 2
+fraction_fit : ${params.fraction_fit}
+fraction_evaluate: ${params.fraction_evaluate}
+min_fit_clients : ${params.min_fit_clients}
 min_available_clients : ${params.num_clients_per_round_fit}
 min_evaluate_clients : ${params.num_clients_per_round_eval}
 

@@ -34,7 +34,7 @@ echo "start_client DATE $(date '+%Y/%m/%dT%H:%M:%S.%6N')" 2>&1 | tee -a "${TMP_R
 
 # START SERVER AND ENABLE CLEANUP FOR CTRL-C 
 trap cleanup SIGINT
-python3 client.py client.cid=$cid hydra.run.dir=$RESULT_DIR
+python3 client.py client.cid=$cid hydra.run.dir=$TMP_RESULT_DIR
 cleanup
 
 # rm -rf /data/ # Remove old data

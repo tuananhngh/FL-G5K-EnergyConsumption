@@ -1,16 +1,19 @@
 params : 
   num_classes : 10
-  num_rounds : 30
+  num_rounds : 3
   num_clients : 3
   batch_size : 128
   validation_split : 10
   num_clients_per_round_fit : 2
   num_clients_per_round_eval : 2
+  fraction_fit : 1.0  
+  fraction_evaluate: 1.0
+  min_fit_clients : 2
   root_data : ${hydra:runtime.cwd}/data
 
 client:
-  lr : 0.1
-  local_epochs : 5
+  lr : 0.01
+  local_epochs : 1
   cid : 0
   dry_run : False
   decay_rate : 0.1
@@ -30,7 +33,7 @@ defaults:
 hydra:
   run:
     dir: ./outputs/${hydra.job.name}_${client.cid}/${now:%Y-%m-%d}/${now:%H-%M-%S}
-  
+
   
 
   

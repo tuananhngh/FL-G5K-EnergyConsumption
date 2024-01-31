@@ -24,20 +24,13 @@ def concat_dict(dict_list):
             new_dict.update(d)
     return new_dict
 
-def execute_command_on_server_and_clients(hosts, command, log_file="/tmp/logs.log", background=False):
-    # check if log file exists
-    if not path.exists(log_file):
-        # create file
-        with open(log_file, 'x') as f:
-            f.write("")
+def execute_command_on_server_and_clients(hosts, command, background=False):
     processes = []
     for host in hosts:
         process = SshProcess(
             command, 
             host=host, 
-            connection_params={'user':'root'},            
-            stdout_handlers=[sys.stdout, log_file], 
-            stderr_handlers=[sys.stderr, log_file]
+            connection_params={'user':'root'},           
             )
         processes.append(process)
         if background:
@@ -49,6 +42,32 @@ def execute_command_on_server_and_clients(hosts, command, log_file="/tmp/logs.lo
             else:
                 process.kill()
                 print(f"Failed to execute on {host} command '{command}'")
-                print(process.stderr)
-                print(process.stdout)
     return processes
+    
+    # # check if log file exists
+    # if not path.exists(log_file):
+    #     # create file
+    #     with open(log_file, 'x') as f:
+    #         f.write("")
+    # processes = []
+    # for host in hosts:
+    #     process = SshProcess(
+    #         command, 
+    #         host=host, 
+    #         connection_params={'user':'root'},            
+    #         stdout_handlers=[sys.stdout, log_file], 
+    #         stderr_handlers=[sys.stderr, log_file]
+    #         )
+    #     processes.append(process)
+    #     if background:
+    #         process.start()
+    #     else:
+    #         process.run()
+    #         if process.ok:
+    #             print(f"Successfully executed on {host} command '{command}'")
+    #         else:
+    #             process.kill()
+    #             print(f"Failed to execute on {host} command '{command}'")
+    #             print(process.stderr)
+    #             print(process.stdout)
+    # return processes

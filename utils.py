@@ -182,3 +182,4 @@ def load_dataloader(client_id, path_to_data):
     trainloader, valloader = torch.load(os.path.join(path_to_data,"trainloader_" + str(client_id) + ".pt")), torch.load(os.path.join(path_to_data,"valloader_" + str(client_id) + ".pt"))
     testloader = torch.load(os.path.join(path_to_data,"testloader.pt"))
     return trainloader, valloader, testloader
+

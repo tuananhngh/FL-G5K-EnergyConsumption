@@ -7,7 +7,7 @@ import os
 def main(args):
     with jtop() as jetson:
         logging.info("Starting monitoring energy using jtop.")
-        result_file = args.log_dir+args.log_csv
+        result_file = os.path.join(args.log_dir,args.log_csv)
         with open(result_file,"w+") as f:
             f.write(f"timestamp,RAM%,GPU%,GPU inst power (mW),GPU avg power (mW),CPU%,CPU inst power (mW),CPU avg power (mW),tot inst power (mW),tot avg power (mW)\n")
             logging.info("Saving the power data in %s", result_file)
