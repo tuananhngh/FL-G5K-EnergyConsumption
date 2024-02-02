@@ -1,7 +1,11 @@
-# Federated Learning with Jetson Devices ion Grid5000
+# Federated Learning with Jetson Devices on Grid'5000
 
 ## Overview
-This repository provides resources and scripts to set up a Federated Learning environment using Jetson devices on the Grid5000 cluster.
+This repository provides resources and scripts to set up a Federated Learning environment using Jetson devices on the Grid'5000 cluster.
+Following steps provided in this repository requires having an Grid'5000 account.
+
+## Repository 
+
 
 ## Server Setup
 1. **Reserve an Estats node for the server:**
@@ -33,3 +37,4 @@ This repository provides resources and scripts to set up a Federated Learning en
      ```bash
      bash estats_deploy_clients.sh $SERVER_IP $num_clients
      ```
+
