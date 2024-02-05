@@ -1,4 +1,5 @@
-from utils.training import load_dataset, get_parameters, test, DataSetHandler
+from utils.training import get_parameters, test, seed_everything
+from utils.datahandler import load_testdata_from_file
 import hydra
 import flwr as fl
 import logging
@@ -14,6 +15,8 @@ from flwr.common import Metrics, NDArray, Scalar, ndarrays_to_parameters, FitIns
 from hydra.utils import instantiate
 from typing import Callable, Dict, Tuple, List
 
+seed_val = 2024
+seed_everything(seed_val)
 
 def weighted_average(metrics:List[Tuple[int, Metrics]]) -> Metrics:
     accuracies = [num_examples * m["accuracy"] for num_examples, m in metrics]
@@ -62,17 +65,17 @@ def main(cfg:DictConfig):
     output_dir = HydraConfig.get().runtime.output_dir
     logging.info(output_dir)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    logging.info("Device: ", device)
-    
+    logging.info(f"USING DEVICE : {device}")    
     # Get initial parameters
     model = instantiate(cfg.neuralnet)
     model_parameters = get_parameters(model)
     initial_parameters = ndarrays_to_parameters(model_parameters)
     
     #Load TestData
-    dataconfig = DataSetHandler(cfg.data)
-    _,_,testloader = dataconfig()
+    #dataconfig = DataSetHandler(cfg.data)
+    #_,_,testloader = dataconfig()
     #_,_, testloader = utils.load_dataloader(1, cfg.params.path_to_data)
+    testloader = load_testdata_from_file(cfg.data)
     
     strategy = instantiate(cfg.strategy,
                            initial_parameters=initial_parameters,

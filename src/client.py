@@ -5,7 +5,8 @@ import flwr as fl
 import hydra
 import logging
 
-from utils.training import load_dataset, train, test, DataSetHandler
+from utils.training import train, test, seed_everything
+from utils.datahandler import load_clientdata_from_file
 from pathlib import Path
 from flwr.common import NDArrays, Scalar
 from omegaconf import DictConfig
@@ -16,7 +17,8 @@ from hydra.utils import instantiate, HydraConfig
 from logging import INFO, DEBUG
 from flwr.common.logger import log
 
-
+seed_val = 2024
+seed_everything(seed_val)
 
 class Client(fl.client.NumPyClient):
     def __init__(self, model, trainloader, valloader, device, outputdir, cid, optimizer) -> None:
@@ -107,15 +109,16 @@ def main(cfg:DictConfig):
     output_dir = HydraConfig.get().runtime.output_dir
     server_address = str(host)+":"+str(port)
     
-    dataconfig = DataSetHandler(cfg.data)
-    trainloaders, valloaders, testloader = dataconfig()
+    #dataconfig = DataSetHandler(cfg.data)
+    #trainloaders, valloaders, testloader = dataconfig()
+    trainloader, valloader = load_clientdata_from_file(cfg.data, client_id)
     
     #trainloader, valloader, testloader = load_dataloader(client_id, path_to_data)
     model = instantiate(cfg.neuralnet)
     optimizer = cfg.optimizer
-    client = Client(model, trainloaders[client_id], valloaders[client_id], device, output_dir, client_id, optimizer)
+    client = Client(model, trainloader, valloader, device, output_dir, client_id, optimizer)
     if dry_run:
-        res = client.client_dry_run(model, client_id, trainloaders, valloaders, cfg.client_params, device)
+        res = client.client_dry_run(model, client_id, trainloader, valloader, cfg.client_params, device)
         logging.info(res)
     else:
         fl.client.start_numpy_client(server_address=server_address, client=client)

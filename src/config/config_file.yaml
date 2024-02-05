@@ -3,19 +3,23 @@ params :
   num_rounds : 5
   num_clients_per_round_fit : 2
   num_clients_per_round_eval : 2
+  min_fit_clients : 2
+  fraction_fit : 1.0
+  fraction_evaluate : 1.0
 
 data :
   data_name : CIFAR10 # (possible_value : CelebA, CIFAR10, CIFAR100, MNIST, FashionMNIST, TinyImageNet)
-  data_dir : ${hydra:runtime.cwd}/data/${data.data_name}
+  partition_dir : /Volumes/T7 Touch/TheseProject/FLDATA/${data.data_name}/ParitionedData/${data.partition}/${data.num_clients}clients/alpha${data.alpha}
   batch_size : 128
   validation_split : 10
-  num_clients : 100
+  num_clients : 5
   alpha : 0.1
-  partition : label_skew  # (possible_value : label_skew, iid, sample_skew)
+  dataloaders : True # Load the dataset to dataloader object
+  partition : sample_skew # (possible_value : label_skew, iid, sample_skew)
 
 client:
   lr : 0.1
-  local_epochs : 5
+  local_epochs : 1
   cid : 0
   dry_run : False
   decay_rate : 0.5 #decay=1 equal constant
@@ -34,7 +38,7 @@ defaults:
 
 hydra:
   run:
-    dir: ./outputs/${now:%Y-%m-%d}_${now:%H-%M-%S}/${hydra.job.name}_${client.cid}/
+    dir: ../outputs/${now:%Y-%m-%d}_${now:%H-%M-%S}/${hydra.job.name}_${client.cid}/
   
   
 

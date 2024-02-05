@@ -1,0 +1,14 @@
+data :
+  data_name : FashionMNIST # (possible_value : CIFAR10, CIFAR100, MNIST, FashionMNIST, TinyImageNet)
+  download_dir : /Volumes/T7 Touch/TheseProject/FLDATA/${data.data_name}
+  partition_dir : /Volumes/T7 Touch/TheseProject/FLDATA/${data.data_name}/ParitionedData/${data.partition}/${data.num_clients}clients/alpha${data.alpha}
+  batch_size : 128
+  validation_split : 10
+  num_clients : 5
+  alpha : 0.1
+  dataloaders : False # True if save partitioned data as dataloaders
+  partition : sample_skew  # (possible_value : label_skew, iid, sample_skew)
+
+hydra:
+  run:
+    dir : ${data.partition_dir} 
