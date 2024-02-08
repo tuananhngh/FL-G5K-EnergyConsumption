@@ -93,28 +93,28 @@ def ResNet18(num_classes=10):
 
 
 
-# resnet18 = ResNet18()
-# basic = Net()
+# # resnet18 = ResNet18()
+# # basic = Net()
 
-sample = torch.randn(2,3,32,32)
-# model = mobilenet_v3_small(num_classes=10)
-model = resnet18(num_classes=10)
-res = model(sample)
-# summary(model, (60,3, 32, 32), device='cpu')
-# summary(resnet18, (60, 3, 32, 32), device='cpu')
-# summary(basic, (60, 3, 32, 32), device='cpu')
+# sample = torch.randn(2,3,32,32)
+# # model = mobilenet_v3_small(num_classes=10)
+# model = resnet18(num_classes=10)
+# res = model(sample)
+# # summary(model, (60,3, 32, 32), device='cpu')
+# # summary(resnet18, (60, 3, 32, 32), device='cpu')
+# # summary(basic, (60, 3, 32, 32), device='cpu')
 
 
-# from flwr.common import ndarrays_to_parameters, parameters_to_ndarrays
-# import utils
+# # from flwr.common import ndarrays_to_parameters, parameters_to_ndarrays
+# # import utils
 
-# params = utils.get_parameters(resnet18)
-# params_out = ndarrays_to_parameters(params)
+# # params = utils.get_parameters(resnet18)
+# # params_out = ndarrays_to_parameters(params)
 
-# params_in = parameters_to_ndarrays(params_out)
+# # params_in = parameters_to_ndarrays(params_out)
 
-# keys = [name for name,val in resnet182.state_dict().items()]
-# params_dict = zip(keys, params)
-# state_dict = OrderedDict({k:torch.Tensor(v) if v.shape != torch.Size([]) else torch.Tensor([0]) for k,v in params_dict})
+# # keys = [name for name,val in resnet182.state_dict().items()]
+# # params_dict = zip(keys, params)
+# # state_dict = OrderedDict({k:torch.Tensor(v) if v.shape != torch.Size([]) else torch.Tensor([0]) for k,v in params_dict})
 
-# resnet182.load_state_dict(state_dict, strict = True)
+# # resnet182.load_state_dict(state_dict, strict = True)
