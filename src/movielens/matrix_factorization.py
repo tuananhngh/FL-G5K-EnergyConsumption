@@ -1,12 +1,13 @@
 # Description: This file contains the implementation of the Matrix Factorization Model for the FedRecon Model
 # Code adapted from https://www.tensorflow.org/federated/tutorials/federated_reconstruction_for_matrix_factorization
 
+from copy import deepcopy
 import torch
 import torch.nn as nn
 import torch.functional as F
-from typing import List, Tuple, Any
+from typing import List, OrderedDict, Tuple, Any
 from torchinfo import summary
-
+from collections import OrderedDict
 
 class ItemEmbedding(nn.Module):
     def __init__(self, num_items, num_latent_factors, spread_out=True):
@@ -198,20 +199,18 @@ model, global_params, local_params = build_reconstruction_model(num_users=100, n
 user_id = torch.tensor([1])
 item_id = torch.tensor([9])
 model_2, global_params2, local_params2 = build_reconstruction_model(num_users=100, num_items=10, num_latent_factors=5, personal_model=True, add_biases=True, l2_regularizer=0.8, spreadout_lambda=0.0)
-# ex_loss = model(user_id, item_id)
-# local_params = model.local_parameters()
-# global_params = model.global_parameters()
-# loss_val = nn.functional.mse_loss(ex_loss, torch.tensor([1.0]))
-# #loss_val.backward()
-# torch.autograd.grad(ex_loss, local_params[1], retain_graph=True)
+ex_loss = model(user_id, item_id)
+local_params = model.local_parameters()
+global_params = model.global_parameters()
+loss_val = nn.functional.mse_loss(ex_loss, torch.tensor([1.0]))
+#loss_val.backward()
+torch.autograd.grad(ex_loss, local_params[1], retain_graph=True)
 
-model1_state_dict = model.state_dict()
+model1_state_dict = deepcopy(model.state_dict())
 model2_global_layers = [{k:v} for k,v in model_2.state_dict().items() if "global_layers" in k]
+model2_ndarray = [val.cpu().numpy() for name,val in model_2.state_dict().items() if "global_layers" in name]
+#model.load_state_dict(model2_global_layers[0], strict=False)
 
-model.load_state_dict(model2_global_layers[0], strict=False)
-
-for name, param in model.named_parameters():
-    print("Name {} Param {}".format(name, param))
-    # if param.requires_grad:
-    #     print("Name {} {} Grad {}".format(name, param, param.grad))
-        
+keys = [k for k in model.state_dict().keys() if "global_layers" in k]
+global_layers_sd = OrderedDict({k:torch.tensor(v) for k,v in zip(keys, model2_ndarray)})
+model.load_state_dict(global_layers_sd, strict=False)

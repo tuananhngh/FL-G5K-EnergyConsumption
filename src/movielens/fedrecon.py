@@ -1,9 +1,10 @@
+from functools import reduce
 import flwr as fl
+import numpy as np
 from typing import List, Tuple, Optional, Callable, Union, Dict
 from flwr.server.strategy import FedAvg
 from flwr.server.client_manager import ClientManager, ClientProxy
 from flwr.common import (
-    Strategy,
     FitIns,
     FitRes,
     MetricsAggregationFn,
@@ -11,12 +12,22 @@ from flwr.common import (
     Scalar,
     ndarrays_to_parameters,
     parameters_to_ndarrays,
+    NDArrays,
 )
 
-class FedRecon(Strategy):
-    def __init__(self):
-        pass
+def aggregate(results : List[Tuple[NDArrays, int]]) -> NDArrays:
+    total_examples = sum([num_examples for _, num_examples in results])
+    weighted_weights = [
+        [layer * num_examples for layer in weights]
+        for weights, num_examples in results
+    ]
+    weights_prime = [
+        reduce(np.add, layer_update)/total_examples for layer_update in zip(*weighted_weights)
+    ]
+    return weights_prime
     
+
+class FedRecon(FedAvg):
     def __repr__(self) -> str:
         return "FedRecon"
     
@@ -40,24 +51,37 @@ class FedRecon(Strategy):
                       server_round: int,
                       parameters: Parameters,
                       client_manager: ClientManager) -> List[Tuple[ClientProxy, FitIns]]:
-        pass
-    
+        config = {}
+        if self.on_fit_config_fn is not None:
+            config = self.on_fit_config_fn(server_round)
+        fit_ins = FitIns(parameters, self.config)
+        
+        sample_size, min_num_clients = self.num_fit_clients(client_manager.num_available())
+        clients = client_manager.sample(sample_size, min_num_clients)
+        return [(client, fit_ins) for client in clients]
+        
     def aggregate_fit(self, server_round: int, results: List[Tuple[ClientProxy, FitRes]], failures: List[Union[Tuple[ClientProxy,FitRes],BaseException]]) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
         if not results:
             return None, {}
         if not self.accept_failures and failures:
             return None, {}
         
-        global_ = [
+        weights_results = [
             (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples) for (_, fit_res) in results
         ]
+        parameters_aggregated = ndarrays_to_parameters(aggregate(weights_results))
         
+        metrics_aggregated = {}
+        if self.fit_metrics_aggregation_fn:
+            fit_metrics = [(res.num_examples, res.metrics) for _ ,res in results]
+            metrics_aggregated = self.fit_metrics_aggregation_fn(fit_metrics)
+        return parameters_aggregated, metrics_aggregated
         
-    def configure_evaluate(self, config):
-        pass
+    # def configure_evaluate(self, config):
+    #     pass
     
-    def aggregate_evaluate(self, config):
-        pass
+    # def aggregate_evaluate(self, config):
+    #     pass
     
-    def evaluate(self, config):
-        pass
+    # def evaluate(self, config):
+    #     pass

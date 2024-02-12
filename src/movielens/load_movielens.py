@@ -116,6 +116,7 @@ class MovieRatingDataset(Dataset):
 
 def create_user_datasets(ratings_df: pd.DataFrame,
                          max_examples_per_user: Optional[int] = None,
+                         min_examples_per_user: int = 0,
                          max_clients: Optional[int] = None) -> List[Subset]:
     num_users = len(ratings_df.UserID.unique())
     if max_clients is not None:
@@ -123,11 +124,12 @@ def create_user_datasets(ratings_df: pd.DataFrame,
     user_datasets = []
     for i in range(num_users):
         user_ratings_df = ratings_df[ratings_df.UserID == i]
-        if max_examples_per_user is not None:
-            n = min(len(user_ratings_df), max_examples_per_user)
-            user_ratings_df = user_ratings_df.sample(n, random_state=42)
-        user_data = MovieRatingDataset(user_ratings_df)
-        user_datasets.append(user_data)
+        if len(user_ratings_df) > min_examples_per_user:
+            if max_examples_per_user is not None:
+                n = min(len(user_ratings_df), max_examples_per_user)
+                user_ratings_df = user_ratings_df.sample(n, random_state=42)
+            user_data = MovieRatingDataset(user_ratings_df)
+            user_datasets.append(user_data)
     return user_datasets
 
         
@@ -146,3 +148,8 @@ def split_dataset(user_datasets, train_frac, val_frac):
     val_datasets = user_datasets[train_idx:val_idx]
     test_datasets = user_datasets[val_idx:]
     return train_datasets, val_datasets, test_datasets
+
+
+ratings_df, movies_df = load_movielens_data(path_to_1m)
+user_datasets = create_user_datasets(ratings_df, min_examples_per_user=50, max_clients=4000)
+train_users,val_users, test_users = split_dataset(user_datasets, 0.8, 0.1)
