@@ -105,6 +105,7 @@ class MatrixFactorizationModel(nn.Module):
         self.spreadout_lambda = spreadout_lambda
         self.item_tensor = torch.empty((self.num_items, self.num_latent_factors))
         self.user_tensor = torch.empty((1, self.num_latent_factors))
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         
         self.spread_out = EmbeddingSpreadoutRegularizer(spreadout_lambda=spreadout_lambda, l2_normalize=False, l2_regularization=l2_regularizer)
         
@@ -147,7 +148,9 @@ class MatrixFactorizationModel(nn.Module):
     def forward(self, user_input, item_input):
         user_embedding = self.user_embedding_layer(user_input)
         item_embedding = self.item_embedding_layer(item_input)
-    
+
+        #print(f"User Embedding {user_embedding.shape} : {user_embedding}")
+        #print(f"Item Embedding {item_embedding.shape} : {item_embedding}")
         
         flat_item_vec = item_embedding.view(-1, self.num_latent_factors)
         flat_user_vec = user_embedding.view(-1, self.num_latent_factors)
@@ -162,7 +165,7 @@ class MatrixFactorizationModel(nn.Module):
         if self.l2_regularizer > 0.0:
             for param in self.parameters():
                 l2_reg = self.l2_regularizer * torch.norm(param, p=2)**2
-            prediction += l2_reg + self.spread_out(self.item_embedding_layer.item_embedding)
+                prediction += l2_reg #+ self.spread_out(self.item_embedding_layer.item_embedding)
             
         return prediction
     
@@ -195,22 +198,22 @@ class ReconstructionAccuracyMetric:
         self.count = 0
     
 
-model, global_params, local_params = build_reconstruction_model(num_users=100, num_items=10, num_latent_factors=5, personal_model=True, add_biases=True, l2_regularizer=0.8, spreadout_lambda=0.0)
-user_id = torch.tensor([1])
-item_id = torch.tensor([9])
-model_2, global_params2, local_params2 = build_reconstruction_model(num_users=100, num_items=10, num_latent_factors=5, personal_model=True, add_biases=True, l2_regularizer=0.8, spreadout_lambda=0.0)
-ex_loss = model(user_id, item_id)
-local_params = model.local_parameters()
-global_params = model.global_parameters()
-loss_val = nn.functional.mse_loss(ex_loss, torch.tensor([1.0]))
-#loss_val.backward()
-torch.autograd.grad(ex_loss, local_params[1], retain_graph=True)
+# model, global_params, local_params = build_reconstruction_model(num_users=100, num_items=10, num_latent_factors=5, personal_model=True, add_biases=True, l2_regularizer=0.8, spreadout_lambda=0.0)
+# user_id = torch.tensor([1])
+# item_id = torch.tensor([9])
+# model_2, global_params2, local_params2 = build_reconstruction_model(num_users=100, num_items=10, num_latent_factors=5, personal_model=True, add_biases=True, l2_regularizer=0.8, spreadout_lambda=0.0)
+# ex_loss = model(user_id, item_id)
+# local_params = model.local_parameters()
+# global_params = model.global_parameters()
+# loss_val = nn.functional.mse_loss(ex_loss, torch.tensor([1.0]))
+# #loss_val.backward()
+# torch.autograd.grad(ex_loss, local_params[1], retain_graph=True)
 
-model1_state_dict = deepcopy(model.state_dict())
-model2_global_layers = [{k:v} for k,v in model_2.state_dict().items() if "global_layers" in k]
-model2_ndarray = [val.cpu().numpy() for name,val in model_2.state_dict().items() if "global_layers" in name]
-#model.load_state_dict(model2_global_layers[0], strict=False)
+# model1_state_dict = deepcopy(model.state_dict())
+# model2_global_layers = [{k:v} for k,v in model_2.state_dict().items() if "global_layers" in k]
+# model2_ndarray = [val.cpu().numpy() for name,val in model_2.state_dict().items() if "global_layers" in name]
+# #model.load_state_dict(model2_global_layers[0], strict=False)
 
-keys = [k for k in model.state_dict().keys() if "global_layers" in k]
-global_layers_sd = OrderedDict({k:torch.tensor(v) for k,v in zip(keys, model2_ndarray)})
-model.load_state_dict(global_layers_sd, strict=False)
+# keys = [k for k in model.state_dict().keys() if "global_layers" in k]
+# global_layers_sd = OrderedDict({k:torch.tensor(v) for k,v in zip(keys, model2_ndarray)})
+# model.load_state_dict(global_layers_sd, strict=False)

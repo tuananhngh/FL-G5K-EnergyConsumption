@@ -28,8 +28,8 @@ def aggregate(results : List[Tuple[NDArrays, int]]) -> NDArrays:
     
 
 class FedRecon(FedAvg):
-    def __repr__(self) -> str:
-        return "FedRecon"
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
     
     def num_fit_clients(self, num_available_clients: int) -> int:
         num_clients = int(self.fraction_fit * num_available_clients)
@@ -38,11 +38,15 @@ class FedRecon(FedAvg):
     def num_evaluate_clients(self, num_available_clients: int) -> int:
         num_clients = int(self.fraction_evaluate * num_available_clients)
         return max(num_clients, self.min_evaluate_clients), self.min_available_clients
-    
-    def initialize_parameters(self) -> Parameters:
-        initial_params = self.initial_parameters
-        self.initialize_parameters = None
-        return initial_params 
+
+    def initialize_parameters(
+        self, client_manager: ClientManager
+    ) -> Optional[Parameters]:
+        """Initialize global model parameters."""
+        initial_parameters = self.initial_parameters
+        #self.initial_parameters = None  # Don't keep initial parameters in memory
+        self.g_t = self.initial_parameters
+        return initial_parameters
     
     def __repr__(self) -> str:
         return "FedRecon"
@@ -54,7 +58,7 @@ class FedRecon(FedAvg):
         config = {}
         if self.on_fit_config_fn is not None:
             config = self.on_fit_config_fn(server_round)
-        fit_ins = FitIns(parameters, self.config)
+        fit_ins = FitIns(parameters, config)
         
         sample_size, min_num_clients = self.num_fit_clients(client_manager.num_available())
         clients = client_manager.sample(sample_size, min_num_clients)
@@ -69,7 +73,9 @@ class FedRecon(FedAvg):
         weights_results = [
             (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples) for (_, fit_res) in results
         ]
-        parameters_aggregated = ndarrays_to_parameters(aggregate(weights_results))
+        aggregated_weights = aggregate(weights_results)
+        self.g_t -= 0.1 * aggregated_weights
+        parameters_aggregated = ndarrays_to_parameters(self.g_t)
         
         metrics_aggregated = {}
         if self.fit_metrics_aggregation_fn:

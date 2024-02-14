@@ -149,7 +149,24 @@ def split_dataset(user_datasets, train_frac, val_frac):
     test_datasets = user_datasets[val_idx:]
     return train_datasets, val_datasets, test_datasets
 
+def create_user_dataloader(dataset,trainfrac,valfrac,batch_size):
+    nb_rating_user = len(dataset)
+    train_idx = int(nb_rating_user*trainfrac)
+    val_idx = int(nb_rating_user*(trainfrac+valfrac))
+    train_dataset = Subset(dataset, range(0,train_idx))
+    val_dataset = Subset(dataset, range(train_idx,val_idx))
+    test_dataset = Subset(dataset, range(val_idx,nb_rating_user))
+    
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=1, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=True)
+    print(len(train_loader.dataset), len(val_loader.dataset), len(test_loader.dataset))
+    return train_loader, val_loader, test_loader
+    
 
-ratings_df, movies_df = load_movielens_data(path_to_1m)
-user_datasets = create_user_datasets(ratings_df, min_examples_per_user=50, max_clients=4000)
-train_users,val_users, test_users = split_dataset(user_datasets, 0.8, 0.1)
+
+# ratings_df, movies_df = load_movielens_data(path_to_1m)
+# user_datasets = create_user_datasets(ratings_df, min_examples_per_user=50, max_clients=4000)
+# train_users,val_users, test_users = split_dataset(user_datasets, 0.8, 0.1)
+
+# trainloader, valloader, testloader = create_user_dataloader(user_datasets[1], 0.8, 0.1, 5)
