@@ -8,15 +8,15 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 from torch.distributions import Dirichlet
-from flwr.common import NDArray, Scalar, Config
+#from flwr.common import NDArray, Scalar, Config
 from typing import Any, Dict, Tuple, List
 from torchvision import datasets
 from torch.utils import data
-from flwr.server.strategy import FedAdam, FedAvg, FedProx
+#from flwr.server.strategy import FedAdam, FedAvg, FedProx
 
 
 class DataSetHandler:
-    def __init__(self, config:Config):
+    def __init__(self, config):
         self.dataname = config["data_name"]
         self.data_dir = config["download_dir"]
         self.num_clients = config["num_clients"]

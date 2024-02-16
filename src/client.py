@@ -50,7 +50,7 @@ class Client(fl.client.NumPyClient):
         optim = instantiate(self.optim, self.model.parameters(), lr=lr)
         #optim = torch.optim.SGD(self.model.parameters(), lr=lr)
         
-        path = Path(self.outputdir, 'fittimes.csv')
+        path = Path(self.outputdir, f'fittimes_client_{self.cid}.csv')
         with open(path, 'a', newline='') as f:
             writer = csv.writer(f)
             if f.tell()==0:
@@ -63,7 +63,7 @@ class Client(fl.client.NumPyClient):
             writer.writerow([self.cid, server_round, start_time.strftime("%Y-%m-%d %H:%M:%S"), end_time.strftime("%Y-%m-%d %H:%M:%S"), lr, local_epochs])
             
         # Write result to file with current date and time
-        path = Path(self.outputdir, 'fitresult.csv')
+        path = Path(self.outputdir, f'fitresult_client_{self.cid}.csv')
         with open(path, 'a', newline='') as f:
             writer = csv.writer(f)
             if f.tell() == 0:
@@ -81,7 +81,7 @@ class Client(fl.client.NumPyClient):
         self.set_parameters(parameters)
         loss, accuracy = test(self.model, self.valloader, self.device, steps=steps,verbose=True) 
         
-        path = Path(self.outputdir, 'evalresult.csv')
+        path = Path(self.outputdir, f'evalresult_client_{self.cid}.csv')
         with open(path, 'a', newline='') as f:
             writer = csv.writer(f)
             if f.tell() == 0:
@@ -127,7 +127,7 @@ def main(cfg:DictConfig):
     #dataconfig = DataSetHandler(cfg.data)
     #trainloaders, valloaders, testloader = dataconfig()
     trainloader, valloader = load_clientdata_from_file(cfg.data, client_id)
-    
+    print(len(trainloader.dataset))
     #trainloader, valloader, testloader = load_dataloader(client_id, path_to_data)
     model = instantiate(cfg.neuralnet)
     optimizer = cfg.optimizer

@@ -2,6 +2,7 @@
 This module contains utility functions and classes for running experiments on a server and multiple clients.
 """
 from types import SimpleNamespace
+import numpy as np
 import warnings
 from execo import SshProcess, Remote
 from execo.host import Host
@@ -106,7 +107,7 @@ class Experiment(Engine):
             self.params = params
             self.nodes = nodes
             self.server = nodes[0]
-            self.clients = nodes[1:]
+            self.client_hosts = nodes[1:]
             self.repository_dir = repository_dir
             self.output = os.path.join("/root", group_storage)
             self.local_output = f"/srv/storage/{group_storage}@storage1.toulouse.grid5000.fr"
@@ -116,8 +117,8 @@ class Experiment(Engine):
             
             self.extra_args = Box(kwargs)
             self.jetson_sensor_monitor_file = os.path.join(self.repository_dir, "src", "energy", "jetson_monitoring_energy.py")
-            self.exp_csv_file = os.path.join(self.local_output, self.output_dir, "experiment_summary.csv")
-            logger.info(("Server : {} \n Clients: {}".format(self.server, self.clients)))
+            self.exp_csv_file = os.path.join(self.local_output, self.output_dir, "experiment_summary1.csv")
+            logger.info(("Server : {} \n Clients: {}".format(self.server, self.client_hosts)))
         
     def __setattr__(self, __name: str, __value: Any) -> None:
         return super().__setattr__(__name, __value)
@@ -158,8 +159,8 @@ class Experiment(Engine):
         hyperparams = Box({})
         hyperparams.update(**run_dir.__dict__)
         hyperparams.server = self.server.address
-        for cid in range(len(self.clients)):
-            hyperparams[f"client{cid}"] = self.clients[cid].address
+        # for cid in range(len(self.client_hosts)):
+        #     hyperparams[f"client{cid}"] = self.client_hosts[cid].address
         hyperparams.sleep_duration = self.sleep
         hyperparams.timestamps = {}
         
@@ -302,9 +303,30 @@ class Experiment(Engine):
             logger.info("SAVING HYPERPARAMS TO CSV")
             debug_hp = self._hyperparams_to_csv(hparams)
         shutil.rmtree(sweep_dir) 
+        
+    def multiple_clients_per_host(self, nb_clients, hparams, cmd_args):
+        self.run_clients=[]
+        nb_host = len(self.client_hosts)
+        client_idx = np.arange(nb_clients)
+        client_per_host = np.split(client_idx, nb_host)
+        for (host, cid_in_host) in zip(self.client_hosts, client_per_host):
+            hparams[f"{host.address}".split('.')[0]] = str(cid_in_host)
+            for cid in cid_in_host:
+                client_cmd = f"cd {self.repository_dir};"\
+                    f"python3 src/client.py {cmd_args} comm.host={hparams.comm.host} hydra.run.dir={hparams.tmp_result_folder} client.cid={cid} >> {hparams.tmp_result_folder}/logs.log 2>&1"
+                run_client = SshProcess(client_cmd, host=host, connection_params={'user':'root'})
+                self.run_clients.append(run_client)
+        
+    def one_client_per_host(self, hparams, cmd_args):
+        self.run_clients = []
+        for (host, cid) in zip(self.client_hosts, range(self.client_hosts)):
+            client_cmd = f"cd {self.repository_dir};"\
+                f"python3 src/client.py {cmd_args} comm.host={hparams.comm.host} hydra.run.dir={hparams.tmp_result_folder} client.cid={cid} >> {hparams.tmp_result_folder}/logs.log 2>&1"
+            run_client = SshProcess(client_cmd, host=host, connection_params={'user': 'root'})
+            self.run_clients.append(run_client)
     
             
-    def run(self):
+    def run(self, multiple_clients_per_host=True):
         """
         Run experiments
         """
@@ -330,13 +352,23 @@ class Experiment(Engine):
             # DEFINE SERVER & CLIENT SSH PROCESSES
             server_cmd = f"cd {self.repository_dir};"\
                 f"python3 src/server.py {cmd_args} comm.host={hparams.comm.host} hydra.run.dir={hparams.tmp_result_folder} >> {hparams.tmp_result_folder}/logs.log 2>&1"
-            self.run_server = SshProcess(server_cmd, host=self.server, connection_params={'user': 'root'})    
-            self.run_clients = []
-            for (host, cid) in zip(self.clients, range(len(self.clients))):
-                client_cmd = f"cd {self.repository_dir};"\
-                    f"python3 src/client.py {cmd_args} comm.host={hparams.comm.host} hydra.run.dir={hparams.tmp_result_folder} client.cid={cid} >> {hparams.tmp_result_folder}/logs.log 2>&1"
-                run_client = SshProcess(client_cmd, host=host, connection_params={'user': 'root'})
-                self.run_clients.append(run_client)
+            self.run_server = SshProcess(server_cmd, host=self.server, connection_params={'user': 'root'})
+            
+            #TEST CASE FOR SSH
+            nb_clients = hparams.data.num_clients
+            if multiple_clients_per_host:
+                self.multiple_clients_per_host(nb_clients, hparams, cmd_args)
+            else :
+                self.one_client_per_host(hparams, cmd_args)
+            
+            # TO UNCOMMENTED IF 1 CLIENT PER HOST
+            # self.run_clients = []
+            # for (host, cid) in zip(self.client_hosts, range(len(self.client_hosts))):
+            #     client_cmd = f"cd {self.repository_dir};"\
+            #         f"python3 src/client.py {cmd_args} comm.host={hparams.comm.host} hydra.run.dir={hparams.tmp_result_folder} client.cid={cid} >> {hparams.tmp_result_folder}/logs.log 2>&1"
+            #     run_client = SshProcess(client_cmd, host=host, connection_params={'user': 'root'})
+            #     self.run_clients.append(run_client)
+            # TO UNCOMMENTED
             
             logger.info("START MONITORING")
             jtop_processes = self._cmd_host_energy(hparams)
@@ -367,11 +399,11 @@ class Experiment(Engine):
             logger.info("SAVE TMP FILES AND PARAMETERS TO FRONTEND")
             hparams.merge_update(**self._params_to_dict(params))
             
-            server_cp_cmd = f"mkdir -p {hparams.result_folder}/server; cp -r {hparams.tmp_result_folder}/ {hparams.result_folder}/server"
+            server_cp_cmd = f"mkdir -p {hparams.result_folder}/server; cp -r {hparams.tmp_result_folder}/* {hparams.result_folder}/server"
             execute_command_on_server_and_clients([self.server], server_cp_cmd, background=False)
-            for cid in range(len(self.clients)):
-                client_cp_cmd = f"mkdir -p {hparams.result_folder}/client_{cid}; cp -r {hparams.tmp_result_folder}/ {hparams.result_folder}/client_{cid}"
-                execute_command_on_server_and_clients([self.clients[cid]], client_cp_cmd, background=False)
+            for cid in range(len(self.client_hosts)):
+                client_cp_cmd = f"mkdir -p {hparams.result_folder}/client_host_{cid}; cp -r {hparams.tmp_result_folder}/* {hparams.result_folder}/client_host_{cid}"
+                execute_command_on_server_and_clients([self.client_hosts[cid]], client_cp_cmd, background=False)
             logger.info("FINISHED SAVING TO FRONTEND")
             
             # SAVE HYPERPARAMS
@@ -390,20 +422,38 @@ class Experiment(Engine):
         #return debug_hp
         
 
-# nodes = get_oar_job_nodes(448524, "toulouse")
+if __name__ == "__main__":
+    nodes = get_oar_job_nodes(448947, "toulouse")
 
-# test_params = {
-#     "client.lr" : [1e-1,1e-2,1e-3],
-#     "client.local_epochs": [1],
-#     "client.decay_rate": [0.1],
-#     "client.decay_steps": [10],
-    
-#     "neuralnet":["MobileNetV3Small"],
-#     "strategy": ["fedavg"],
-#     "optimizer": ["SGD"],
-# }
+    params = {
+        "params.num_rounds":[100],
+        "data.num_clients": [10],
+        "data.alpha": [0.1], #[1,2,5,10],
+        "data.partition":["iid"],
+        "client.lr" : [1e-2],#,1e-2],
+        "client.local_epochs": [1],
+        "client.decay_rate": [1],
+        "client.decay_steps": [10],
+        "neuralnet":["ResNet18"],
+        "strategy": ["fedavg"],
+        "optimizer": ["SGD"],
+    }
 
-# to_remove = ["client.cid","client.dry_run","params.root_data","tmp_result_folder","energy_file","exp_datetime"]
+    repository_dir = "/home/tunguyen/jetson-test"
 
-# Exps = MyExperiment(params=test_params,nodes=nodes,key_to_remove=to_remove)
-# Exps.run()
+    to_remove = ["client.cid",
+                 "client.dry_run",
+                 "data.partition_dir",
+                 "params.num_classes",
+                 "tmp_result_folder",
+                 "exp_datetime",
+                 "hydra.run.dir",]
+
+    Exps = Experiment(
+        params=params,
+        nodes=nodes,
+        repository_dir=repository_dir,
+        sleep=30,
+        key_to_remove=to_remove)
+    #Exps.frontend_dry_run()
+    Exps.run()
