@@ -1,0 +1,27 @@
+---
+name: fl_jetson_image
+version: 2024011717
+arch: aarch64
+alias: ubuntul4t200435-arm64-big
+description: ubuntu 20.04 (focal) with L4T r35.4.1-cti001 for aarch64 - big
+author: support-staff@lists.grid5000.fr
+visibility: public
+destructive: false
+os: linux
+image:
+  file: http://public.toulouse.grid5000.fr/~tunguyen/fl_jetson_image.tar.zst
+  kind: tar
+  compression: zstd
+postinstalls:
+- archive: server:///grid5000/postinstalls/g5k-postinstall.tgz
+  compression: gzip
+  script: g5k-postinstall --net netplan --fstab nfs --restrict-user current --disk-aliases
+boot:
+  kernel: "/boot/Image"
+  initrd: "/boot/initrd"
+  kernel_params: modprobe.blacklist=nouveau
+filesystem: ext4
+partition_type: 131
+multipart: false
+custom_variables:
+  BOOTLOADER_NO_GRUB_FROM_DEST: '1'

@@ -1,0 +1,2 @@
+[2024-01-17 11:38:25,605][root][INFO] - 25000 DataSamples Per Clients
+[2024-01-17 11:38:25,647][flwr][INFO] - Starting Flower server, config: ServerConfig(num_rounds=3, round_timeout=None)

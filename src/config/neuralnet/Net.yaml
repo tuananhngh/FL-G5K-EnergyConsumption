@@ -1,0 +1,3 @@
+_target_ : models.models.Net
+num_classes : ${params.num_classes}
+

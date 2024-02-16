@@ -1,3 +1,7 @@
-./__pycache__/**
-./data/**
-./outputs/**
+kameleon_recipes/build/
+data/
+outputs/
+__pycache__/
+src/utils/__pycache__/
+test.ipynb
+sweep/

@@ -1,60 +1,66 @@
-# Studying the energy consumption of Federate Learning
-The goal if this project is to study the energy consumption of Federated Learning.
+# FL-G5K-EnergyConsumption
 
-## FL on Grid'5000
-We use the French experimental platform wall Grid'5000 which contains a variety of machines from A100 clusters to Jetson Xavier AGX.
-Below are the steps required to execute the FL algorithm on Grid'5000 using the Flower framework.
+## Overview
 
-### Book as many nodes as needed
-```
-flyon$ oarsub -l host=3 -p chifflot -I
-```
+This repository contains the source code and documentation for the FL-G5K-EnergyConsumption project, specifically the Toulouse G5K branch. FL-G5K-EnergyConsumption is a Federated Learning (FL) framework designed for energy consumption analysis in the Grid'5000 testbed.
 
-### Create a conda environment (no need if using docker)
-```
-flyon$ module load conda
-flyon$ conda env create -f environment.yml
-```
-### Lanch server and clients on same node
-```
-flyon$ ssh node-server (for exemple chifflot-2)
-node-server$ module load conda
-node-server$ conda activate fl
-node-server$ bash run_server.sh
-```
+## Table of Contents
 
-### Launch server and clients on different nodes
-```
-flyon$ ssh node-server (for exemple chifflot-2)
-node-server$ module load conda
-node-server$ conda activate fl
-node-server$ hostname -I (ou IP_SERVER=`hostname -I` puis echo $IP_SERVER)
-```
-This returns the server ID. 
-Copy it into the host parameter in [config.yaml](./config/config_file.yaml).
-```
-node-server$ python main_server.py comm.host=$IP_SERVER
-```
-For every client to be launched:
-```
-flyon$ ssh node-client (for exemple chifflot-4)
-node-client$ module load conda
-node-client$ conda activate fl
-node-client$ cd FL-G5K-Test
-node-client$ python client.py comm.host=$IP_SERVER client_params.client_id=0
-```
-The server will start when enough client are connected (as defined in the config file).
+- [Introduction](#introduction)
+- [Repository organisation](#repository-organisation)
+- [Getting Started](#getting-started)
 
-### Using docker
-Install docker on your node:
-```
-g5k-setup-docker -t
-```
-To build and run the client docker image on machine similar to chifflot:
-```
-bash run_docker.sh -b pt
-```
-To build and run the docker image on machine similar to a Jetson:
-```
-bash run_docker.sh -b jetson
-```
+## Introduction
+
+The FL-G5K-EnergyConsumption project aims to provide a comprehensive solution for analyzing energy consumption patterns in Federated Learning frameworks using the Grid'5000 testbed. The Toulouse G5K branch was adapted to be executed on the estats cluster of the Toulouse site within the Grid'5000 infrastructure.
+We rely on the [Flower framework](https://flower.dev/) for Federated Learning.
+
+## Repository organisation
+The code can be found in the [source repository](./src/).
+
+1. **Configuration:**
+   - The `config/` directory provides configuration files (`config.yaml`) for training and evaluation.
+
+2. **Energy monitoring:**
+   - The `energy/` directory contains 2 modules for monitoring the energy consumption of the Jetson AGX Xavier ([jetson_monitoring_energy.py](./src/energy/jetson_monitoring_energy.py)).
+
+3. **Utilities:**
+   - The `utils/` directory contains utility functions and modules.
+        - [experiment.py](./src/utils/experiment.py) provides functions and a class to run experiments on a server and serveral nodes.
+        - [models.py](./src/utils/models.py) provides models.
+        - [process_results.py](./src/utils/process_results.py) provides functions to read, process and plot logs from experiments.
+        - [training.py](./src/utils/training.py) provides functions required to use Flower.
+
+4. **Main files**
+    - [reservation.ipynb](./src/reservation.ipynb) is a notebook you can use to make job reservation and start experiments from the frontend.
+    - [server.py](./src/server.py) is the code to be executed on the server node.
+    - [client.py](./src/client.py) is the code to be executed on the client nodes.
+
+5. **Analysis**
+    - Notebooks to analyse results can be found in the [analysis](./analysis/) folder.
+
+## Getting Started
+
+To get started with FL-G5K-EnergyConsumption, you need to have an Grid'5000 account. 
+If you do, you can connect to the Toulouse frontend and follow these steps:
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/tuananhngh/FL-G5K-EnergyConsumption.git -b toulouse-g5k
+   ```
+
+2. Install the required dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Open the Jupyter notebook [reservation.ipynb](./src/reservation.ipynb) and follow the instructions there.
+
+<!-- ## A more comprehensive documentation
+### Federated Learning with Flower
+### Job reservation and ssh processes with Execo
+### Storage
+We relied on a group storage to run experiments.
+https://www.grid5000.fr/w/Storage_Manager#Usage -->

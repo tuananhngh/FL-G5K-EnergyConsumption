@@ -1,0 +1,95 @@
+#==============================================================================
+# vim: softtabstop=2 shiftwidth=2 expandtab fenc=utf-8 cc=81 tw=80
+#==============================================================================
+#
+# DESCRIPTION: Base recipe to build a custom Grid'5000 environment on top of an
+# existing pre-built one (such as one supported by the technical team).
+# The recipe takes a environment name, and first extracts its image tarball
+# before letting define some customizations in the setup section. It then
+# export the new environment. This recipe does not rebuild the Grid'5000
+# environment from scratch: neither the distribution installer nor Puppet is
+# involved. The recipe must be built on a Grid'5000 node.
+#
+#==============================================================================
+---
+extend: ../steps/backend/$${backend}.yaml
+
+# Loads some helpful aliases (this files are located in steps/aliases/ directory)
+aliases: defaults.yaml
+
+# Custom shell environement (this files are located in steps/env/ directory)
+env:
+  - bashrc
+  - functions.sh
+
+# Global variables use by Kameleon engine and the steps
+global:
+  # Architecture for the target system
+  arch: "$${grid5000_environment_import_arch}"
+  # Distribution
+  distrib: debian
+  release: 11
+
+  ## Grid'5000 environment information
+  # Frontend to run kaenv3 on
+  grid5000_frontend: "frontend"
+  # Site used in the build
+  grid5000_site: "grenoble"
+  # Environment to build from
+  grid5000_environment_import_name: "debian11-min"
+  grid5000_environment_import_user: "deploy"
+  grid5000_environment_import_version: ""
+  grid5000_environment_import_arch: "x86_64"
+  # New environment description
+  grid5000_environment_export_name: "$${kameleon_recipe_name}"
+  grid5000_environment_export_format: "tar.zst"
+  grid5000_environment_export_description: "Customized $${grid5000_environment_import_name}"
+  #grid5000_environment_export_postinstall_script: "g5k-postinstall --net debian --fstab nfs --restrict-user current"
+  grid5000_environment_export_additional_postinstall_archive: ""
+  grid5000_environment_export_additional_postinstall_script: ""
+  grid5000_environment_export_additional_postinstall_dir: "additional_postinstall"
+  grid5000_environment_export_dir: "$HOME/public/"
+  grid5000_environment_export_baseurl: "local://$HOME/public/"
+  grid5000_environment_export_visibility: "shared"
+
+  # output appliance options
+  filesystem_type: ext4
+  image_size: 20G
+  image_disk: $${kameleon_cwd}/base_$${kameleon_recipe_name}
+  # Allowed formats are: tar.gz, tar.bz2, tar.xz, tar.zst, qcow, qcow2, qed, vdi, raw, vmdk
+  appliance_formats: "$${grid5000_environment_export_format}"
+  appliance_tar_compression_level: "9"
+  appliance_filename: "$${kameleon_cwd}/$${kameleon_recipe_name}"
+  appliance_tar_excludes: >-
+    ./etc/fstab ./root/.bash_history ./root/kameleon_workdir ./root/.ssh
+    ./var/tmp/* ./tmp/* ./var/log/* ./dev/* ./proc/* ./run/*
+    ./sys/*
+  # rootfs options
+  rootfs: $${kameleon_cwd}/rootfs
+
+  # set the dns search in qemu_netdev_user_options, so that ldap works in nfs and big environments
+  qemu_netdev_user_options: "dnssearch=$${grid5000_site}.grid5000.fr,dnssearch=grid5000.fr"
+
+  # kernel boot parameters
+  kernel_args: "quiet"
+
+  ssh_config_file: $${kameleon_cwd}/ssh_config
+  local_ip: 10.0.2.2
+
+  ## Select backend for in context isolation
+  backend: qemu
+
+  ## System variables. Required by kameleon engine
+  # Include specific steps
+  include_steps:
+    - $${distrib}/$${release}
+    - $${distrib}
+bootstrap:
+  - "@base"
+
+setup:
+  # Customization steps will come in this section
+
+export:
+  - "@base"
+  - export_modified_g5k_env
