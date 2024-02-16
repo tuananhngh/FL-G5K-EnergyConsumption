@@ -4,6 +4,7 @@ import torch
 import flwr as fl
 import hydra
 import logging
+import os
 
 from utils.training import train, test, seed_everything
 from utils.datahandler import load_clientdata_from_file
@@ -96,6 +97,15 @@ class Client(fl.client.NumPyClient):
         logging.info(len(self.trainloader.dataset))
         result = train(model, self.trainloader, self.valloader, local_epochs, optim, self.device)
         return result
+    
+
+def save_client_pid(pid, client_id):
+    path = Path(HydraConfig.get().runtime.output_dir, 'client_pids.csv')
+    with open(path, 'a', newline='') as f:
+        writer = csv.writer(f)
+        if f.tell() == 0:
+            writer.writerow(["client_id", "pid"])
+        writer.writerow([client_id, pid])
 
 @hydra.main(config_path="config", config_name="config_file")
 def main(cfg:DictConfig):
@@ -108,6 +118,11 @@ def main(cfg:DictConfig):
     port = cfg.comm.port
     output_dir = HydraConfig.get().runtime.output_dir
     server_address = str(host)+":"+str(port)
+    
+    # get pid of the current process
+    pid = os.getpid()
+    # save client pid
+    save_client_pid(pid, client_id)
     
     #dataconfig = DataSetHandler(cfg.data)
     #trainloaders, valloaders, testloader = dataconfig()
