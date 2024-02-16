@@ -1,8 +1,8 @@
-from re import split
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from types import SimpleNamespace
 import pickle as pkl
 import re
+import os
 import yaml # pip install PyYAML
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -33,6 +33,7 @@ def flwr_pkl(path_to_pkl):
     with open(path_to_pkl, "rb") as f:
         result = pkl.load(f)
     return result
+
 
 def read_yaml_file(path_to_yaml):
     with open(path_to_yaml, "r") as f:
@@ -134,10 +135,18 @@ class ReadFlowerLog:
 # msg = log_dataframe._get_fit_message()
 # fitmess = log_dataframe.get_server_fit_time()
 
-        
+
+def summary_file(path_summary):
+    usr_home = path_summary.replace('/',' ').split()
+    usr_homedir = f"{usr_home[0]}/{usr_home[1]}"
+    summary = pd.read_csv(path_summary)
+    cols = summary.columns
+    summary["result_folder"] = summary["result_folder"].apply(lambda x: x.replace("root",usr_homedir))
+    return summary
+
 
 class EnergyResult:
-    def __init__(self, path_to_output:str, nb_clients:int, datetime:str)->None:
+    def __init__(self,path_to_result:str, summaryfile:pd.DataFrame)->None:
         """Read results from path
         Args:
             path_to_output (str): Path to output folder
@@ -145,48 +154,77 @@ class EnergyResult:
             date (str): %Y-%m-%d
             time (str): %H-%M-%S
         """
-        self.path_to_output = Path(path_to_output)
-        self.nb_clients = nb_clients
-        self.datetime = datetime
-        self.cids = [i for i in range(nb_clients)]
+        self.summaryfile = summaryfile
+        self.path_to_result = path_to_result
+        self.exp_info = self.summaryfile[self.summaryfile["result_folder"]==self.path_to_result]
         self.date_time_format = "%Y-%m-%d %H:%M:%S"
-        
-    def _read_client(self, cid:int)->pd.DataFrame:
-        """_summary_
 
-        Args:
-            cid (int): _description_
-
-        Returns:
-            SimpleNamespace: Contains energy, evalresult, fitresult, fittimes as DataFrames
-            To access an element: SimpleNamespace.element
-        """
-        path_to_client = self.path_to_output/self.datetime/f"client_{cid}"
         
-        energy = pd.read_csv(path_to_client/"energy.csv", parse_dates=["timestamp"])
-        # energy["timestamp"] = energy["timestamp"].dt.round("1s") # Rounding to 1s
-        energy.columns = [col.strip() for col in energy.columns]
         
-        evalresult = pd.read_csv(path_to_client/"evalresult.csv", parse_dates=["time"], date_format=self.date_time_format)
-        fitresult = pd.read_csv(path_to_client/"fitresult.csv", parse_dates=["time"], date_format=self.date_time_format)
-        fittimes = pd.read_csv(path_to_client/"fittimes.csv", parse_dates=["Start Time","End Time"], date_format=self.date_time_format)
 
-        fittimes["fittime"] = (fittimes["End Time"] - fittimes["Start Time"]).dt.total_seconds() # Get fit time of each communication round
-        return SimpleNamespace(energy=energy, results=evalresult, fitresult=fitresult, fittimes=fittimes)
+    def _get_client_in_host(self)->List[Tuple[str,List[int]]]:
+        #exp_info = self.summary[self.summary["result_folder"]==self.result_path]
+        host_dict = [col for col in self.exp_info.columns if "estats" in col]
+        hostmetainfo = []
+        for host in host_dict:
+            client_list = self.exp_info[host].iloc[0].replace(']','').replace('[','').split(' ')
+            client_list = [int(i) for i in client_list]
+            hostmetainfo.append((host,client_list))
+        return hostmetainfo
     
         
+    def _read_client_host(self, hid:int):
+        path_to_host = os.path.join(self.path_to_result,f"client_host_{hid}")
+        energy = pd.read_csv(os.path.join(path_to_host,"energy.csv"), parse_dates=["timestamp"])
+        energy.columns = [col.strip() for col in energy.columns]
+        
+        hostmetadata = self._get_client_in_host()
+        hostname = hostmetadata[hid][0]
+        client_list = hostmetadata[hid][1]
+        client_metadata = {f"client_{cid}": self._read_client(path_to_host,cid) for cid in client_list}
+        #client_metadata = SimpleNamespace(**client_metadata)
+        return SimpleNamespace(hostname=hostname, energy=energy, clients=client_metadata)    
+    
+        
+    def _read_client(self,path_host,cid:int)->pd.DataFrame:
+        evalresult = pd.read_csv(os.path.join(path_host, f"evalresult_client_{cid}.csv"), parse_dates=["time"], date_format=self.date_time_format)
+        
+        fitresult = pd.read_csv(os.path.join(path_host, f"fitresult_client_{cid}.csv"), parse_dates=["time"], date_format=self.date_time_format)
+        
+        fittime = pd.read_csv(os.path.join(path_host, f"fittimes_client_{cid}.csv"), parse_dates=["Start Time","End Time"], date_format=self.date_time_format)
+        fittime["fittime"] = (fittime["End Time"] - fittime["Start Time"]).dt.total_seconds() # Get fit time of each communication round
+        return SimpleNamespace(results=evalresult, fitresults=fitresult, fittimes=fittime)
+    
+    def _read_all_clients(self)->List[pd.DataFrame]:
+        clients = []
+        hostmetadata = self._get_client_in_host()
+        for hid,hostdata in zip(range(len(hostmetadata)),hostmetadata):
+            hostinfo = self._read_client_host(hid)
+            for k in hostinfo.clients.keys():
+                clients.append(hostinfo.clients[k])            
+        return clients
+    
+    def _read_all_host_energy(self)->Tuple[List[str],List[pd.DataFrame]]:
+        hosts = self._get_client_in_host()
+        hostname, energy = [], []
+        for hid in range(len(hosts)):
+            hostinfo = self._read_client_host(hid)
+            hostname.append(hostinfo.hostname)
+            energy.append(hostinfo.energy)
+        return hostname, energy
+
     def _read_server(self)->pd.DataFrame:
         """_summary_
 
         Returns:
             SimpleNamespace[pd.DataFrame]: Contains energy, results as DataFrames
         """
-        path_to_server = self.path_to_output/self.datetime/"server"
-        energy = pd.read_csv(path_to_server/"energy.csv", parse_dates=["timestamp"])
+        path_to_server = os.path.join(self.path_to_result,"server")
+        energy = pd.read_csv(os.path.join(path_to_server,"energy.csv"), parse_dates=["timestamp"])
         energy["timestamp"] = energy["timestamp"].dt.round("1s") # Rounding to 1s
         energy.columns = [col.strip() for col in energy.columns]
         
-        results = flwr_pkl(path_to_server/"results.pkl")
+        results = flwr_pkl(os.path.join(path_to_server,"results.pkl"))
         acc_centralized = [acc[1] for acc in results.metrics_centralized["accuracy"][1:]]
         acc_distributed = [acc[1] for acc in results.metrics_distributed["accuracy"]]
         losses_centralized = [loss[1] for loss in results.losses_centralized[1:]] # First loss is evaluated on initial parameters
@@ -203,12 +241,6 @@ class EnergyResult:
             }
         )
         return SimpleNamespace(energy=energy, results=results_df)
-        
-    def _read_all_clients(self)->List[pd.DataFrame]:
-        clients = []
-        for cid in self.cids:
-            clients.append(self._read_client(cid))
-        return clients
     
     def _filter_energy(self, df:pd.DataFrame, start_time:str, end_time:str)->pd.DataFrame:
         """_summary_
@@ -232,7 +264,11 @@ class EnergyResult:
     def server_results(self)->pd.DataFrame:
         server = self._read_server()
         return server
-        
+    
+    def client_host_energy(self):
+        hostname, energy = self._read_all_host_energy()
+        return hostname, energy
+            
     def make_energy_plot(self, attribute:str, columns_name_1:str, columns_name_2)->None:
         """_summary_
 
@@ -242,11 +278,13 @@ class EnergyResult:
             columns_name_2 (_type_): Columns name of DataFrame for the y-axis
             Example: attribute = "energy", columns_name_1 = "timestamp", columns_name_2 = "tot inst power"
         """
-        clients = self._read_all_clients()
+        # clients = self._read_all_clients()
         server = self._read_server()
+        hostname, host_energy = self.client_host_energy()
         plt.figure(figsize=(10,5))
-        for cid in self.cids:
-            plt.plot(clients[cid].__getattribute__(attribute)[columns_name_1], clients[cid].__getattribute__(attribute)[columns_name_2], label=f"Client {cid}")
+        for hid in range(len(host_energy)):
+        #    plt.plot(host[cid].__getattribute__(attribute)[columns_name_1], clients[cid].__getattribute__(attribute)[columns_name_2], label=f"Client {cid}")
+            plt.plot(host_energy[hid][columns_name_1], host_energy[hid][columns_name_2], label=f"{hostname[hid]}")
         plt.plot(server.__getattribute__(attribute)[columns_name_1], server.__getattribute__(attribute)[columns_name_2], label="Server")
         plt.xlabel(columns_name_1)
         plt.ylabel(columns_name_2)
@@ -263,8 +301,8 @@ class EnergyResult:
         for k,v in kwargs.items():
             if k=="loss":
                 plt.figure(figsize=(10,5))
-                for cid in self.cids:
-                    plt.plot(clients[cid].__getattribute__(v[0])[v[1]],clients[cid].__getattribute__(v[0])[v[2]], label=f"Client {cid}")
+                for cid in range(len(clients)):
+                   plt.plot(clients[cid].__getattribute__(v[0])[v[1]],clients[cid].__getattribute__(v[0])[v[2]], label=f"Client {cid}")
                 plt.plot(server.__getattribute__(v[0])[v[1]],server.__getattribute__(v[0])[v[3]], label=f"Server {v[3]}", linestyle="--")
                 plt.plot(server.__getattribute__(v[0])[v[1]],server.__getattribute__(v[0])[v[4]], label=f"Server {v[4]}", linestyle="-.")
                 plt.xlabel(v[1])
@@ -272,8 +310,8 @@ class EnergyResult:
                 plt.legend()
             elif k=="accuracy":
                 plt.figure(figsize=(10,5))
-                for cid in self.cids:
-                    plt.plot(clients[cid].__getattribute__(v[0])[v[1]],clients[cid].__getattribute__(v[0])[v[2]], label=f"Client {cid}")
+                for cid in range(len(clients)):
+                   plt.plot(clients[cid].__getattribute__(v[0])[v[1]],clients[cid].__getattribute__(v[0])[v[2]], label=f"Client {cid}")
                 plt.plot(server.__getattribute__(v[0])[v[1]],server.__getattribute__(v[0])[v[3]], label=f"Server {v[3]}", linestyle="--")
                 plt.plot(server.__getattribute__(v[0])[v[1]],server.__getattribute__(v[0])[v[4]], label=f"Server {v[4]}", linestyle="-.")
                 plt.xlabel(v[1])
@@ -282,57 +320,19 @@ class EnergyResult:
                     
         
 
-# if __name__ == "__main__":  
-    
-#     result_plot = {"loss": ["results","server_round","loss","losses_centralized","losses_distributed"],
-#                     "accuracy": ["results","server_round","accuracy","acc_centralized","acc_distributed"]}
+if __name__ == "__main__":  
+    result_plot = {"loss": ["results","server_round","loss","losses_centralized","losses_distributed"],
+                    "accuracy": ["results","server_round","accuracy","acc_centralized","acc_distributed"]}
+
+    summaryfile = summary_file("/home/tunguyen/energyfl/outputs/experiment_summary1.csv")
+    results_dir_ls = summaryfile["result_folder"].tolist()[-3:]
+    for result_dir in results_dir_ls:
+        result = EnergyResult(result_dir,summaryfile)
+        result.make_energy_plot("energy",'timestamp',"tot avg power (mW)")
+        result.make_result_plot(**result_plot)
         
-#     result = EnergyResult("../outputs_from_tl1/", 4, "2024-01-22_19-31-34")
-#     #mycsv = result._read_client(5)
+#     result = EnergyResult("/home/tunguyen/energyfl/outputs/2024-02-15_20-13-16",summaryfile)
 #     server = result._read_server()
 #     result.make_energy_plot("energy",'timestamp',"tot avg power (mW)")
-#     result.make_result_plot(**result_plot)
-
-# def read_result(path_to_last_run, multirun=True):
-#     ls_results = {}
-#     if multirun:
-#         run_dirs = os.listdir(path_to_last_run)
-#         for rd in run_dirs:
-#             run_path = os.path.join(path_to_last_run, rd)
-#             if os.path.isdir(run_path):
-#                 if os.path.exists(os.path.join(run_path, "results.pkl")):
-#                     pkl_file = os.path.join(run_path, "results.pkl")
-#                     result = read_pkl(pkl_file)
-#                     ls_results[rd] = result
-#     else:
-#         pkl_file = os.path.join(path_to_last_run, "results.pkl")
-#         result = read_pkl(pkl_file)
-#         ls_results["0"] = result
-#     return ls_results   
-
-# def plot_results_multirun(result_file:Dict, metrics)->None:
-#     #nb_runs = len(result_file)
-#     #Plot run results on the same figure
-#     fig,ax = plt.subplots(figsize=(5,5))
-#     labels = {'0': 'FedOrdered',
-#               '1': 'FedAvg'}
-#     for k,v in result_file.items():
-#         if metrics == "losses_distributed":
-#             rounds, vals = zip(*v.losses_distributed)
-#         elif metrics == "losses_centralized":
-#             rounds, vals = zip(*v.losses_centralized)
-#         elif metrics == "metrics_centralized":
-#             rounds, vals = zip(*v.metrics_centralized["accuracy"])
-#         elif metrics == "metrics_distributed":
-#             rounds, vals = zip(*v.metrics_distributed["accuracy"])
-#         ax.plot(rounds,vals, label=labels[k])
-#     ax.set_xlabel('Communication Round')
-#     ax.set_ylabel(metrics)
-#     ax.legend()
-    
-    
-
-# path_to_multirun = "/Users/Slaton/Documents/grenoble-code/fl-flower/outputs_from_tl/main_server_0/2024-01-20/23-35-19"
-# ok = read_result(path_to_multirun, multirun=False)
-# plot_results_multirun(ok, "losses_distributed")
+# result.make_result_plot(**result_plot)
 

@@ -1,13 +1,13 @@
 data :
-  data_name : MNIST # (possible_value : CIFAR10, CIFAR100, MNIST, FashionMNIST)
-  download_dir : /Volumes/T7 Touch/TheseProject/FLDATA/${data.data_name}
-  partition_dir : /Volumes/T7 Touch/TheseProject/FLDATA/${data.data_name}/ParitionedData/${data.partition}/${data.num_clients}clients/alpha${data.alpha}
+  data_name : CIFAR10 # (possible_value : CIFAR10, CIFAR100, MNIST, FashionMNIST)
+  download_dir : /srv/storage/energyfl@storage1.toulouse.grid5000.fr/FLDATA/${data.data_name}
+  partition_dir : /srv/storage/energyfl@storage1.toulouse.grid5000.fr/FLDATA/${data.data_name}/ParitionedData/${data.partition}/${data.num_clients}clients/alpha${data.alpha}
   batch_size : 128
   validation_split : 10
-  num_clients : 5
+  num_clients : 100
   alpha : 0.1
   dataloaders : False # True if save partitioned data as dataloaders
-  partition : sample_skew  # (possible_value : label_skew, iid, sample_skew)
+  partition : iid  # (possible_value : label_skew, iid, sample_skew)
 
 hydra:
   run:

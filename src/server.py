@@ -1,6 +1,7 @@
 from utils.training import get_parameters, test, seed_everything
 from utils.datahandler import load_testdata_from_file
 import hydra
+import numpy as np
 import flwr as fl
 import logging
 import torch
@@ -28,16 +29,19 @@ def learning_rate_scheduler(lr, epoch, decay_rate, decay_steps):
     lr = lr * (decay_rate ** (epoch // decay_steps))
     return lr
 
+def sample_server_round(server_round:int):
+    nb_clients = 5
+    return np.random.choice(nb_clients, 2, replace=False)
 
 def get_on_fit_config(config: Dict[str, Scalar])->Callable:
     def fit_config_fn(server_round:int)->FitIns:
+        logging.info(f"Server Round: {server_round}")
         decay_rate = config.decay_rate
         decay_steps = config.decay_steps
         lr = learning_rate_scheduler(config.lr, server_round, decay_rate, decay_steps)
         return {'lr': lr, 'local_epochs': config.local_epochs, 'server_round': server_round}
     return fit_config_fn
-
-
+    
 def get_on_evaluate_config(config: Dict[str, Scalar])->Callable:
     def evaluate_config_fn(server_round:int)->EvaluateRes:
         return {'server_round': server_round}
@@ -118,20 +122,6 @@ if __name__ == "__main__":
             logging.info(f"GPU {i + 1}: {gpu_name}")
     else:
         logging.info("CUDA (GPU support) is not available on this system.")
-
-    # Check if CUDA (GPU support) is available
-    if torch.cuda.is_available():
-        # Get the number of available GPUs
-        num_gpus = torch.cuda.device_count()
-        logging.info(f"Number of available GPUs: {num_gpus}")
-
-        # Get information about each GPU
-        for i in range(num_gpus):
-            gpu_name = torch.cuda.get_device_name(i)
-            logging.info(f"GPU {i + 1}: {gpu_name}")
-    else:
-        logging.info("CUDA (GPU support) is not available on this system.")
-    
     
     try:
         main()
