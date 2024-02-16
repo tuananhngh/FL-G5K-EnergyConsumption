@@ -4,4 +4,4 @@ outputs/
 __pycache__/
 src/utils/__pycache__/
 test.ipynb
-
+sweep/
