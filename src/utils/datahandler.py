@@ -12,7 +12,7 @@ from torch.distributions import Dirichlet
 from typing import Any, Dict, Tuple, List
 from torchvision import datasets
 from torch.utils import data
-#from flwr.server.strategy import FedAdam, FedAvg, FedProx
+from flwr.server.strategy import FedAdam, FedAvg, FedProx
 
 
 class DataSetHandler:

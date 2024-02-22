@@ -87,8 +87,9 @@ class Experiment(Engine):
                 nodes:List[Host], 
                 repository_dir:str,
                 group_storage:str="energyfl",
-                output_dir:str="outputs",
+                output_dir:str="outputs2",
                 sleep:int=30,
+                summary_name:str="experiment_summary2.csv",
                 **kwargs
                 ):
             """
@@ -117,7 +118,7 @@ class Experiment(Engine):
             
             self.extra_args = Box(kwargs)
             self.jetson_sensor_monitor_file = os.path.join(self.repository_dir, "src", "energy", "jetson_monitoring_energy.py")
-            self.exp_csv_file = os.path.join(self.local_output, self.output_dir, "experiment_summary1.csv")
+            self.exp_csv_file = os.path.join(self.local_output, self.output_dir, summary_name)
             logger.info(("Server : {} \n Clients: {}".format(self.server, self.client_hosts)))
         
     def __setattr__(self, __name: str, __value: Any) -> None:
@@ -269,10 +270,8 @@ class Experiment(Engine):
         """
         Kill server and client processes when ended.
         """
-        if self.run_server.ended:
-            self.run_server.kill()
+        self.run_server.kill()
         for run_client in self.run_clients:
-            if run_client.ended:
                 run_client.kill()
         logger.info("ALL PROCESSES KILLED")
     
@@ -308,7 +307,8 @@ class Experiment(Engine):
         self.run_clients=[]
         nb_host = len(self.client_hosts)
         client_idx = np.arange(nb_clients)
-        client_per_host = np.split(client_idx, nb_host)
+        client_per_host = np.array_split(client_idx, nb_host)
+        print("CLIENT PER HOST : {}".format(client_per_host))
         for (host, cid_in_host) in zip(self.client_hosts, client_per_host):
             hparams[f"{host.address}".split('.')[0]] = str(cid_in_host)
             for cid in cid_in_host:
@@ -356,6 +356,7 @@ class Experiment(Engine):
             
             #TEST CASE FOR SSH
             nb_clients = hparams.data.num_clients
+            print("NB CLIENTS : {}".format(nb_clients))
             if multiple_clients_per_host:
                 self.multiple_clients_per_host(nb_clients, hparams, cmd_args)
             else :
@@ -423,20 +424,25 @@ class Experiment(Engine):
         
 
 if __name__ == "__main__":
-    nodes = get_oar_job_nodes(448947, "toulouse")
+    nodes = get_oar_job_nodes(449189, "toulouse")
 
     params = {
-        "params.num_rounds":[100],
-        "data.num_clients": [10],
+        "params.num_rounds":[1000],
+        "params.fraction_fit":[0.1], #0.1 is enough for 100 client
+        "params.fraction_evaluate":[0.1], #0.5 is enough for 100 client
+        "params.min_fit_clients":[10],
+        "params.wait_round":[10],
+        "params.lr":[1e-2,1e-3],
+        "data.batch_size": [50],
         "data.alpha": [0.1], #[1,2,5,10],
         "data.partition":["iid"],
-        "client.lr" : [1e-2],#,1e-2],
-        "client.local_epochs": [1],
+        "client.lr" : [1e-2,1e-3,1e-4],
+        "client.local_epochs": [3],
         "client.decay_rate": [1],
-        "client.decay_steps": [10],
-        "neuralnet":["ResNet18"],
-        "strategy": ["fedavg"],
-        "optimizer": ["SGD"],
+        "client.decay_steps": [1],
+        "neuralnet":["MobileNetV3Small"],
+        "strategy": ["fedadam"],
+        "optimizer": ["SGD","Adam"],
     }
 
     repository_dir = "/home/tunguyen/jetson-test"
@@ -444,16 +450,19 @@ if __name__ == "__main__":
     to_remove = ["client.cid",
                  "client.dry_run",
                  "data.partition_dir",
+                 "data.dataloaders",
                  "params.num_classes",
                  "tmp_result_folder",
                  "exp_datetime",
                  "hydra.run.dir",]
-
+    
     Exps = Experiment(
         params=params,
         nodes=nodes,
         repository_dir=repository_dir,
         sleep=30,
-        key_to_remove=to_remove)
+        key_to_remove=to_remove,
+        output_dir="outputs4",
+        summary_name="experiment_summary.csv")
     #Exps.frontend_dry_run()
     Exps.run()

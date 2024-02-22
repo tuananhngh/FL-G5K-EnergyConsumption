@@ -7,8 +7,8 @@ data :
   num_clients : 100
   alpha : 0.1
   dataloaders : False # True if save partitioned data as dataloaders
-  partition : iid  # (possible_value : label_skew, iid, sample_skew)
+  partition : label_skew  # (possible_value : label_skew, iid, sample_skew)
 
 hydra:
   run:
-    dir : ${data.partition_dir} 
+    dir : ${data.partition_dir} data  

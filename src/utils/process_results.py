@@ -1,3 +1,4 @@
+
 from typing import Dict, List, Tuple
 from types import SimpleNamespace
 import pickle as pkl
@@ -6,6 +7,7 @@ import os
 import yaml # pip install PyYAML
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 # from flwr.server import strategy
 # from torch import mul
 from pathlib import Path
@@ -136,13 +138,6 @@ class ReadFlowerLog:
 # fitmess = log_dataframe.get_server_fit_time()
 
 
-def summary_file(path_summary):
-    usr_home = path_summary.replace('/',' ').split()
-    usr_homedir = f"{usr_home[0]}/{usr_home[1]}"
-    summary = pd.read_csv(path_summary)
-    cols = summary.columns
-    summary["result_folder"] = summary["result_folder"].apply(lambda x: x.replace("root",usr_homedir))
-    return summary
 
 
 class EnergyResult:
@@ -157,6 +152,7 @@ class EnergyResult:
         self.summaryfile = summaryfile
         self.path_to_result = path_to_result
         self.exp_info = self.summaryfile[self.summaryfile["result_folder"]==self.path_to_result]
+        #print(self.exp_info)
         self.date_time_format = "%Y-%m-%d %H:%M:%S"
 
         
@@ -164,21 +160,32 @@ class EnergyResult:
 
     def _get_client_in_host(self)->List[Tuple[str,List[int]]]:
         #exp_info = self.summary[self.summary["result_folder"]==self.result_path]
-        host_dict = [col for col in self.exp_info.columns if "estats" in col]
+        hosts = [col for col in self.exp_info.columns if "estats" in col]
         hostmetainfo = []
-        for host in host_dict:
-            client_list = self.exp_info[host].iloc[0].replace(']','').replace('[','').split(' ')
+        for host in hosts:
+            client_list = self.exp_info[host].iloc[0]
+            client_list = re.sub(r'\[|\]','',client_list).split()
             client_list = [int(i) for i in client_list]
             hostmetainfo.append((host,client_list))
         return hostmetainfo
     
+    def _get_selectedclient_in_host(self)->List[Tuple[str,List[int]]]:
+        hosts = sorted([host for host in os.listdir(self.path_to_result) if 'client' in host])
+        hostmetainfo = []
+        for host in hosts:
+            file_in_host = os.listdir(os.path.join(self.path_to_result,host))
+            client_list = [name.split("_")[-1].split('.')[0] for name in file_in_host if "evalresult" in name]
+            client_list = [int(i) for i in client_list]
+            hostmetainfo.append((host,client_list))
+        return hostmetainfo
         
     def _read_client_host(self, hid:int):
         path_to_host = os.path.join(self.path_to_result,f"client_host_{hid}")
         energy = pd.read_csv(os.path.join(path_to_host,"energy.csv"), parse_dates=["timestamp"])
         energy.columns = [col.strip() for col in energy.columns]
         
-        hostmetadata = self._get_client_in_host()
+        #hostmetadata = self._get_client_in_host()
+        hostmetadata = self._get_selectedclient_in_host()
         hostname = hostmetadata[hid][0]
         client_list = hostmetadata[hid][1]
         client_metadata = {f"client_{cid}": self._read_client(path_to_host,cid) for cid in client_list}
@@ -291,48 +298,112 @@ class EnergyResult:
         plt.legend()
         plt.show()
         
-    def make_result_plot(self,**kwargs)->None:
+    def make_server_plot(self,config, centralized:bool=True,**kwargs)->None:
         """
         Args:
             attribute (str): _description_
         """
+        config_text = '\n'.join(f'{k}: {v}' for k, v in config.items())
+        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
         server = self._read_server()
-        clients= self._read_all_clients()
+        #clients= self._read_all_clients()
         for k,v in kwargs.items():
             if k=="loss":
-                plt.figure(figsize=(10,5))
-                for cid in range(len(clients)):
-                   plt.plot(clients[cid].__getattribute__(v[0])[v[1]],clients[cid].__getattribute__(v[0])[v[2]], label=f"Client {cid}")
-                plt.plot(server.__getattribute__(v[0])[v[1]],server.__getattribute__(v[0])[v[3]], label=f"Server {v[3]}", linestyle="--")
-                plt.plot(server.__getattribute__(v[0])[v[1]],server.__getattribute__(v[0])[v[4]], label=f"Server {v[4]}", linestyle="-.")
-                plt.xlabel(v[1])
-                plt.ylabel(v[2])
-                plt.legend()
+                fig,ax = plt.subplots(figsize=(10,5))
+                # for cid in range(len(clients)):
+                #    plt.plot(clients[cid].__getattribute__(v[0])[v[1]],clients[cid].__getattribute__(v[0])[v[2]], label=f"Client {cid}")
+                if centralized:
+                    x_vals = server.__getattribute__(v[0])[v[1]]
+                    y_vals = server.__getattribute__(v[0])[v[3]]
+                    min_value = min(y_vals)
+                    ax.hlines(y=min_value, label=f"Min {v[3]} : {min_value:.4f}", linestyle="--", xmin = x_vals.min(), xmax = x_vals.max(), color="blue")
+                    ax.plot(x_vals, y_vals, label=f"Server {v[3]}", linestyle="--")
+                ax.text(1.05, 0.95, config_text, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+                
+                xd_vals = server.__getattribute__(v[0])[v[1]]
+                yd_vals = server.__getattribute__(v[0])[v[4]]
+                mind_value = min(yd_vals)
+                avg_val = np.sum(yd_vals)/len(yd_vals)
+                ax.hlines(y=mind_value, label=f"Min & Avg {v[4]} : {mind_value:.4f} & {avg_val:.4f}", linestyle="--", color="orange", xmin =xd_vals.min(), xmax = xd_vals.max())
+                ax.plot(xd_vals, yd_vals, label=f"Server {v[4]}", linestyle="-.")
+                ax.set_xlabel(v[1])
+                ax.set_ylabel(v[2])
+                ax.legend()
+
             elif k=="accuracy":
-                plt.figure(figsize=(10,5))
-                for cid in range(len(clients)):
-                   plt.plot(clients[cid].__getattribute__(v[0])[v[1]],clients[cid].__getattribute__(v[0])[v[2]], label=f"Client {cid}")
-                plt.plot(server.__getattribute__(v[0])[v[1]],server.__getattribute__(v[0])[v[3]], label=f"Server {v[3]}", linestyle="--")
-                plt.plot(server.__getattribute__(v[0])[v[1]],server.__getattribute__(v[0])[v[4]], label=f"Server {v[4]}", linestyle="-.")
-                plt.xlabel(v[1])
-                plt.ylabel(v[2])
+                fig, ax = plt.subplots(figsize=(10,5))
+                #plt.figure(figsize=(10,5))
+                # for cid in range(len(clients)):
+                #    plt.plot(clients[cid].__getattribute__(v[0])[v[1]],clients[cid].__getattribute__(v[0])[v[2]], label=f"Client {cid}")
+                if centralized:
+                    x_vals = server.__getattribute__(v[0])[v[1]]
+                    y_vals = server.__getattribute__(v[0])[v[3]]
+                    max_value = max(y_vals)
+                    ax.hlines(y=max_value, label=f"Max {v[3]} : {max_value:.4f}", linestyle="--", xmin = x_vals.min(), xmax = x_vals.max(), color="blue")
+                    ax.plot(x_vals, y_vals, label=f"Server {v[3]}", linestyle="--")
+                ax.text(1.05, 0.95, config_text, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+                
+                xd_vals = server.__getattribute__(v[0])[v[1]]
+                yd_vals = server.__getattribute__(v[0])[v[4]]
+                maxd_value = max(yd_vals)
+                avg_val = np.sum(yd_vals)/len(yd_vals)
+                ax.hlines(y=maxd_value, label=f"Max & Avg {v[4]} : {maxd_value:.4f} & {avg_val:.4f}", linestyle="--", color="orange", xmin =xd_vals.min(), xmax = xd_vals.max())
+                ax.plot(xd_vals,yd_vals, label=f"Server {v[4]}", linestyle="-.")
+                ax.set_xlabel(v[1])
+                ax.set_ylabel(v[2])
                 plt.legend()
-                    
+                
+
+    
+def match_folder_csv(summaryfile, output_dir):
+    correct_file = os.listdir(output_dir)
+    summaryfile = summaryfile[summaryfile["result_folder"].apply(lambda x: x.split("/")[-1] in correct_file)]
+    return summaryfile
+
+def select_model(summaryfile, model_name):
+    summaryfile = summaryfile[summaryfile["neuralnet"]==model_name]
+    return summaryfile
+    
+def read_summaryfile(path_summary):
+    usr_home = path_summary.replace('/',' ').split()
+    usr_homedir = f"{usr_home[0]}/{usr_home[1]}"
+    summary = pd.read_csv(path_summary)
+    cols = summary.columns
+    summary["result_folder"] = summary["result_folder"].apply(lambda x: x.replace("root",usr_homedir))
+    return summary
+
+def config_drop(config:Dict[str,str])->Dict[str,str]:
+    keys_etc = ['server','energy_file','sleep_duration']
+    
+    nodes_keys = [k for k in config if 'estats' in k]
+    timestamp_keys = [k for k in config if 'timestamp' in k]
+    comm_keys = [k for k in config if 'comm' in k]
+    params_keys = [k for k in config if 'params' in k]
+    additional_keys = [k for k in config for i in keys_etc if i in k]
+    
+    results_dir_short = config["result_folder"].split("/")[-1]
+    config["result_folder"] = results_dir_short
+    
+    drop_list = nodes_keys + timestamp_keys + comm_keys + additional_keys #+ params_keys
+    for key in drop_list:
+        config.pop(key)
+    return config
         
 
 if __name__ == "__main__":  
-    result_plot = {"loss": ["results","server_round","loss","losses_centralized","losses_distributed"],
+    result_plot = {#"loss": ["results","server_round","loss","losses_centralized","losses_distributed"],}
                     "accuracy": ["results","server_round","accuracy","acc_centralized","acc_distributed"]}
-
-    summaryfile = summary_file("/home/tunguyen/energyfl/outputs/experiment_summary1.csv")
-    results_dir_ls = summaryfile["result_folder"].tolist()[-3:]
-    for result_dir in results_dir_ls:
+    
+    path_to_output = "/home/tunguyen/energyfl/outputs3/"
+    summary_path = os.path.join(path_to_output,"experiment_summary.csv")
+    summaryfile = read_summaryfile(summary_path)
+    summaryfile = match_folder_csv(summaryfile, path_to_output)
+    summaryfile = select_model(summaryfile, "Net") # select only ResNet
+    results_dir_ls = summaryfile["result_folder"].tolist()
+    summaryfile_dict = summaryfile.to_dict(orient="records")
+    for (result_dir,config) in zip(results_dir_ls,summaryfile_dict):
         result = EnergyResult(result_dir,summaryfile)
-        result.make_energy_plot("energy",'timestamp',"tot avg power (mW)")
-        result.make_result_plot(**result_plot)
+        #result.make_energy_plot("energy",'timestamp',"tot avg power (mW)")
+        config = config_drop(config)
+        result.make_server_plot(config,centralized=True, **result_plot)
         
-#     result = EnergyResult("/home/tunguyen/energyfl/outputs/2024-02-15_20-13-16",summaryfile)
-#     server = result._read_server()
-#     result.make_energy_plot("energy",'timestamp',"tot avg power (mW)")
-# result.make_result_plot(**result_plot)
-
