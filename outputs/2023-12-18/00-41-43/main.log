@@ -1,0 +1,132 @@
+[2023-12-18 00:41:45,169][flwr][INFO] - Starting Flower simulation, config: ServerConfig(num_rounds=10, round_timeout=None)
+[2023-12-18 00:41:48,435][flwr][INFO] - Flower VCE: Ray initialized with resources: {'CPU': 64.0, 'memory': 129699792692.0, 'object_store_memory': 59871339724.0, 'node:172.16.20.30': 1.0, 'node:__internal_head__': 1.0}
+[2023-12-18 00:41:48,435][flwr][INFO] - Optimize your simulation with Flower VCE: https://flower.dev/docs/framework/how-to-run-simulations.html
+[2023-12-18 00:41:48,435][flwr][INFO] - No `client_resources` specified. Using minimal resources for clients.
+[2023-12-18 00:41:48,435][flwr][INFO] - Flower VCE: Resources for each Virtual Client: {'num_cpus': 1, 'num_gpus': 0.0}
+[2023-12-18 00:41:48,466][flwr][INFO] - Flower VCE: Creating VirtualClientEngineActorPool with 64 actors
+[2023-12-18 00:41:48,466][flwr][INFO] - Initializing global parameters
+[2023-12-18 00:41:48,466][flwr][INFO] - Requesting initial parameters from one random client
+[2023-12-18 00:41:52,581][flwr][ERROR] - Traceback (most recent call last):
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 138, in _submit_job
+    res = self.actor_pool.get_client_result(self.cid, timeout)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 414, in get_client_result
+    return self._fetch_future_result(cid)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 300, in _fetch_future_result
+    res_cid, res = ray.get(future)  # type: (str, ClientRes)
+                   ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/auto_init_hook.py", line 24, in auto_init_wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/client_mode_hook.py", line 103, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/worker.py", line 2524, in get
+    raise value.as_instanceof_cause()
+ray.exceptions.RayTaskError(ClientException): [36mray::DefaultActor.run()[39m (pid=8904, ip=172.16.20.30, actor_id=5c0a6629a1c4f1aa92b3873101000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fe389ddee50>)
+                                           ^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 46, in client_fn
+    return SimpleClient(trainloader[client_id], valloader[client_id])
+                        ~~~~~~~~~~~^^^^^^^^^^^
+TypeError: list indices must be integers or slices, not str
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=8904, ip=172.16.20.30, actor_id=5c0a6629a1c4f1aa92b3873101000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fe389ddee50>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 76 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 70, in run\n    client = check_clientfn_returns_client(client_fn(cid))\n                                           ^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 46, in client_fn\n    return SimpleClient(trainloader[client_id], valloader[client_id])\n                        ~~~~~~~~~~~^^^^^^^^^^^\nTypeError: list indices must be integers or slices, not str\n',)
+
+[2023-12-18 00:41:52,581][flwr][ERROR] - [36mray::DefaultActor.run()[39m (pid=8904, ip=172.16.20.30, actor_id=5c0a6629a1c4f1aa92b3873101000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fe389ddee50>)
+                                           ^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 46, in client_fn
+    return SimpleClient(trainloader[client_id], valloader[client_id])
+                        ~~~~~~~~~~~^^^^^^^^^^^
+TypeError: list indices must be integers or slices, not str
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=8904, ip=172.16.20.30, actor_id=5c0a6629a1c4f1aa92b3873101000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fe389ddee50>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 76 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 70, in run\n    client = check_clientfn_returns_client(client_fn(cid))\n                                           ^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 46, in client_fn\n    return SimpleClient(trainloader[client_id], valloader[client_id])\n                        ~~~~~~~~~~~^^^^^^^^^^^\nTypeError: list indices must be integers or slices, not str\n',)
+[2023-12-18 00:41:52,581][flwr][ERROR] - [36mray::DefaultActor.run()[39m (pid=8904, ip=172.16.20.30, actor_id=5c0a6629a1c4f1aa92b3873101000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fe389ddee50>)
+                                           ^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 46, in client_fn
+    return SimpleClient(trainloader[client_id], valloader[client_id])
+                        ~~~~~~~~~~~^^^^^^^^^^^
+TypeError: list indices must be integers or slices, not str
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=8904, ip=172.16.20.30, actor_id=5c0a6629a1c4f1aa92b3873101000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fe389ddee50>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 76 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 70, in run\n    client = check_clientfn_returns_client(client_fn(cid))\n                                           ^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 46, in client_fn\n    return SimpleClient(trainloader[client_id], valloader[client_id])\n                        ~~~~~~~~~~~^^^^^^^^^^^\nTypeError: list indices must be integers or slices, not str\n',)
+[2023-12-18 00:41:52,584][flwr][ERROR] - Traceback (most recent call last):
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/app.py", line 308, in start_simulation
+    hist = run_fl(
+           ^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/server/app.py", line 225, in run_fl
+    hist = server.fit(num_rounds=config.num_rounds, timeout=config.round_timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/server/server.py", line 90, in fit
+    self.parameters = self._get_initial_parameters(timeout=timeout)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/server/server.py", line 279, in _get_initial_parameters
+    get_parameters_res = random_client.get_parameters(ins=ins, timeout=timeout)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 180, in get_parameters
+    res = self._submit_job(get_parameters, timeout)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 147, in _submit_job
+    raise ex
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 138, in _submit_job
+    res = self.actor_pool.get_client_result(self.cid, timeout)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 414, in get_client_result
+    return self._fetch_future_result(cid)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 300, in _fetch_future_result
+    res_cid, res = ray.get(future)  # type: (str, ClientRes)
+                   ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/auto_init_hook.py", line 24, in auto_init_wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/client_mode_hook.py", line 103, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/worker.py", line 2524, in get
+    raise value.as_instanceof_cause()
+ray.exceptions.RayTaskError(ClientException): [36mray::DefaultActor.run()[39m (pid=8904, ip=172.16.20.30, actor_id=5c0a6629a1c4f1aa92b3873101000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fe389ddee50>)
+                                           ^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 46, in client_fn
+    return SimpleClient(trainloader[client_id], valloader[client_id])
+                        ~~~~~~~~~~~^^^^^^^^^^^
+TypeError: list indices must be integers or slices, not str
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=8904, ip=172.16.20.30, actor_id=5c0a6629a1c4f1aa92b3873101000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fe389ddee50>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 76 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 70, in run\n    client = check_clientfn_returns_client(client_fn(cid))\n                                           ^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 46, in client_fn\n    return SimpleClient(trainloader[client_id], valloader[client_id])\n                        ~~~~~~~~~~~^^^^^^^^^^^\nTypeError: list indices must be integers or slices, not str\n',)
+
+[2023-12-18 00:41:52,585][flwr][ERROR] - Your simulation crashed :(. This could be because of several reasons.The most common are: 
+	 > Your system couldn't fit a single VirtualClient: try lowering `client_resources`.
+	 > All the actors in your pool crashed. This could be because: 
+		 - You clients hit an out-of-memory (OOM) error and actors couldn't recover from it. Try launching your simulation with more generous `client_resources` setting (i.e. it seems {'num_cpus': 1, 'num_gpus': 0.0} is not enough for your workload). Use fewer concurrent actors. 
+		 - You were running a multi-node simulation and all worker nodes disconnected. The head node might still be alive but cannot accommodate any actor with resources: {'num_cpus': 1, 'num_gpus': 0.0}.

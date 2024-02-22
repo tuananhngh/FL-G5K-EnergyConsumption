@@ -1,0 +1,25 @@
+[2023-12-18 17:04:11,940][flwr][WARNING] - 
+Setting `min_available_clients` lower than `min_fit_clients` or
+`min_evaluate_clients` can cause the server to fail when there are too few clients
+connected to the server. `min_available_clients` must be set to a value larger
+than or equal to the values of `min_fit_clients` and `min_evaluate_clients`.
+
+[2023-12-18 17:04:11,941][flwr][INFO] - Starting Flower simulation, config: ServerConfig(num_rounds=50, round_timeout=None)
+[2023-12-18 17:04:15,582][flwr][INFO] - Flower VCE: Ray initialized with resources: {'accelerator_type:P100': 1.0, 'CPU': 48.0, 'node:__internal_head__': 1.0, 'GPU': 2.0, 'memory': 128949976884.0, 'node:172.16.36.6': 1.0, 'object_store_memory': 59549990092.0}
+[2023-12-18 17:04:15,583][flwr][INFO] - Optimize your simulation with Flower VCE: https://flower.dev/docs/framework/how-to-run-simulations.html
+[2023-12-18 17:04:15,583][flwr][INFO] - Flower VCE: Resources for each Virtual Client: {'num_cpus': 2, 'num_gpus': 0.25}
+[2023-12-18 17:04:15,594][flwr][INFO] - Flower VCE: Creating VirtualClientEngineActorPool with 8 actors
+[2023-12-18 17:04:15,595][flwr][INFO] - Initializing global parameters
+[2023-12-18 17:04:15,595][flwr][INFO] - Requesting initial parameters from one random client
+[2023-12-18 17:04:18,994][flwr][INFO] - Received initial parameters from one random client
+[2023-12-18 17:04:18,994][flwr][INFO] - Evaluating initial parameters
+[2023-12-18 17:04:21,748][flwr][INFO] - initial parameters (loss, other metrics): 0.11521170027256011, {'accuracy': 0.0886}
+[2023-12-18 17:04:21,749][flwr][INFO] - FL starting
+[2023-12-18 17:04:21,750][flwr][DEBUG] - fit_round 1: strategy sampled 100 clients (out of 100)
+[2023-12-18 17:06:26,367][flwr][DEBUG] - fit_round 1 received 100 results and 0 failures
+[2023-12-18 17:06:26,444][flwr][WARNING] - No fit_metrics_aggregation_fn provided
+[2023-12-18 17:06:29,259][flwr][INFO] - fit progress: (1, 0.11510059237480164, {'accuracy': 0.1321}, 127.50927274999958)
+[2023-12-18 17:06:29,260][flwr][DEBUG] - evaluate_round 1: strategy sampled 25 clients (out of 100)
+[2023-12-18 17:06:58,763][flwr][DEBUG] - evaluate_round 1 received 25 results and 0 failures
+[2023-12-18 17:06:58,764][flwr][WARNING] - No evaluate_metrics_aggregation_fn provided
+[2023-12-18 17:06:58,764][flwr][DEBUG] - fit_round 2: strategy sampled 100 clients (out of 100)

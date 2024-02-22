@@ -1,0 +1,706 @@
+[2023-12-18 00:44:31,064][flwr][INFO] - Starting Flower simulation, config: ServerConfig(num_rounds=10, round_timeout=None)
+[2023-12-18 00:44:34,234][flwr][INFO] - Flower VCE: Ray initialized with resources: {'node:172.16.20.30': 1.0, 'object_store_memory': 59859265536.0, 'memory': 129671619584.0, 'CPU': 64.0, 'node:__internal_head__': 1.0}
+[2023-12-18 00:44:34,235][flwr][INFO] - Optimize your simulation with Flower VCE: https://flower.dev/docs/framework/how-to-run-simulations.html
+[2023-12-18 00:44:34,235][flwr][INFO] - No `client_resources` specified. Using minimal resources for clients.
+[2023-12-18 00:44:34,235][flwr][INFO] - Flower VCE: Resources for each Virtual Client: {'num_cpus': 1, 'num_gpus': 0.0}
+[2023-12-18 00:44:34,263][flwr][INFO] - Flower VCE: Creating VirtualClientEngineActorPool with 64 actors
+[2023-12-18 00:44:34,264][flwr][INFO] - Initializing global parameters
+[2023-12-18 00:44:34,264][flwr][INFO] - Requesting initial parameters from one random client
+[2023-12-18 00:44:38,375][flwr][INFO] - Received initial parameters from one random client
+[2023-12-18 00:44:38,375][flwr][INFO] - Evaluating initial parameters
+[2023-12-18 00:44:41,724][flwr][INFO] - initial parameters (loss, other metrics): 0.11528265776634217, {'accuracy': 0.1028}
+[2023-12-18 00:44:41,725][flwr][INFO] - FL starting
+[2023-12-18 00:44:41,729][flwr][DEBUG] - fit_round 1: strategy sampled 10 clients (out of 100)
+[2023-12-18 00:44:54,237][flwr][ERROR] - Traceback (most recent call last):
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 138, in _submit_job
+    res = self.actor_pool.get_client_result(self.cid, timeout)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 414, in get_client_result
+    return self._fetch_future_result(cid)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 300, in _fetch_future_result
+    res_cid, res = ray.get(future)  # type: (str, ClientRes)
+                   ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/auto_init_hook.py", line 24, in auto_init_wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/client_mode_hook.py", line 103, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/worker.py", line 2524, in get
+    raise value.as_instanceof_cause()
+ray.exceptions.RayTaskError(ClientException): [36mray::DefaultActor.run()[39m (pid=13854, ip=172.16.20.30, actor_id=e2275eed8cce273d1c55eed301000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7f0c2c1c0490>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13854, ip=172.16.20.30, actor_id=e2275eed8cce273d1c55eed301000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7f0c2c1c0490>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 64 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+
+[2023-12-18 00:44:54,238][flwr][ERROR] - [36mray::DefaultActor.run()[39m (pid=13854, ip=172.16.20.30, actor_id=e2275eed8cce273d1c55eed301000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7f0c2c1c0490>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13854, ip=172.16.20.30, actor_id=e2275eed8cce273d1c55eed301000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7f0c2c1c0490>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 64 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+[2023-12-18 00:44:54,241][flwr][ERROR] - Traceback (most recent call last):
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 138, in _submit_job
+    res = self.actor_pool.get_client_result(self.cid, timeout)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 414, in get_client_result
+    return self._fetch_future_result(cid)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 300, in _fetch_future_result
+    res_cid, res = ray.get(future)  # type: (str, ClientRes)
+                   ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/auto_init_hook.py", line 24, in auto_init_wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/client_mode_hook.py", line 103, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/worker.py", line 2524, in get
+    raise value.as_instanceof_cause()
+ray.exceptions.RayTaskError(ClientException): [36mray::DefaultActor.run()[39m (pid=13850, ip=172.16.20.30, actor_id=d0feed8eebd1e7465545978701000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fbd04151c50>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13850, ip=172.16.20.30, actor_id=d0feed8eebd1e7465545978701000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fbd04151c50>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 90 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+
+[2023-12-18 00:44:54,243][flwr][ERROR] - Traceback (most recent call last):
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 138, in _submit_job
+    res = self.actor_pool.get_client_result(self.cid, timeout)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 414, in get_client_result
+    return self._fetch_future_result(cid)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 300, in _fetch_future_result
+    res_cid, res = ray.get(future)  # type: (str, ClientRes)
+                   ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/auto_init_hook.py", line 24, in auto_init_wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/client_mode_hook.py", line 103, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/worker.py", line 2524, in get
+    raise value.as_instanceof_cause()
+ray.exceptions.RayTaskError(ClientException): [36mray::DefaultActor.run()[39m (pid=13849, ip=172.16.20.30, actor_id=6eed87ea87a089c3266949d401000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fb4a4212650>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13849, ip=172.16.20.30, actor_id=6eed87ea87a089c3266949d401000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fb4a4212650>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 85 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+
+[2023-12-18 00:44:54,243][flwr][ERROR] - Traceback (most recent call last):
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 138, in _submit_job
+    res = self.actor_pool.get_client_result(self.cid, timeout)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 414, in get_client_result
+    return self._fetch_future_result(cid)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 300, in _fetch_future_result
+    res_cid, res = ray.get(future)  # type: (str, ClientRes)
+                   ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/auto_init_hook.py", line 24, in auto_init_wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/client_mode_hook.py", line 103, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/worker.py", line 2524, in get
+    raise value.as_instanceof_cause()
+ray.exceptions.RayTaskError(ClientException): [36mray::DefaultActor.run()[39m (pid=13848, ip=172.16.20.30, actor_id=2936cca61e0144d41ccb7abe01000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fdc900d5c50>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13848, ip=172.16.20.30, actor_id=2936cca61e0144d41ccb7abe01000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fdc900d5c50>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 18 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+
+[2023-12-18 00:44:54,244][flwr][ERROR] - Traceback (most recent call last):
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 138, in _submit_job
+    res = self.actor_pool.get_client_result(self.cid, timeout)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 414, in get_client_result
+    return self._fetch_future_result(cid)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 300, in _fetch_future_result
+    res_cid, res = ray.get(future)  # type: (str, ClientRes)
+                   ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/auto_init_hook.py", line 24, in auto_init_wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/client_mode_hook.py", line 103, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/worker.py", line 2524, in get
+    raise value.as_instanceof_cause()
+ray.exceptions.RayTaskError(ClientException): [36mray::DefaultActor.run()[39m (pid=13846, ip=172.16.20.30, actor_id=38b419ff08aa29a52a7ea1ef01000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7faffc3766d0>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13846, ip=172.16.20.30, actor_id=38b419ff08aa29a52a7ea1ef01000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7faffc3766d0>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 32 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+
+[2023-12-18 00:44:54,244][flwr][ERROR] - [36mray::DefaultActor.run()[39m (pid=13850, ip=172.16.20.30, actor_id=d0feed8eebd1e7465545978701000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fbd04151c50>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13850, ip=172.16.20.30, actor_id=d0feed8eebd1e7465545978701000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fbd04151c50>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 90 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+[2023-12-18 00:44:54,244][flwr][ERROR] - [36mray::DefaultActor.run()[39m (pid=13849, ip=172.16.20.30, actor_id=6eed87ea87a089c3266949d401000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fb4a4212650>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13849, ip=172.16.20.30, actor_id=6eed87ea87a089c3266949d401000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fb4a4212650>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 85 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+[2023-12-18 00:44:54,244][flwr][ERROR] - Traceback (most recent call last):
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 138, in _submit_job
+    res = self.actor_pool.get_client_result(self.cid, timeout)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 414, in get_client_result
+    return self._fetch_future_result(cid)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 300, in _fetch_future_result
+    res_cid, res = ray.get(future)  # type: (str, ClientRes)
+                   ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/auto_init_hook.py", line 24, in auto_init_wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/client_mode_hook.py", line 103, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/worker.py", line 2524, in get
+    raise value.as_instanceof_cause()
+ray.exceptions.RayTaskError(ClientException): [36mray::DefaultActor.run()[39m (pid=13842, ip=172.16.20.30, actor_id=9325dc79c38b4eb7da4acc7101000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7f5e2c376910>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13842, ip=172.16.20.30, actor_id=9325dc79c38b4eb7da4acc7101000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7f5e2c376910>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 23 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+
+[2023-12-18 00:44:54,245][flwr][ERROR] - [36mray::DefaultActor.run()[39m (pid=13848, ip=172.16.20.30, actor_id=2936cca61e0144d41ccb7abe01000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fdc900d5c50>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13848, ip=172.16.20.30, actor_id=2936cca61e0144d41ccb7abe01000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fdc900d5c50>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 18 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+[2023-12-18 00:44:54,246][flwr][ERROR] - [36mray::DefaultActor.run()[39m (pid=13846, ip=172.16.20.30, actor_id=38b419ff08aa29a52a7ea1ef01000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7faffc3766d0>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13846, ip=172.16.20.30, actor_id=38b419ff08aa29a52a7ea1ef01000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7faffc3766d0>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 32 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+[2023-12-18 00:44:54,246][flwr][ERROR] - Traceback (most recent call last):
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 138, in _submit_job
+    res = self.actor_pool.get_client_result(self.cid, timeout)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 414, in get_client_result
+    return self._fetch_future_result(cid)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 300, in _fetch_future_result
+    res_cid, res = ray.get(future)  # type: (str, ClientRes)
+                   ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/auto_init_hook.py", line 24, in auto_init_wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/client_mode_hook.py", line 103, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/worker.py", line 2524, in get
+    raise value.as_instanceof_cause()
+ray.exceptions.RayTaskError(ClientException): [36mray::DefaultActor.run()[39m (pid=13852, ip=172.16.20.30, actor_id=4d501f717914b70f6dd1519201000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7f8b54266b10>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13852, ip=172.16.20.30, actor_id=4d501f717914b70f6dd1519201000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7f8b54266b10>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 46 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+
+[2023-12-18 00:44:54,246][flwr][ERROR] - Traceback (most recent call last):
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 138, in _submit_job
+    res = self.actor_pool.get_client_result(self.cid, timeout)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 414, in get_client_result
+    return self._fetch_future_result(cid)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 300, in _fetch_future_result
+    res_cid, res = ray.get(future)  # type: (str, ClientRes)
+                   ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/auto_init_hook.py", line 24, in auto_init_wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/client_mode_hook.py", line 103, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/worker.py", line 2524, in get
+    raise value.as_instanceof_cause()
+ray.exceptions.RayTaskError(ClientException): [36mray::DefaultActor.run()[39m (pid=13844, ip=172.16.20.30, actor_id=6df3158e7ddb80e0229db60b01000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7ff8a8406b10>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13844, ip=172.16.20.30, actor_id=6df3158e7ddb80e0229db60b01000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7ff8a8406b10>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 72 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+
+[2023-12-18 00:44:54,247][flwr][ERROR] - [36mray::DefaultActor.run()[39m (pid=13842, ip=172.16.20.30, actor_id=9325dc79c38b4eb7da4acc7101000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7f5e2c376910>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13842, ip=172.16.20.30, actor_id=9325dc79c38b4eb7da4acc7101000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7f5e2c376910>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 23 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+[2023-12-18 00:44:54,247][flwr][ERROR] - [36mray::DefaultActor.run()[39m (pid=13852, ip=172.16.20.30, actor_id=4d501f717914b70f6dd1519201000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7f8b54266b10>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13852, ip=172.16.20.30, actor_id=4d501f717914b70f6dd1519201000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7f8b54266b10>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 46 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+[2023-12-18 00:44:54,247][flwr][ERROR] - [36mray::DefaultActor.run()[39m (pid=13844, ip=172.16.20.30, actor_id=6df3158e7ddb80e0229db60b01000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7ff8a8406b10>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13844, ip=172.16.20.30, actor_id=6df3158e7ddb80e0229db60b01000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7ff8a8406b10>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 72 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+[2023-12-18 00:44:54,823][flwr][ERROR] - Traceback (most recent call last):
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 138, in _submit_job
+    res = self.actor_pool.get_client_result(self.cid, timeout)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 414, in get_client_result
+    return self._fetch_future_result(cid)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 300, in _fetch_future_result
+    res_cid, res = ray.get(future)  # type: (str, ClientRes)
+                   ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/auto_init_hook.py", line 24, in auto_init_wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/client_mode_hook.py", line 103, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/worker.py", line 2524, in get
+    raise value.as_instanceof_cause()
+ray.exceptions.RayTaskError(ClientException): [36mray::DefaultActor.run()[39m (pid=13840, ip=172.16.20.30, actor_id=181b3c0591f6fd0a36dbd5c001000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7f67342e5c50>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13840, ip=172.16.20.30, actor_id=181b3c0591f6fd0a36dbd5c001000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7f67342e5c50>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 71 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+
+[2023-12-18 00:44:54,824][flwr][ERROR] - [36mray::DefaultActor.run()[39m (pid=13840, ip=172.16.20.30, actor_id=181b3c0591f6fd0a36dbd5c001000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7f67342e5c50>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13840, ip=172.16.20.30, actor_id=181b3c0591f6fd0a36dbd5c001000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7f67342e5c50>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 71 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+[2023-12-18 00:44:56,146][flwr][ERROR] - Traceback (most recent call last):
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 138, in _submit_job
+    res = self.actor_pool.get_client_result(self.cid, timeout)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 414, in get_client_result
+    return self._fetch_future_result(cid)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 300, in _fetch_future_result
+    res_cid, res = ray.get(future)  # type: (str, ClientRes)
+                   ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/auto_init_hook.py", line 24, in auto_init_wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/client_mode_hook.py", line 103, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/ray/_private/worker.py", line 2524, in get
+    raise value.as_instanceof_cause()
+ray.exceptions.RayTaskError(ClientException): [36mray::DefaultActor.run()[39m (pid=13839, ip=172.16.20.30, actor_id=88b9d37390b31530903897d601000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fc86c44a650>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13839, ip=172.16.20.30, actor_id=88b9d37390b31530903897d601000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fc86c44a650>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 87 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+
+[2023-12-18 00:44:56,146][flwr][ERROR] - [36mray::DefaultActor.run()[39m (pid=13839, ip=172.16.20.30, actor_id=88b9d37390b31530903897d601000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fc86c44a650>)
+                  ^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit
+    return maybe_call_fit(
+           ^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit
+    return client.fit(fit_ins)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit
+    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: train() missing 1 required positional argument: 'device'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DefaultActor.run()[39m (pid=13839, ip=172.16.20.30, actor_id=88b9d37390b31530903897d601000000, repr=<flwr.simulation.ray_transport.ray_actor.DefaultActor object at 0x7fc86c44a650>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 84, in run
+    raise ClientException(str(message)) from ex
+flwr.simulation.ray_transport.ray_actor.ClientException: 
+>>>>>>>A ClientException occurred.('\n\tSomething went wrong when running your client workload.\n\tClient 87 crashed when the DefaultActor was running its workload.\n\tException triggered on the client side: Traceback (most recent call last):\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_actor.py", line 72, in run\n    job_results = job_fn(client)\n                  ^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 191, in fit\n    return maybe_call_fit(\n           ^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/client.py", line 223, in maybe_call_fit\n    return client.fit(fit_ins)\n           ^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/.conda/envs/flower-simulation/lib/python3.11/site-packages/flwr/client/numpy_client.py", line 227, in _fit\n    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/tunguyen/federated-learning/project3/client.py", line 34, in fit\n    result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device, verbose=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: train() missing 1 required positional argument: \'device\'\n',)
+[2023-12-18 00:44:56,148][flwr][DEBUG] - fit_round 1 received 0 results and 10 failures
+[2023-12-18 00:44:58,926][flwr][INFO] - fit progress: (1, 0.11528265795707703, {'accuracy': 0.1028}, 17.20013703199993)
+[2023-12-18 00:44:58,929][flwr][DEBUG] - evaluate_round 1: strategy sampled 100 clients (out of 100)

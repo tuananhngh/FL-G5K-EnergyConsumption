@@ -1,0 +1,11 @@
+path_to_data: "../data" # path to the data directory
+num_rounds: 50 # number of FL rounds in the experiment
+num_clients: 10 # number of total clients available (this is also the number of partitions we need to create)
+batch_size: 20 # batch size to use by clients during training
+num_classes: 10 # number of classes in our dataset (we use MNIST) -- this tells the model how to setup its output fully-connected layer
+num_clients_per_round_fit: 2 # number of clients to involve in each fit round (fit  round = clients receive the model from the server and do local training)
+num_clients_per_round_eval: 2 # number of clients to involve in each evaluate round (evaluate round = client only evaluate the model sent by the server on their local dataset without training it)
+config_fit: # a config that each client will receive (this is send by the server) when they are sampled. This allows you to dynamically configure the training on the client side as the simulation progresses
+  server_lr : 0.01
+  lr: 0.01 # learning rate to use by the clients
+  local_epochs: 3 # number of training epochs each clients does in a fit() round

@@ -1,0 +1,16 @@
+[2024-02-22 13:30:43,678][flwr][WARNING] - 
+Setting `min_available_clients` lower than `min_fit_clients` or
+`min_evaluate_clients` can cause the server to fail when there are too few clients
+connected to the server. `min_available_clients` must be set to a value larger
+than or equal to the values of `min_fit_clients` and `min_evaluate_clients`.
+
+[2024-02-22 13:30:43,678][flwr][INFO] - Starting Flower simulation, config: ServerConfig(num_rounds=50, round_timeout=None)
+[2024-02-22 13:30:47,263][flwr][INFO] - Flower VCE: Ray initialized with resources: {'memory': 7389587047.0, 'node:__internal_head__': 1.0, 'node:127.0.0.1': 1.0, 'object_store_memory': 2147483648.0, 'CPU': 8.0}
+[2024-02-22 13:30:47,263][flwr][INFO] - Optimize your simulation with Flower VCE: https://flower.dev/docs/framework/how-to-run-simulations.html
+[2024-02-22 13:30:47,263][flwr][INFO] - Flower VCE: Resources for each Virtual Client: {'num_cpus': 4, 'num_gpus': 0}
+[2024-02-22 13:30:47,283][flwr][INFO] - Flower VCE: Creating VirtualClientEngineActorPool with 2 actors
+[2024-02-22 13:30:47,284][flwr][INFO] - Initializing global parameters
+[2024-02-22 13:30:47,284][flwr][INFO] - Using initial parameters provided by strategy
+[2024-02-22 13:30:47,284][flwr][INFO] - Evaluating initial parameters
+[2024-02-22 13:30:47,284][flwr][INFO] - FL starting
+[2024-02-22 13:30:47,284][flwr][DEBUG] - fit_round 1: strategy sampled 10 clients (out of 10)
