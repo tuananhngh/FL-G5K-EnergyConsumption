@@ -1,1 +1,1 @@
-The purpose of this branch is to test hyperparameters and algorithm setting in a simulation environment before deploying in Toulouse Cluster.
+The purpose of this branch is to test model hyperparameters and optimization algorithms in a simulated environment before deploying onto Toulouse cluster.
