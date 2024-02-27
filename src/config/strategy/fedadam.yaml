@@ -2,9 +2,7 @@ _target_ : flwr.server.strategy.FedAdam
 fraction_fit : ${params.fraction_fit}
 fraction_evaluate: ${params.fraction_evaluate}
 min_fit_clients : ${params.num_clients_per_round_fit}
-min_available_clients : ${params.num_clients_per_round_fit}
 min_evaluate_clients : ${params.num_clients_per_round_eval}
 eta : ${params.lr}
 eta_l : ${client.lr}
-beta_1 : 0.9
-beta_2 : 0.999
+tau : 0.001

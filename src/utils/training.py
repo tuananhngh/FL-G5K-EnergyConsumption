@@ -114,8 +114,8 @@ def test(model, dataloader, device, steps=None, verbose=True):
 
 def set_parameters(net, parameters:NDArray) -> None:
     params_dict = zip(net.state_dict().keys(), parameters)
-    #state_dict = OrderedDict({k:torch.Tensor(v) for k,v in params_dict})
-    state_dict = OrderedDict({k:torch.Tensor(v) if v.shape != torch.Size([]) else torch.Tensor([0]) for k,v in params_dict})
+    state_dict = OrderedDict({k:torch.Tensor(v) for k,v in params_dict})
+    #state_dict = OrderedDict({k:torch.Tensor(v) if v.shape != torch.Size([]) else torch.Tensor([0]) for k,v in params_dict})
     net.load_state_dict(state_dict, strict = True)
     
 def get_parameters(net) -> List[NDArray]:

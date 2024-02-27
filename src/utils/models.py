@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.models.mobilenet import mobilenet_v3_small
 from torchvision.models.resnet import resnet18
-from torchinfo import summary
+#from torchinfo import summary
 
 
 # Basic CNN Model
@@ -27,9 +27,18 @@ class Net(nn.Module):
         x = self.fc3(x)
         return x
     
+def convert_bn_to_gn(module, num_groups=64):
+    if isinstance(module, nn.BatchNorm2d):
+        num_channels = module.num_features
+        if num_channels % num_groups == 0:
+            return nn.GroupNorm(num_groups, num_channels)
+        else:
+            return nn.GroupNorm(1, num_channels)
+    else:
+        for name, child_module in module.named_children():
+            module.add_module(name, convert_bn_to_gn(child_module, num_groups))
+        return module
 
-
-    
 # ResNet18 Model
 
 class BasicBlock(nn.Module):

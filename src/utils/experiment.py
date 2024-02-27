@@ -424,25 +424,25 @@ class Experiment(Engine):
         
 
 if __name__ == "__main__":
-    nodes = get_oar_job_nodes(449189, "toulouse")
+    nodes = get_oar_job_nodes(449249, "toulouse")
 
     params = {
         "params.num_rounds":[1000],
         "params.fraction_fit":[0.1], #0.1 is enough for 100 client
-        "params.fraction_evaluate":[0.1], #0.5 is enough for 100 client
-        "params.min_fit_clients":[10],
-        "params.wait_round":[10],
-        "params.lr":[1e-2,1e-3],
+        "params.fraction_evaluate":[0.3], #0.5 is enough for 100 client
+        "params.num_groups":[32],
+        "params.wait_round":[50],
+        "params.lr":[1e-2],
         "data.batch_size": [50],
-        "data.alpha": [0.1], #[1,2,5,10],
-        "data.partition":["iid"],
-        "client.lr" : [1e-2,1e-3,1e-4],
-        "client.local_epochs": [3],
-        "client.decay_rate": [1],
+        "data.alpha": [0.5], #[1,2,5,10],
+        "data.partition":["label_skew"],
+        "client.lr" : [0.0316, 0.01, 0.05],
+        "client.local_epochs": [3,5],
+        "client.decay_rate": [1, 0.99],
         "client.decay_steps": [1],
-        "neuralnet":["MobileNetV3Small"],
-        "strategy": ["fedadam"],
-        "optimizer": ["SGD","Adam"],
+        "neuralnet":["ResNet18"],
+        "strategy": ["fedadam","fedavg"],
+        "optimizer": ["SGD"],
     }
 
     repository_dir = "/home/tunguyen/jetson-test"
@@ -462,7 +462,7 @@ if __name__ == "__main__":
         repository_dir=repository_dir,
         sleep=30,
         key_to_remove=to_remove,
-        output_dir="outputs4",
+        output_dir="outputslabelskew",
         summary_name="experiment_summary.csv")
     #Exps.frontend_dry_run()
     Exps.run()

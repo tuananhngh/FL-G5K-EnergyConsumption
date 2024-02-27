@@ -8,6 +8,7 @@ import os
 
 from utils.training import train, test, seed_everything
 from utils.datahandler import load_clientdata_from_file
+from utils.models import convert_bn_to_gn
 from pathlib import Path
 from flwr.common import NDArrays, Scalar
 from omegaconf import DictConfig
@@ -32,10 +33,10 @@ class Client(fl.client.NumPyClient):
         self.optim = optimizer
     
     def set_parameters(self, parameters:NDArrays)->None:
-        key = [k for k in self.model.state_dict().keys()]
-        params_dict = zip(key, parameters)
-        #state_dict = OrderedDict({k:torch.Tensor(v) for k,v in params_dict})
-        state_dict = OrderedDict({k:torch.Tensor(v) if v.shape != torch.Size([]) else torch.Tensor([0]) for k,v in params_dict})
+        #key = [k for k in self.model.state_dict().keys()]
+        params_dict = zip(self.model.state_dict().keys(), parameters)
+        state_dict = OrderedDict({k:torch.Tensor(v) for k,v in params_dict})
+        #state_dict = OrderedDict({k:torch.Tensor(v) if v.shape != torch.Size([]) else torch.Tensor([0]) for k,v in params_dict})
         self.model.load_state_dict(state_dict, strict = True)
         
     def get_parameters(self, config: Dict[str, Scalar]) -> NDArrays:
@@ -130,6 +131,7 @@ def main(cfg:DictConfig):
     print(len(trainloader.dataset))
     #trainloader, valloader, testloader = load_dataloader(client_id, path_to_data)
     model = instantiate(cfg.neuralnet)
+    model = convert_bn_to_gn(model, num_groups=cfg.params.num_groups)
     optimizer = cfg.optimizer
     client = Client(model, trainloader, valloader, device, output_dir, client_id, optimizer)
     if dry_run:

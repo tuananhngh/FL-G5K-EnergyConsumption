@@ -1,13 +1,13 @@
 params : 
   num_classes : 10
   num_rounds : 5
-  num_clients_per_round_fit : 2
-  num_clients_per_round_eval : 2
-  min_fit_clients : 10
-  fraction_fit : 0.5
-  fraction_evaluate : 0.5
+  num_clients_per_round_fit : 10
+  num_clients_per_round_eval : 10
+  fraction_fit : 0.1
+  fraction_evaluate : 0.3
   wait_round : 5
-  lr : 0.001
+  lr : 0.01
+  num_groups : 16
 
 # Mount Storage : "/srv/storage/energyfl@storage1.toulouse.grid5000.fr"
 # /home/tunguyen/energyfl

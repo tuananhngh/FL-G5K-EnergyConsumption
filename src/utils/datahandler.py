@@ -146,12 +146,17 @@ class DataSetHandler:
         return datasets, testdata
     
     def cifar10_transform(self):
-        transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-            transforms.RandomHorizontalFlip(),
+        train_transform = transforms.Compose([
+                        transforms.RandomCrop(32, padding=4),
+                        transforms.ToTensor(),
+                        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+                        transforms.RandomHorizontalFlip(),
         ])
-        return transform
+        test_transform = transforms.Compose([
+                        transforms.ToTensor(),
+                        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))
+        ])
+        return train_transform, test_transform
     
     def cifar100_transform(self):
         transform = transforms.Compose([
@@ -215,15 +220,16 @@ class DataSetHandler:
         plt.savefig(f"{output_dir}/distribution_per_client.png")
         
     def get_data(self):
-        transform = self.__getattribute__(self.dataname.lower() + "_transform")()
-        trainset = datasets.__getattribute__(self.dataname)(root=self.data_dir, train=True, download=True, transform=transform)
-        testset = datasets.__getattribute__(self.dataname)(root=self.data_dir, train=False, download=True, transform=transform)
+        transformer = self.__getattribute__(self.dataname.lower() + "_transform")()
+        trainset = datasets.__getattribute__(self.dataname)(root=self.data_dir, train=True, download=True, transform=transformer[0])
+        testset = datasets.__getattribute__(self.dataname)(root=self.data_dir, train=False, download=True, transform=transformer[1])
         logging.info("NUM CLASSES : {}".format(len(np.unique(trainset.targets))))
         trainchunks, testdata = self._get_data(trainset, testset, self.partition, dataloaders=self.dataloaders)
         self.plot_label_distribution(trainset)
         with open(os.path.join(self.partition_dir,"idx_map.json"), "w") as f:
             json.dump(self.idx_map, f)
         return trainchunks, testdata
+    
     
     
 def load_clientdata_from_file(config:DictConfig, client_id:int)->Tuple[data.DataLoader, data.DataLoader]:

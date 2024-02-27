@@ -398,7 +398,7 @@ if __name__ == "__main__":
     summary_path = os.path.join(path_to_output,"experiment_summary.csv")
     summaryfile = read_summaryfile(summary_path)
     summaryfile = match_folder_csv(summaryfile, path_to_output)
-    summaryfile = select_model(summaryfile, "Net") # select only ResNet
+    summaryfile = select_model(summaryfile, "ResNet18") # select only ResNet
     results_dir_ls = summaryfile["result_folder"].tolist()
     summaryfile_dict = summaryfile.to_dict(orient="records")
     for (result_dir,config) in zip(results_dir_ls,summaryfile_dict):

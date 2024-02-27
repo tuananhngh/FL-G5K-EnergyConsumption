@@ -5,9 +5,9 @@ data :
   batch_size : 128
   validation_split : 10
   num_clients : 100
-  alpha : 0.1
+  alpha : 1.
   dataloaders : False # True if save partitioned data as dataloaders
-  partition : label_skew  # (possible_value : label_skew, iid, sample_skew)
+  partition : sample_skew  # (possible_value : label_skew, iid, sample_skew)
 
 hydra:
   run:

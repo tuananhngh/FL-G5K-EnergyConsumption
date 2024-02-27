@@ -1,4 +1,4 @@
-from utils.training import get_parameters, test, seed_everything
+from utils.training import get_parameters, test, seed_everything, set_parameters
 from utils.datahandler import load_testdata_from_file
 import hydra
 import numpy as np
@@ -18,6 +18,7 @@ from typing import Callable, Dict, Tuple, List, Optional
 from flwr.server.history import History
 from logging import DEBUG, INFO
 from flwr.common.logger import log
+from utils.models import convert_bn_to_gn
 from flwr.server.strategy import FedAvg, FedYogi, FedAdam
 
 seed_val = 2024
@@ -33,9 +34,6 @@ def learning_rate_scheduler(lr, epoch, decay_rate, decay_steps):
     lr = lr * (decay_rate ** (epoch // decay_steps))
     return lr
 
-def sample_server_round(server_round:int):
-    nb_clients = 5
-    return np.random.choice(nb_clients, 2, replace=False)
 
 def get_on_fit_config(config: Dict[str, Scalar])->Callable:
     def fit_config_fn(server_round:int)->FitIns:
@@ -54,12 +52,8 @@ def get_on_evaluate_config(config: Dict[str, Scalar])->Callable:
 
 def get_evaluate_fn(model, testloader, device, cfg: Dict[str, Scalar])->Callable:
     def evaluate_fn(server_round:int, parameters:NDArray, config):
-        #num_classes = cfg["num_classes"]
-        #steps = len(testloader)
-        params_dict = zip(model.state_dict().keys(),parameters)
-        state_dict = OrderedDict({k:torch.Tensor(v) if v.shape != torch.Size([]) else torch.Tensor([0]) for k,v in params_dict})
-        model.load_state_dict(state_dict, strict=True)
-        #utils.set_parameters(model, parameters)
+        model.to(device)
+        set_parameters(model, parameters)
         loss, accuracy = test(model, testloader, device, verbose=False)
         return float(loss), {"accuracy": float(accuracy)}
     return evaluate_fn
@@ -140,14 +134,15 @@ class CustomServer(fl.server.Server):
                         server_round=current_round, metrics=evaluate_metrics_fed
                     )
                     # Early Stopping
-                    if loss_fed < min_val_loss:
-                        round_no_improve = 0
-                        min_val_loss = loss_fed
-                    else:
-                        round_no_improve += 1
-                        if round_no_improve == self.wait_round:
-                            log(INFO, "EARLY STOPPING")
-                            break
+                    if current_round >= 100: # Start Early Stopping after 100 rounds
+                        if loss_fed < min_val_loss:
+                            round_no_improve = 0
+                            min_val_loss = loss_fed
+                        else:
+                            round_no_improve += 1
+                            if round_no_improve == self.wait_round:
+                                log(INFO, "EARLY STOPPING")
+                                break
                     
         # Bookkeeping
         end_time = timeit.default_timer()
@@ -167,13 +162,11 @@ def main(cfg:DictConfig):
     logging.info(f"USING DEVICE : {device}")    
     # Get initial parameters
     model = instantiate(cfg.neuralnet)
+    model = convert_bn_to_gn(model, num_groups=cfg.params.num_groups)
     model_parameters = get_parameters(model)
     initial_parameters = ndarrays_to_parameters(model_parameters)
     
     #Load TestData
-    #dataconfig = DataSetHandler(cfg.data)
-    #_,_,testloader = dataconfig()
-    #_,_, testloader = utils.load_dataloader(1, cfg.params.path_to_data)
     testloader = load_testdata_from_file(cfg.data)
     
     strategy = instantiate(cfg.strategy,
@@ -183,11 +176,19 @@ def main(cfg:DictConfig):
                            evaluate_fn=get_evaluate_fn(model, testloader,device,cfg.params),
                            on_evaluate_config_fn=get_on_evaluate_config(cfg.client)
                            )
-    # strategy = FedYogi(initial_parameters=initial_parameters,
-    #                    on_evaluate_config_fn=get_on_evaluate_config(cfg.client),
-    #                       on_fit_config_fn=get_on_fit_config(cfg.client),
-    #                         evaluate_metrics_aggregation_fn=weighted_average,
-    #                         evaluate_fn=get_evaluate_fn(model, testloader,device,cfg.client),)
+    
+    # strategy = FedAdam(initial_parameters=initial_parameters,
+    #                     fraction_fit=cfg.params.fraction_fit,
+    #                     fraction_evaluate=cfg.params.fraction_evaluate,
+    #                     on_evaluate_config_fn=get_on_evaluate_config(cfg.client),
+    #                     on_fit_config_fn=get_on_fit_config(cfg.client),
+    #                     evaluate_metrics_aggregation_fn=weighted_average,
+    #                     evaluate_fn=get_evaluate_fn(model, testloader,device,cfg.client),
+    #                     min_fit_clients=cfg.params.num_clients_per_round_fit,
+    #                     min_evaluate_clients=cfg.params.num_clients_per_round_eval,
+    #                     eta=cfg.params.lr,
+    #                     eta_l=cfg.client.lr,
+    #                     tau=0.001)
     
     print(strategy.__repr__())
     customserver = CustomServer(wait_round=cfg.params.wait_round, 
