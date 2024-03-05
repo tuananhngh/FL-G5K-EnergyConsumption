@@ -1,5 +1,6 @@
 import datetime
 import csv
+from sys import version
 import torch
 import flwr as fl
 import hydra
@@ -108,7 +109,7 @@ def save_client_pid(pid, client_id):
             writer.writerow(["client_id", "pid"])
         writer.writerow([client_id, pid])
 
-@hydra.main(config_path="config", config_name="config_file")
+@hydra.main(config_path="config", config_name="config_file",version_base=None)
 def main(cfg:DictConfig):
     logging.info(OmegaConf.to_yaml(cfg))
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

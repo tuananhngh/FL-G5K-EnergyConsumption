@@ -227,26 +227,36 @@ class EnergyResult:
             SimpleNamespace[pd.DataFrame]: Contains energy, results as DataFrames
         """
         path_to_server = os.path.join(self.path_to_result,"server")
-        energy = pd.read_csv(os.path.join(path_to_server,"energy.csv"), parse_dates=["timestamp"])
-        energy["timestamp"] = energy["timestamp"].dt.round("1s") # Rounding to 1s
-        energy.columns = [col.strip() for col in energy.columns]
+        try : 
+            energy = pd.read_csv(os.path.join(path_to_server,"energy.csv"), parse_dates=["timestamp"])
+            energy["timestamp"] = energy["timestamp"].dt.round("1s") # Rounding to 1s
+            energy.columns = [col.strip() for col in energy.columns]
+        except FileNotFoundError as err:
+            energy = None
+            print(err)
         
-        results = flwr_pkl(os.path.join(path_to_server,"results.pkl"))
-        acc_centralized = [acc[1] for acc in results.metrics_centralized["accuracy"][1:]]
-        acc_distributed = [acc[1] for acc in results.metrics_distributed["accuracy"]]
-        losses_centralized = [loss[1] for loss in results.losses_centralized[1:]] # First loss is evaluated on initial parameters
-        losses_distributed = [loss[1] for loss in results.losses_distributed]
-        server_round = [i for i in range(1,len(acc_centralized)+1)]
-        #print(len(server_round), len(acc_centralized), len(acc_distributed), len(losses_centralized), len(losses_distributed))
-        results_df = pd.DataFrame(
-            {
-                "server_round": server_round,
-                "acc_centralized": acc_centralized,
-                "acc_distributed": acc_distributed,
-                "losses_centralized": losses_centralized,
-                "losses_distributed": losses_distributed   
-            }
-        )
+        try :
+            results = flwr_pkl(os.path.join(path_to_server,"results.pkl"))
+        except FileNotFoundError as err:
+            print(err)
+            results = None
+            results_df = None
+        if results is not None:
+            acc_centralized = [acc[1] for acc in results.metrics_centralized["accuracy"][1:]]
+            acc_distributed = [acc[1] for acc in results.metrics_distributed["accuracy"]]
+            losses_centralized = [loss[1] for loss in results.losses_centralized[1:]] # First loss is evaluated on initial parameters
+            losses_distributed = [loss[1] for loss in results.losses_distributed]
+            server_round = [i for i in range(1,len(acc_centralized)+1)]
+            #print(len(server_round), len(acc_centralized), len(acc_distributed), len(losses_centralized), len(losses_distributed))
+            results_df = pd.DataFrame(
+                {
+                    "server_round": server_round,
+                    "acc_centralized": acc_centralized,
+                    "acc_distributed": acc_distributed,
+                    "losses_centralized": losses_centralized,
+                    "losses_distributed": losses_distributed   
+                }
+            )
         return SimpleNamespace(energy=energy, results=results_df)
     
     def _filter_energy(self, df:pd.DataFrame, start_time:str, end_time:str)->pd.DataFrame:
@@ -309,49 +319,51 @@ class EnergyResult:
         #clients= self._read_all_clients()
         for k,v in kwargs.items():
             if k=="loss":
-                fig,ax = plt.subplots(figsize=(10,5))
-                # for cid in range(len(clients)):
-                #    plt.plot(clients[cid].__getattribute__(v[0])[v[1]],clients[cid].__getattribute__(v[0])[v[2]], label=f"Client {cid}")
-                if centralized:
-                    x_vals = server.__getattribute__(v[0])[v[1]]
-                    y_vals = server.__getattribute__(v[0])[v[3]]
-                    min_value = min(y_vals)
-                    ax.hlines(y=min_value, label=f"Min {v[3]} : {min_value:.4f}", linestyle="--", xmin = x_vals.min(), xmax = x_vals.max(), color="blue")
-                    ax.plot(x_vals, y_vals, label=f"Server {v[3]}", linestyle="--")
-                ax.text(1.05, 0.95, config_text, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
-                
-                xd_vals = server.__getattribute__(v[0])[v[1]]
-                yd_vals = server.__getattribute__(v[0])[v[4]]
-                mind_value = min(yd_vals)
-                avg_val = np.sum(yd_vals)/len(yd_vals)
-                ax.hlines(y=mind_value, label=f"Min & Avg {v[4]} : {mind_value:.4f} & {avg_val:.4f}", linestyle="--", color="orange", xmin =xd_vals.min(), xmax = xd_vals.max())
-                ax.plot(xd_vals, yd_vals, label=f"Server {v[4]}", linestyle="-.")
-                ax.set_xlabel(v[1])
-                ax.set_ylabel(v[2])
-                ax.legend()
+                if server.__getattribute__(v[0]) is not None:
+                    fig,ax = plt.subplots(figsize=(10,5))
+                    # for cid in range(len(clients)):
+                    #    plt.plot(clients[cid].__getattribute__(v[0])[v[1]],clients[cid].__getattribute__(v[0])[v[2]], label=f"Client {cid}")
+                    if centralized:
+                        x_vals = server.__getattribute__(v[0])[v[1]]
+                        y_vals = server.__getattribute__(v[0])[v[3]]
+                        min_value = min(y_vals)
+                        ax.hlines(y=min_value, label=f"Min {v[3]} : {min_value:.4f}", linestyle="--", xmin = x_vals.min(), xmax = x_vals.max(), color="blue")
+                        ax.plot(x_vals, y_vals, label=f"Server {v[3]}", linestyle="--")
+                    ax.text(1.05, 0.95, config_text, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+                    
+                    xd_vals = server.__getattribute__(v[0])[v[1]]
+                    yd_vals = server.__getattribute__(v[0])[v[4]]
+                    mind_value = min(yd_vals)
+                    avg_val = np.sum(yd_vals[-100:])/len(yd_vals[:100])
+                    ax.hlines(y=mind_value, label=f"Min & Avg {v[4]} : {mind_value:.4f} & {avg_val:.4f}", linestyle="--", color="orange", xmin =xd_vals.min(), xmax = xd_vals.max())
+                    ax.plot(xd_vals, yd_vals, label=f"Server {v[4]}", linestyle="-.")
+                    ax.set_xlabel(v[1])
+                    ax.set_ylabel(v[2])
+                    ax.legend()
 
             elif k=="accuracy":
-                fig, ax = plt.subplots(figsize=(10,5))
-                #plt.figure(figsize=(10,5))
-                # for cid in range(len(clients)):
-                #    plt.plot(clients[cid].__getattribute__(v[0])[v[1]],clients[cid].__getattribute__(v[0])[v[2]], label=f"Client {cid}")
-                if centralized:
-                    x_vals = server.__getattribute__(v[0])[v[1]]
-                    y_vals = server.__getattribute__(v[0])[v[3]]
-                    max_value = max(y_vals)
-                    ax.hlines(y=max_value, label=f"Max {v[3]} : {max_value:.4f}", linestyle="--", xmin = x_vals.min(), xmax = x_vals.max(), color="blue")
-                    ax.plot(x_vals, y_vals, label=f"Server {v[3]}", linestyle="--")
-                ax.text(1.05, 0.95, config_text, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
-                
-                xd_vals = server.__getattribute__(v[0])[v[1]]
-                yd_vals = server.__getattribute__(v[0])[v[4]]
-                maxd_value = max(yd_vals)
-                avg_val = np.sum(yd_vals)/len(yd_vals)
-                ax.hlines(y=maxd_value, label=f"Max & Avg {v[4]} : {maxd_value:.4f} & {avg_val:.4f}", linestyle="--", color="orange", xmin =xd_vals.min(), xmax = xd_vals.max())
-                ax.plot(xd_vals,yd_vals, label=f"Server {v[4]}", linestyle="-.")
-                ax.set_xlabel(v[1])
-                ax.set_ylabel(v[2])
-                plt.legend()
+                if server.__getattribute__(v[0]) is not None:
+                    fig, ax = plt.subplots(figsize=(10,5))
+                    #plt.figure(figsize=(10,5))
+                    # for cid in range(len(clients)):
+                    #    plt.plot(clients[cid].__getattribute__(v[0])[v[1]],clients[cid].__getattribute__(v[0])[v[2]], label=f"Client {cid}")
+                    if centralized:
+                        x_vals = server.__getattribute__(v[0])[v[1]]
+                        y_vals = server.__getattribute__(v[0])[v[3]]
+                        max_value = max(y_vals)
+                        ax.hlines(y=max_value, label=f"Max {v[3]} : {max_value:.4f}", linestyle="--", xmin = x_vals.min(), xmax = x_vals.max(), color="blue")
+                        ax.plot(x_vals, y_vals, label=f"Server {v[3]}", linestyle="--")
+                    ax.text(1.05, 0.95, config_text, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+                    
+                    xd_vals = server.__getattribute__(v[0])[v[1]]
+                    yd_vals = server.__getattribute__(v[0])[v[4]]
+                    maxd_value = max(yd_vals)
+                    avg_val = np.sum(yd_vals[-100:])/len(yd_vals[-100:])
+                    ax.hlines(y=maxd_value, label=f"Max & Avg {v[4]} : {maxd_value:.4f} & {avg_val:.4f}", linestyle="--", color="orange", xmin =xd_vals.min(), xmax = xd_vals.max())
+                    ax.plot(xd_vals,yd_vals, label=f"Server {v[4]}", linestyle="-.")
+                    ax.set_xlabel(v[1])
+                    ax.set_ylabel(v[2])
+                    plt.legend()
                 
 
     
@@ -394,7 +406,8 @@ if __name__ == "__main__":
     result_plot = {#"loss": ["results","server_round","loss","losses_centralized","losses_distributed"],}
                     "accuracy": ["results","server_round","accuracy","acc_centralized","acc_distributed"]}
     
-    path_to_output = "/home/tunguyen/energyfl/outputs3/"
+    #path_to_output = "/home/tunguyen/energyfl/outputslabelskew" # /fedavg/labelskew"
+    path_to_output = "/home/tunguyen/energyfl/outputcifar10/fedadam/labelskew"
     summary_path = os.path.join(path_to_output,"experiment_summary.csv")
     summaryfile = read_summaryfile(summary_path)
     summaryfile = match_folder_csv(summaryfile, path_to_output)

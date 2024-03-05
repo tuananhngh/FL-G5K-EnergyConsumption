@@ -3,6 +3,7 @@ params :
   num_rounds : 5
   num_clients_per_round_fit : 10
   num_clients_per_round_eval : 10
+  min_available_clients : 60
   fraction_fit : 0.1
   fraction_evaluate : 0.3
   wait_round : 5

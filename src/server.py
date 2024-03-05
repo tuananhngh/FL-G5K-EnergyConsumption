@@ -1,3 +1,4 @@
+from itertools import accumulate
 from utils.training import get_parameters, test, seed_everything, set_parameters
 from utils.datahandler import load_testdata_from_file
 import hydra
@@ -88,6 +89,7 @@ class CustomServer(fl.server.Server):
         
         # Early Stopping
         min_val_loss = float("inf")
+        max_metric_dis = 0.
         round_no_improve = 0
         
         for current_round in range(1, num_rounds + 1):
@@ -126,6 +128,8 @@ class CustomServer(fl.server.Server):
             res_fed = self.evaluate_round(server_round=current_round, timeout=timeout)
             if res_fed is not None:
                 loss_fed, evaluate_metrics_fed, _ = res_fed
+                key_metrics = list(evaluate_metrics_fed.keys())
+                acc = evaluate_metrics_fed[key_metrics[0]]
                 if loss_fed is not None:
                     history.add_loss_distributed(
                         server_round=current_round, loss=loss_fed
@@ -134,15 +138,23 @@ class CustomServer(fl.server.Server):
                         server_round=current_round, metrics=evaluate_metrics_fed
                     )
                     # Early Stopping
-                    if current_round >= 100: # Start Early Stopping after 100 rounds
-                        if loss_fed < min_val_loss:
+                    if current_round >= 50: # Start Early Stopping after 100 rounds
+                        if acc > max_metric_dis:
                             round_no_improve = 0
-                            min_val_loss = loss_fed
+                            max_metric_dis = acc
                         else:
                             round_no_improve += 1
                             if round_no_improve == self.wait_round:
                                 log(INFO, "EARLY STOPPING")
                                 break
+                        # if loss_fed < min_val_loss:
+                        #     round_no_improve = 0
+                        #     min_val_loss = loss_fed
+                        # else:
+                        #     round_no_improve += 1
+                        #     if round_no_improve == self.wait_round:
+                        #         log(INFO, "EARLY STOPPING")
+                        #         break
                     
         # Bookkeeping
         end_time = timeit.default_timer()
@@ -151,7 +163,7 @@ class CustomServer(fl.server.Server):
         return history        
 
 
-@hydra.main(config_path="config", config_name="config_file")
+@hydra.main(config_path="config", config_name="config_file",version_base=None)
 def main(cfg:DictConfig):
     logging.info(OmegaConf.to_yaml(cfg))
     server_address = cfg.comm.host
@@ -166,6 +178,7 @@ def main(cfg:DictConfig):
     model_parameters = get_parameters(model)
     initial_parameters = ndarrays_to_parameters(model_parameters)
     
+    
     #Load TestData
     testloader = load_testdata_from_file(cfg.data)
     
@@ -175,9 +188,9 @@ def main(cfg:DictConfig):
                            evaluate_metrics_aggregation_fn=weighted_average,
                            evaluate_fn=get_evaluate_fn(model, testloader,device,cfg.params),
                            on_evaluate_config_fn=get_on_evaluate_config(cfg.client)
-                           )
+                        )
     
-    # strategy = FedAdam(initial_parameters=initial_parameters,
+    # strategy = FedYogi(initial_parameters=initial_parameters,
     #                     fraction_fit=cfg.params.fraction_fit,
     #                     fraction_evaluate=cfg.params.fraction_evaluate,
     #                     on_evaluate_config_fn=get_on_evaluate_config(cfg.client),

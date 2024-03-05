@@ -211,6 +211,14 @@ class Experiment(Engine):
         cmd = f"python3 {self.jetson_sensor_monitor_file} --log-dir {hparams.tmp_result_folder} >> {hparams.tmp_result_folder}/logs.log 2>&1" #TO VERIFY IF LOG CORRECTLY CREATED
         jtop_processes = execute_command_on_server_and_clients(self.nodes, cmd, background=True)
         return jtop_processes
+    
+    def _cmd_network(self, hparams:Box)->List[SshProcess]:
+        """
+        Start network monitoring
+        """
+        cmd = f"nethogs -t >> {hparams.tmp_result_folder}/network.log 2>&1"
+        nethogs_processes = execute_command_on_server_and_clients(self.nodes, cmd, background=True)
+        return nethogs_processes
         
     def _params_to_dict(self, params:Dict)->Dict:
         """
@@ -274,6 +282,14 @@ class Experiment(Engine):
         for run_client in self.run_clients:
                 run_client.kill()
         logger.info("ALL PROCESSES KILLED")
+        
+    def _delete_tmp_files(self, hparams:Box)->None:
+        """
+        Delete temporary files on the server and clients.
+        """
+        cmd = f"rm -rf {hparams.tmp_result_folder}"
+        _ = execute_command_on_server_and_clients(self.nodes, cmd, background=False)
+        logger.info("TMP FILES DELETED")
     
     def frontend_dry_run(self):
         """
@@ -291,8 +307,10 @@ class Experiment(Engine):
             #curr_run_args = self._run_dir_setup()
             cmd_args = self._cmd_args(params) 
             hparams = self._get_hyperparams()
+            self._cmd_host_logs(hparams)
             #hparams.exp_datetime = curr_run_args.exp_datetime
-            #jtop_processes = self._cmd_host_energy(hparams)
+            jtop_processes = self._cmd_host_energy(hparams)
+            network_processes = self._cmd_network(hparams)
             hparams.merge_update(**self._params_to_dict(params))
             logger.info("HYPERPARAMS DONE")
             hparams.timestamps.end_experiment = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_%f")
@@ -373,6 +391,7 @@ class Experiment(Engine):
             
             logger.info("START MONITORING")
             jtop_processes = self._cmd_host_energy(hparams)
+            network_processes = self._cmd_network(hparams)
             hparams.timestamps.start_experiment_before_sleep = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_%f")
             time.sleep(hparams.sleep_duration)
             hparams.timestamps.start_experiment = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_%f")
@@ -395,15 +414,19 @@ class Experiment(Engine):
             for proc in jtop_processes:
                 proc.kill()
             logger.info("JTOP PROCESSES FINISHED AND KILLED")
+        
+            for proc in network_processes:
+                proc.kill()
+            logger.info("NETWORK PROCESSES FINISHED AND KILLED")
             
             # UPDATE PARAMS IN HYPERPARAMS
             logger.info("SAVE TMP FILES AND PARAMETERS TO FRONTEND")
             hparams.merge_update(**self._params_to_dict(params))
             
-            server_cp_cmd = f"mkdir -p {hparams.result_folder}/server; cp -r {hparams.tmp_result_folder}/* {hparams.result_folder}/server"
+            server_cp_cmd = f"mkdir -p {hparams.result_folder}/server; cp -r {hparams.tmp_result_folder}/* {hparams.result_folder}/server;rm -rf {hparams.tmp_result_folder}"
             execute_command_on_server_and_clients([self.server], server_cp_cmd, background=False)
             for cid in range(len(self.client_hosts)):
-                client_cp_cmd = f"mkdir -p {hparams.result_folder}/client_host_{cid}; cp -r {hparams.tmp_result_folder}/* {hparams.result_folder}/client_host_{cid}"
+                client_cp_cmd = f"mkdir -p {hparams.result_folder}/client_host_{cid}; cp -r {hparams.tmp_result_folder}/* {hparams.result_folder}/client_host_{cid};rm -rf {hparams.tmp_result_folder}"
                 execute_command_on_server_and_clients([self.client_hosts[cid]], client_cp_cmd, background=False)
             logger.info("FINISHED SAVING TO FRONTEND")
             
@@ -424,24 +447,27 @@ class Experiment(Engine):
         
 
 if __name__ == "__main__":
-    nodes = get_oar_job_nodes(449249, "toulouse")
+    nodes = get_oar_job_nodes(449337, "toulouse")
+    
+    partition = "label_skew"
+    strategy = "fedadagrad"
 
     params = {
-        "params.num_rounds":[1000],
+        "params.num_rounds":[2000],
         "params.fraction_fit":[0.1], #0.1 is enough for 100 client
         "params.fraction_evaluate":[0.3], #0.5 is enough for 100 client
         "params.num_groups":[32],
-        "params.wait_round":[50],
+        "params.wait_round":[30],
         "params.lr":[1e-2],
-        "data.batch_size": [50],
+        "data.batch_size": [20],
         "data.alpha": [0.5], #[1,2,5,10],
-        "data.partition":["label_skew"],
-        "client.lr" : [0.0316, 0.01, 0.05],
-        "client.local_epochs": [3,5],
-        "client.decay_rate": [1, 0.99],
+        "data.partition":[partition],
+        "client.lr" : [0.0316],
+        "client.local_epochs": [1,3,5,10,20],
+        "client.decay_rate": [1],
         "client.decay_steps": [1],
         "neuralnet":["ResNet18"],
-        "strategy": ["fedadam","fedavg"],
+        "strategy": [strategy],
         "optimizer": ["SGD"],
     }
 
@@ -462,7 +488,7 @@ if __name__ == "__main__":
         repository_dir=repository_dir,
         sleep=30,
         key_to_remove=to_remove,
-        output_dir="outputslabelskew",
+        output_dir=f"outputcifar10/{strategy}/{partition.replace('_','')}",
         summary_name="experiment_summary.csv")
     #Exps.frontend_dry_run()
     Exps.run()
