@@ -8,10 +8,9 @@ import yaml # pip install PyYAML
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-# from flwr.server import strategy
-# from torch import mul
 from pathlib import Path
 from omegaconf import OmegaConf
+from datetime import datetime
 
 energy_cols = ['timestamp',
  'RAM%',
@@ -28,16 +27,44 @@ evalresult_cols = ['time', 'server_round', 'loss', 'accuracy']
 fitresult_cols = ['time', 'server_round', 'train_loss', 'train_acc', 'val_loss', 'val_acc']
 fittimes_cols =['Client ID', 'Server Round', 'Start Time', 'End Time', 'fittime']
 
+match_hosts_estats = {
+    'client_host_0': 'estats-11', 
+     'client_host_1': 'estats-12',
+     'client_host_2': 'estats-2',
+     'client_host_3': 'estats-3',
+     'client_host_4': 'estats-4',
+     'client_host_5': 'estats-5',
+     'client_host_6': 'estats-6',
+     'client_host_7': 'estats-7',
+     'client_host_8': 'estats-8',
+     'client_host_9': 'estats-9'
+}
 
-
-# Function read results from path
 def flwr_pkl(path_to_pkl):
+    """
+    Load and return the contents of a pickle file.
+
+    Parameters:
+    path_to_pkl (str): The path to the pickle file.
+
+    Returns:
+    object: The deserialized object from the pickle file.
+    """
     with open(path_to_pkl, "rb") as f:
         result = pkl.load(f)
     return result
 
 
 def read_yaml_file(path_to_yaml):
+    """
+    Read and return the contents of a YAML file.
+
+    Parameters:
+    path_to_yaml (str): The path to the YAML file.
+
+    Returns:
+    object: The deserialized object from the YAML file.
+    """
     with open(path_to_yaml, "r") as f:
         try : 
             result = yaml.load(f, Loader=yaml.FullLoader)
@@ -48,6 +75,15 @@ def read_yaml_file(path_to_yaml):
 
 
 def read_flwr_logfile(file_path):
+    """
+    Read and process a FLWR log file.
+
+    Parameters:
+    file_path (str): The path to the log file.
+
+    Returns:
+    pd.DataFrame: A DataFrame containing the processed log data.
+    """
     # Read log file
     with open(file_path, 'r') as file:
         log_lines = file.readlines()
@@ -77,6 +113,7 @@ def read_flwr_logfile(file_path):
     df['timestamp'] = pd.to_datetime(df['timestamp'], format='%Y-%m-%d %H:%M:%S,%f')
 
     return df
+
 
 class ReadFlowerLog:
     def __init__(self, path_to_log):
@@ -119,6 +156,12 @@ class ReadFlowerLog:
         return self.df.iloc[fit_message].reset_index(drop=True)
     
     def get_server_fit_time(self):
+        """
+        Get the fit time for each server round.
+
+        Returns:
+        pd.DataFrame: A DataFrame containing the server round and fit time.
+        """
         fit_msg = self._get_fit_message()
         concatmsg = pd.concat([fit_msg[::2].reset_index(drop=True),fit_msg[1::2].reset_index(drop=True)], axis=1, keys=['Start', 'End'])
         server_round = [i for i in range(1,len(concatmsg)+1)]
@@ -130,14 +173,6 @@ class ReadFlowerLog:
         server_fit_time["fittime"] = (server_fit_time.endtime - server_fit_time.starttime).dt.total_seconds()
         
         return server_fit_time
-
-
-# log_file_path = '../outputs_from_tl1/2024-01-22_19-31-34/server/main_server.log'
-# log_dataframe = ReadFlowerLog(log_file_path)
-# msg = log_dataframe._get_fit_message()
-# fitmess = log_dataframe.get_server_fit_time()
-
-
 
 
 class EnergyResult:
@@ -152,70 +187,150 @@ class EnergyResult:
         self.summaryfile = summaryfile
         self.path_to_result = path_to_result
         self.exp_info = self.summaryfile[self.summaryfile["result_folder"]==self.path_to_result]
-        #print(self.exp_info)
         self.date_time_format = "%Y-%m-%d %H:%M:%S"
+    
+    def _folder_still_exist(self):
+        return os.path.exists(self.path_to_result)
 
-        
-        
+    def _get_client_in_host(self) -> List[Tuple[str, List[int]]]:
+        """
+        Get the client information for each host.
 
-    def _get_client_in_host(self)->List[Tuple[str,List[int]]]:
-        #exp_info = self.summary[self.summary["result_folder"]==self.result_path]
+        Returns:
+            A list of tuples, where each tuple contains the host name and a list of client IDs.
+        """
         hosts = [col for col in self.exp_info.columns if "estats" in col]
         hostmetainfo = []
         for host in hosts:
             client_list = self.exp_info[host].iloc[0]
-            client_list = re.sub(r'\[|\]','',client_list).split()
-            client_list = [int(i) for i in client_list]
-            hostmetainfo.append((host,client_list))
+            try:
+                client_list = re.sub(r'\[|\]', '', client_list).split()
+                client_list = [int(i) for i in client_list]
+                hostmetainfo.append((host, client_list))
+            except TypeError as err:
+                print(f"Host {host} doesn't have any clients: {self.exp_info[host].iloc[0]}, triggered {err}")
         return hostmetainfo
     
-    def _get_selectedclient_in_host(self)->List[Tuple[str,List[int]]]:
+    def _get_selectedclient_in_host(self) -> List[Tuple[str, List[int]]]:
+        """
+        Retrieves the selected clients for each host.
+
+        Returns:
+            A list of tuples, where each tuple contains the host name and a list of selected clients.
+        """
         hosts = sorted([host for host in os.listdir(self.path_to_result) if 'client' in host])
         hostmetainfo = []
         for host in hosts:
-            file_in_host = os.listdir(os.path.join(self.path_to_result,host))
+            file_in_host = os.listdir(os.path.join(self.path_to_result, host))
             client_list = [name.split("_")[-1].split('.')[0] for name in file_in_host if "evalresult" in name]
             client_list = [int(i) for i in client_list]
-            hostmetainfo.append((host,client_list))
+            hostmetainfo.append((host, client_list))
         return hostmetainfo
+    
+    def _match_host_estats(self) -> Dict[str, str]:
+        estats = [x for x,_ in self._get_client_in_host()]
+        hosts = [x for x,_ in self._get_selectedclient_in_host()]
+        if len(estats) != len(hosts):
+            print(estats, hosts)
+            raise ValueError("The number of hosts in the summary file does not match the number of hosts in the result folder.")
+        estats_match = {}
+        for i in range(len(estats)):
+            estats_match[hosts[i]] = estats[i]
+        
+        return estats_match
+    
+    def _get_client_training_results(self, path_host, cid: int) -> pd.DataFrame:
+        """
+        Read the evaluation, fit results, and fit times for a specific client.
+
+        Args:
+            path_host (str): The path to the host directory.
+            cid (int): The client ID.
+
+        Returns:
+            Namespace: A namespace object containing the evaluation results, fit results, and fit times.
+        """
+        evalresult = pd.read_csv(
+            os.path.join(path_host, f"evalresult_client_{cid}.csv"), 
+            parse_dates=["time"], 
+            date_format=self.date_time_format
+            )
+        fitresult = pd.read_csv(
+            os.path.join(path_host, f"fitresult_client_{cid}.csv"), 
+            parse_dates=["time"], 
+            date_format=self.date_time_format
+            )
+        fittime = pd.read_csv(
+            os.path.join(path_host, f"fittimes_client_{cid}.csv"), 
+            parse_dates=["Start Time","End Time"], 
+            date_format=self.date_time_format
+            )
+        # Get fit time of each communication round
+        fittime["fittime"] = (fittime["End Time"] - fittime["Start Time"]).dt.total_seconds()
+        return SimpleNamespace(results=evalresult, fitresults=fitresult, fittimes=fittime)
         
     def _read_client_host(self, hid:int):
+        """
+        Reads the client host data for a given host ID.
+
+        Args:
+            hid (int): The host ID.
+
+        Returns:
+            SimpleNamespace: A namespace object containing the hostname, energy data, and client metadata.
+        """
         path_to_host = os.path.join(self.path_to_result,f"client_host_{hid}")
-        energy = pd.read_csv(os.path.join(path_to_host,"energy.csv"), parse_dates=["timestamp"])
-        energy.columns = [col.strip() for col in energy.columns]
-        
-        #hostmetadata = self._get_client_in_host()
-        hostmetadata = self._get_selectedclient_in_host()
-        hostname = hostmetadata[hid][0]
-        client_list = hostmetadata[hid][1]
-        client_metadata = {f"client_{cid}": self._read_client(path_to_host,cid) for cid in client_list}
-        #client_metadata = SimpleNamespace(**client_metadata)
-        return SimpleNamespace(hostname=hostname, energy=energy, clients=client_metadata)    
+        try:
+            energy = pd.read_csv(
+                os.path.join(path_to_host,"energy.csv"), 
+                parse_dates=["timestamp"]
+                )
+            energy.columns = [col.strip() for col in energy.columns]
+            
+            hostmetadata = self._get_selectedclient_in_host()
+            try:
+                hostname = hostmetadata[hid][0]
+                client_list = hostmetadata[hid][1]
+                client_data = {f"client_{cid}": self._get_client_training_results(path_to_host,cid) for cid in client_list}
+                return SimpleNamespace(hostname=hostname, energy=energy, clients=client_data)
+            except IndexError as err:
+                print(f"Host {hid} doesn't have any clients: {err}")
+        except FileNotFoundError as err:
+            print(f"Host {hid} doesn't have an energy file: {err}")
+            
     
-        
-    def _read_client(self,path_host,cid:int)->pd.DataFrame:
-        evalresult = pd.read_csv(os.path.join(path_host, f"evalresult_client_{cid}.csv"), parse_dates=["time"], date_format=self.date_time_format)
-        
-        fitresult = pd.read_csv(os.path.join(path_host, f"fitresult_client_{cid}.csv"), parse_dates=["time"], date_format=self.date_time_format)
-        
-        fittime = pd.read_csv(os.path.join(path_host, f"fittimes_client_{cid}.csv"), parse_dates=["Start Time","End Time"], date_format=self.date_time_format)
-        fittime["fittime"] = (fittime["End Time"] - fittime["Start Time"]).dt.total_seconds() # Get fit time of each communication round
-        return SimpleNamespace(results=evalresult, fitresults=fitresult, fittimes=fittime)
+    def _get_each_client_training_results(self) -> List[pd.DataFrame]:
+            """
+            Get all the clients' training results from the host and returns a list of pandas DataFrames.
+
+            Returns:
+                List[pd.DataFrame]: A list of pandas DataFrames containing the clients' training results.
+            """
+            clients = []
+            hostmetadata = self._get_selectedclient_in_host()
+            for hid, _ in zip(range(len(hostmetadata)), hostmetadata):
+                hostinfo = self._read_client_host(hid)
+                if hostinfo is None:
+                    continue
+                for k in hostinfo.clients.keys():
+                    clients.append(hostinfo.clients[k])            
+            return clients
     
-    def _read_all_clients(self)->List[pd.DataFrame]:
-        clients = []
-        hostmetadata = self._get_client_in_host()
-        for hid,hostdata in zip(range(len(hostmetadata)),hostmetadata):
-            hostinfo = self._read_client_host(hid)
-            for k in hostinfo.clients.keys():
-                clients.append(hostinfo.clients[k])            
-        return clients
-    
-    def _read_all_host_energy(self)->Tuple[List[str],List[pd.DataFrame]]:
+    def _get_each_host_energy(self) -> Tuple[List[str], List[pd.DataFrame]]:
+        """
+        Get the energy information for each hosts.
+
+        Returns:
+            A tuple containing two lists:
+            - hostname: A list of hostnames.
+            - energy: A list of energy dataframes for each host.
+        """
         hosts = self._get_client_in_host()
         hostname, energy = [], []
         for hid in range(len(hosts)):
             hostinfo = self._read_client_host(hid)
+            if hostinfo is None:
+                continue
             hostname.append(hostinfo.hostname)
             energy.append(hostinfo.energy)
         return hostname, energy
@@ -228,8 +343,11 @@ class EnergyResult:
         """
         path_to_server = os.path.join(self.path_to_result,"server")
         try : 
-            energy = pd.read_csv(os.path.join(path_to_server,"energy.csv"), parse_dates=["timestamp"])
-            energy["timestamp"] = energy["timestamp"].dt.round("1s") # Rounding to 1s
+            energy = pd.read_csv(
+                os.path.join(path_to_server,"energy.csv"), 
+                parse_dates=["timestamp"]
+                )
+            # energy["timestamp"] = energy["timestamp"].dt.round("1s") # Rounding to 1s
             energy.columns = [col.strip() for col in energy.columns]
         except FileNotFoundError as err:
             energy = None
@@ -275,7 +393,7 @@ class EnergyResult:
     
         
     def clients_results(self)->List[pd.DataFrame]:
-        clients = self._read_all_clients()
+        clients = self._get_each_client_training_results()
         return clients
     
     def server_results(self)->pd.DataFrame:
@@ -283,7 +401,7 @@ class EnergyResult:
         return server
     
     def client_host_energy(self):
-        hostname, energy = self._read_all_host_energy()
+        hostname, energy = self._get_each_host_energy()
         return hostname, energy
             
     def make_energy_plot(self, attribute:str, columns_name_1:str, columns_name_2)->None:
@@ -295,7 +413,7 @@ class EnergyResult:
             columns_name_2 (_type_): Columns name of DataFrame for the y-axis
             Example: attribute = "energy", columns_name_1 = "timestamp", columns_name_2 = "tot inst power"
         """
-        # clients = self._read_all_clients()
+        # clients = self._get_each_client_training_results()
         server = self._read_server()
         hostname, host_energy = self.client_host_energy()
         plt.figure(figsize=(10,5))
@@ -316,7 +434,7 @@ class EnergyResult:
         config_text = '\n'.join(f'{k}: {v}' for k, v in config.items())
         props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
         server = self._read_server()
-        #clients= self._read_all_clients()
+        #clients= self _get_client_training_results()
         for k,v in kwargs.items():
             if k=="loss":
                 if server.__getattribute__(v[0]) is not None:
@@ -372,6 +490,7 @@ def match_folder_csv(summaryfile, output_dir):
     summaryfile = summaryfile[summaryfile["result_folder"].apply(lambda x: x.split("/")[-1] in correct_file)]
     return summaryfile
 
+
 def select_model(summaryfile, model_name):
     summaryfile = summaryfile[summaryfile["neuralnet"]==model_name]
     return summaryfile
@@ -379,28 +498,130 @@ def select_model(summaryfile, model_name):
 def read_summaryfile(path_summary):
     usr_home = path_summary.replace('/',' ').split()
     usr_homedir = f"{usr_home[0]}/{usr_home[1]}"
-    summary = pd.read_csv(path_summary)
-    cols = summary.columns
+    summary = pd.read_csv(
+        path_summary, 
+        parse_dates=[
+            "timestamps.end_experiment_after_sleep", 
+            "timestamps.end_experiment", 
+            "timestamps.start_experiment", 
+            "timestamps.start_experiment_before_sleep"
+            ],
+        date_format='%Y-%m-%d_%H:%M:%S_%f')
     summary["result_folder"] = summary["result_folder"].apply(lambda x: x.replace("root",usr_homedir))
     return summary
 
 def config_drop(config:Dict[str,str])->Dict[str,str]:
+    light_config = config.copy()
     keys_etc = ['server','energy_file','sleep_duration']
     
-    nodes_keys = [k for k in config if 'estats' in k]
-    timestamp_keys = [k for k in config if 'timestamp' in k]
-    comm_keys = [k for k in config if 'comm' in k]
-    params_keys = [k for k in config if 'params' in k]
-    additional_keys = [k for k in config for i in keys_etc if i in k]
+    nodes_keys = [k for k in light_config if 'estats' in k]
+    timestamp_keys = [k for k in light_config if 'timestamp' in k]
+    comm_keys = [k for k in light_config if 'comm' in k]
+    params_keys = [k for k in light_config if 'params' in k]
+    additional_keys = [k for k in light_config for i in keys_etc if i in k]
     
-    results_dir_short = config["result_folder"].split("/")[-1]
-    config["result_folder"] = results_dir_short
+    results_dir_short = light_config["result_folder"].split("/")[-1]
+    light_config["result_folder"] = results_dir_short
     
     drop_list = nodes_keys + timestamp_keys + comm_keys + additional_keys #+ params_keys
     for key in drop_list:
-        config.pop(key)
-    return config
+        light_config.pop(key)
+    return light_config
         
+def compute_host_energy(energy_df, start_datetime, end_datetime):
+    try:
+        total_energy_df = energy_df[(energy_df["timestamp"] >= start_datetime) & (energy_df["timestamp"] <= end_datetime)]
+    except TypeError as err:
+        print(f"Error: {err}")
+        energy_df["timestamp"] = pd.to_datetime(energy_df["timestamp"], format='mixed')
+        total_energy_df = energy_df[(energy_df["timestamp"] >= start_datetime) & (energy_df["timestamp"] <= end_datetime)]
+        
+    intervals = total_energy_df["timestamp"].diff().apply(lambda x: x.total_seconds())
+    energy_J = (total_energy_df["tot inst power (mW)"] * 1e-3 * intervals).sum()
+    energy_kWh = energy_J * 1e-3 / 3600
+    avg_gpu = total_energy_df["GPU%"].mean()/100
+    avg_cpu = total_energy_df["CPU%"].mean()/100
+    avg_ram = total_energy_df["RAM%"].mean()/100
+    
+    res = {
+        "energy_J": energy_J,
+        "energy_kWh": energy_kWh,
+        "gpu_perc_avg": avg_gpu,
+        "cpu_perc_avg": avg_cpu,
+        "ram_perc_avg": avg_ram
+    }
+    
+    return res
+
+def compute_exp_energy_per_host(summaryfile, experiment_summary, experiment_folder):
+    
+    result = EnergyResult(experiment_folder,summaryfile)
+    if not result._folder_still_exist():
+        print(f"Folder {experiment_folder} does not exist")
+        return None
+    server = result._read_server()
+    hostname, host_energy = result.client_host_energy()
+    
+    datetime_format = "%Y-%m-%d_%H-%M-%S_%f"
+    start_time = experiment_summary["timestamps.start_experiment"]
+    end_time = experiment_summary["timestamps.end_experiment"]
+    start_datetime = datetime.strptime(start_time, datetime_format)
+    end_datetime = datetime.strptime(end_time, datetime_format)
+
+    host_summary = pd.DataFrame()
+
+    row = compute_host_energy(server.__getattribute__("energy"), start_datetime, end_datetime)
+    row["hostname"] = "server"
+    row["role"] = "server"
+    row["result_folder"] = experiment_folder
+    row["estatsname"] = experiment_summary["server"].split(".")[0].split("-")[1]
+    host_summary = pd.concat([host_summary, pd.DataFrame([row])], ignore_index=True)
+
+    for hid in range(len(host_energy)):
+        row = compute_host_energy(host_energy[hid], start_datetime, end_datetime)
+        row["hostname"] = hostname[hid]
+        row["result_folder"] = experiment_folder
+        row["estatsname"] = match_hosts_estats[hostname[hid]].split("-")[1]
+        row["role"] = "client"
+        host_summary = pd.concat([host_summary, pd.DataFrame([row])], ignore_index=True)
+        
+    return host_summary
+
+def compute_exp_energy(exp_id, summaryfile, outputs_path):
+    
+    experiment_summary = summaryfile.to_dict(orient="records")[exp_id]
+    experiment_folder = experiment_summary["result_folder"]
+    
+    print(f"Processing experiment {experiment_folder}")
+    
+    host_summary_path = os.path.join(experiment_folder, "energy_hosts_summary.csv")
+    if os.path.exists(host_summary_path):
+        host_summary = pd.read_csv(host_summary_path)
+    else: 
+        host_summary = compute_exp_energy_per_host(
+            summaryfile, experiment_summary, experiment_folder)
+        if host_summary is None:
+            return None, None
+        host_summary.to_csv(host_summary_path, index=False)
+    
+    clients_J, clients_kWh = host_summary[host_summary["role"] == "client"][["energy_J", "energy_kWh"]].sum()
+    server_J, server_kWh = host_summary[host_summary["role"] == "server"][["energy_J", "energy_kWh"]].sum()
+    
+    exp_summary = {
+        "result_folder": experiment_folder,
+        "clients_J": clients_J,
+        "clients_kWh": clients_kWh,
+        "server_J": server_J,
+        "server_kWh": server_kWh
+    }
+    
+    exp_summary = pd.DataFrame(exp_summary, index=[0])
+    exp_summary_path = os.path.join(outputs_path, "perf_summary.csv")
+    
+    exp_summary.to_csv(exp_summary_path, mode='a', index=False, header=not os.path.exists(exp_summary_path))
+    
+    return host_summary, exp_summary
+
 
 if __name__ == "__main__":  
     result_plot = {#"loss": ["results","server_round","loss","losses_centralized","losses_distributed"],}
