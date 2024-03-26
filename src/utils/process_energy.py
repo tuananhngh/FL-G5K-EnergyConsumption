@@ -88,7 +88,9 @@ def compute_exp_energy(exp_id, summaryfile, outputs_path):
         "clients_J": clients_J,
         "clients_kWh": clients_kWh,
         "server_J": server_J,
-        "server_kWh": server_kWh
+        "server_kWh": server_kWh,
+        "total_J": clients_J + server_J,
+        "total_kWh": clients_kWh + server_kWh
     }
     
     exp_summary = pd.DataFrame(exp_summary, index=[0])
