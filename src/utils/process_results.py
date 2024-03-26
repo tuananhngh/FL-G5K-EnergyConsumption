@@ -482,14 +482,11 @@ class EnergyResult:
                     ax.set_xlabel(v[1])
                     ax.set_ylabel(v[2])
                     plt.legend()
-                
-
     
 def match_folder_csv(summaryfile, output_dir):
     correct_file = os.listdir(output_dir)
     summaryfile = summaryfile[summaryfile["result_folder"].apply(lambda x: x.split("/")[-1] in correct_file)]
     return summaryfile
-
 
 def select_model(summaryfile, model_name):
     summaryfile = summaryfile[summaryfile["neuralnet"]==model_name]
@@ -527,100 +524,7 @@ def config_drop(config:Dict[str,str])->Dict[str,str]:
     for key in drop_list:
         light_config.pop(key)
     return light_config
-        
-def compute_host_energy(energy_df, start_datetime, end_datetime):
-    try:
-        total_energy_df = energy_df[(energy_df["timestamp"] >= start_datetime) & (energy_df["timestamp"] <= end_datetime)]
-    except TypeError as err:
-        print(f"Error: {err}")
-        energy_df["timestamp"] = pd.to_datetime(energy_df["timestamp"], format='mixed')
-        total_energy_df = energy_df[(energy_df["timestamp"] >= start_datetime) & (energy_df["timestamp"] <= end_datetime)]
-        
-    intervals = total_energy_df["timestamp"].diff().apply(lambda x: x.total_seconds())
-    energy_J = (total_energy_df["tot inst power (mW)"] * 1e-3 * intervals).sum()
-    energy_kWh = energy_J * 1e-3 / 3600
-    avg_gpu = total_energy_df["GPU%"].mean()/100
-    avg_cpu = total_energy_df["CPU%"].mean()/100
-    avg_ram = total_energy_df["RAM%"].mean()/100
-    
-    res = {
-        "energy_J": energy_J,
-        "energy_kWh": energy_kWh,
-        "gpu_perc_avg": avg_gpu,
-        "cpu_perc_avg": avg_cpu,
-        "ram_perc_avg": avg_ram
-    }
-    
-    return res
 
-def compute_exp_energy_per_host(summaryfile, experiment_summary, experiment_folder):
-    
-    result = EnergyResult(experiment_folder,summaryfile)
-    if not result._folder_still_exist():
-        print(f"Folder {experiment_folder} does not exist")
-        return None
-    server = result._read_server()
-    hostname, host_energy = result.client_host_energy()
-    
-    datetime_format = "%Y-%m-%d_%H-%M-%S_%f"
-    start_time = experiment_summary["timestamps.start_experiment"]
-    end_time = experiment_summary["timestamps.end_experiment"]
-    start_datetime = datetime.strptime(start_time, datetime_format)
-    end_datetime = datetime.strptime(end_time, datetime_format)
-
-    host_summary = pd.DataFrame()
-
-    row = compute_host_energy(server.__getattribute__("energy"), start_datetime, end_datetime)
-    row["hostname"] = "server"
-    row["role"] = "server"
-    row["result_folder"] = experiment_folder
-    row["estatsname"] = experiment_summary["server"].split(".")[0].split("-")[1]
-    host_summary = pd.concat([host_summary, pd.DataFrame([row])], ignore_index=True)
-
-    for hid in range(len(host_energy)):
-        row = compute_host_energy(host_energy[hid], start_datetime, end_datetime)
-        row["hostname"] = hostname[hid]
-        row["result_folder"] = experiment_folder
-        row["estatsname"] = match_hosts_estats[hostname[hid]].split("-")[1]
-        row["role"] = "client"
-        host_summary = pd.concat([host_summary, pd.DataFrame([row])], ignore_index=True)
-        
-    return host_summary
-
-def compute_exp_energy(exp_id, summaryfile, outputs_path):
-    
-    experiment_summary = summaryfile.to_dict(orient="records")[exp_id]
-    experiment_folder = experiment_summary["result_folder"]
-    
-    print(f"Processing experiment {experiment_folder}")
-    
-    host_summary_path = os.path.join(experiment_folder, "energy_hosts_summary.csv")
-    if os.path.exists(host_summary_path):
-        host_summary = pd.read_csv(host_summary_path)
-    else: 
-        host_summary = compute_exp_energy_per_host(
-            summaryfile, experiment_summary, experiment_folder)
-        if host_summary is None:
-            return None, None
-        host_summary.to_csv(host_summary_path, index=False)
-    
-    clients_J, clients_kWh = host_summary[host_summary["role"] == "client"][["energy_J", "energy_kWh"]].sum()
-    server_J, server_kWh = host_summary[host_summary["role"] == "server"][["energy_J", "energy_kWh"]].sum()
-    
-    exp_summary = {
-        "result_folder": experiment_folder,
-        "clients_J": clients_J,
-        "clients_kWh": clients_kWh,
-        "server_J": server_J,
-        "server_kWh": server_kWh
-    }
-    
-    exp_summary = pd.DataFrame(exp_summary, index=[0])
-    exp_summary_path = os.path.join(outputs_path, "perf_summary.csv")
-    
-    exp_summary.to_csv(exp_summary_path, mode='a', index=False, header=not os.path.exists(exp_summary_path))
-    
-    return host_summary, exp_summary
 
 
 if __name__ == "__main__":  
