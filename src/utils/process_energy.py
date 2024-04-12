@@ -2,7 +2,7 @@ import pandas as pd
 import os 
 from datetime import datetime
 
-from process_results import EnergyResult, match_hosts_estats, read_summaryfile
+from process_results import EnergyResult, match_hosts_estats, read_summaryfile, match_folder_csv
 
 def compute_host_energy(energy_df, start_datetime, end_datetime):
     try:
@@ -102,14 +102,16 @@ def compute_exp_energy(exp_id, summaryfile, outputs_path):
 
 if __name__ == "__main__":
     output_paths = [
-    "/home/mjay/energyfl/outputcifar10/fedyogi/labelskew",
-    "/home/mjay/energyfl/outputcifar10/fedavg/labelskew",
-    "/home/mjay/energyfl/outputcifar10/fedadam/labelskew",
-    "/home/mjay/energyfl/outputcifar10/fedadagrad/labelskew"
+    # "/home/mjay/energyfl/outputcifar10/fedyogi/labelskew",
+    # "/home/mjay/energyfl/outputcifar10/fedavg/labelskew",
+    # "/home/mjay/energyfl/outputcifar10/fedadam/labelskew",
+    # "/home/mjay/energyfl/outputcifar10/fedadagrad/labelskew",
+    "/home/mjay/energyfl/outputcifar10/10clients/fedadagrad/labelskew"
     ]
     for path in output_paths:
         summary_path = os.path.join(path,"experiment_summary.csv")
         summaryfile = pd.read_csv(summary_path)
+        summaryfile = match_folder_csv(summaryfile, path)
         for exp_id in range(len(summaryfile)):
             compute_exp_energy(exp_id, summaryfile, path)
             
@@ -118,7 +120,10 @@ if __name__ == "__main__":
     for path in output_paths:
         summary_path = os.path.join(path,"experiment_summary.csv")
         summaryfile = read_summaryfile(summary_path)
-        perf_summary = pd.read_csv(os.path.join(path,"perf_summary.csv"))
+        if os.path.exists(os.path.join(path,"perf_summary.csv")):
+            perf_summary = pd.read_csv(os.path.join(path,"perf_summary.csv"))
+        else:
+            perf_summary = summaryfile
         for index, row in perf_summary.iterrows():
             # accuracy and nb of rounds
             result = EnergyResult(row["result_folder"],summaryfile)
