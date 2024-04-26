@@ -216,7 +216,7 @@ class Experiment(Engine):
         """
         Start network monitoring
         """
-        cmd = f"nethogs -t >> {hparams.tmp_result_folder}/network.log 2>&1"
+        cmd = f"nethogs -d 1 -t | while IFS= read -r line; do echo \"$(date +'%Y-%m-%d %H:%M:%S.%6N') $line\"; done >> {hparams.tmp_result_folder}/network.log 2>&1"
         nethogs_processes = execute_command_on_server_and_clients(self.nodes, cmd, background=True)
         return nethogs_processes
         
@@ -337,7 +337,8 @@ class Experiment(Engine):
         
     def one_client_per_host(self, hparams, cmd_args):
         self.run_clients = []
-        for (host, cid) in zip(self.client_hosts, range(self.client_hosts)):
+        client_idx = np.arange(len(self.client_hosts))
+        for (host, cid) in zip(self.client_hosts, client_idx):
             client_cmd = f"cd {self.repository_dir};"\
                 f"python3 src/client.py {cmd_args} comm.host={hparams.comm.host} hydra.run.dir={hparams.tmp_result_folder} client.cid={cid} >> {hparams.tmp_result_folder}/logs.log 2>&1"
             run_client = SshProcess(client_cmd, host=host, connection_params={'user': 'root'})
@@ -447,23 +448,24 @@ class Experiment(Engine):
         
 
 if __name__ == "__main__":
-    nodes = get_oar_job_nodes(449337, "toulouse")
+    nodes = get_oar_job_nodes(450617, "toulouse")
     
     partition = "label_skew"
-    strategy = "fedadagrad"
+    strategy = "fedavg"
 
     params = {
-        "params.num_rounds":[2000],
-        "params.fraction_fit":[0.1], #0.1 is enough for 100 client
-        "params.fraction_evaluate":[0.3], #0.5 is enough for 100 client
+        "params.num_rounds":[200],
+        "params.fraction_fit":[1], #0.1 is enough for 100 client
+        "params.fraction_evaluate":[1], #0.5 is enough for 100 client
         "params.num_groups":[32],
-        "params.wait_round":[30],
+        "params.wait_round":[200],
         "params.lr":[1e-2],
-        "data.batch_size": [20],
+        "params.save_model":[True], #Test this feature before running multiple rounds, change save period to 50
+        "data.batch_size": [64],
         "data.alpha": [0.5], #[1,2,5,10],
         "data.partition":[partition],
         "client.lr" : [0.0316],
-        "client.local_epochs": [1,3,5,10,20],
+        "client.local_epochs": [3,5],
         "client.decay_rate": [1],
         "client.decay_steps": [1],
         "neuralnet":["ResNet18"],
@@ -488,7 +490,7 @@ if __name__ == "__main__":
         repository_dir=repository_dir,
         sleep=30,
         key_to_remove=to_remove,
-        output_dir=f"outputcifar10/{strategy}/{partition.replace('_','')}",
+        output_dir=f"outputcifar10/10clients/comm/{strategy}/{partition.replace('_','')}",
         summary_name="experiment_summary.csv")
     #Exps.frontend_dry_run()
-    Exps.run()
+    Exps.run(multiple_clients_per_host=False)

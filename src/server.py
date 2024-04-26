@@ -1,7 +1,10 @@
+import csv
+import datetime
 from itertools import accumulate
 from utils.training import get_parameters, test, seed_everything, set_parameters
 from utils.datahandler import load_testdata_from_file
 import hydra
+import os
 import numpy as np
 import flwr as fl
 import logging
@@ -15,12 +18,41 @@ from hydra.core.hydra_config import HydraConfig
 from hydra.utils import instantiate
 from flwr.common import Metrics, NDArray, Scalar, ndarrays_to_parameters, FitIns, EvaluateRes
 from hydra.utils import instantiate
-from typing import Callable, Dict, Tuple, List, Optional
+from typing import Callable, Dict, Tuple, List, Optional, Union
 from flwr.server.history import History
 from logging import DEBUG, INFO
 from flwr.common.logger import log
 from utils.models import convert_bn_to_gn
 from flwr.server.strategy import FedAvg, FedYogi, FedAdam
+
+from flwr.common import (
+    Code,
+    DisconnectRes,
+    EvaluateIns,
+    EvaluateRes,
+    FitIns,
+    FitRes,
+    Parameters,
+    ReconnectIns,
+    Scalar,
+)
+import concurrent.futures
+from flwr.common.typing import GetParametersIns
+from flwr.server.client_manager import ClientManager
+from flwr.server.client_proxy import ClientProxy
+
+FitResultsAndFailures = Tuple[
+    List[Tuple[ClientProxy, FitRes]],
+    List[Union[Tuple[ClientProxy, FitRes], BaseException]],
+]
+EvaluateResultsAndFailures = Tuple[
+    List[Tuple[ClientProxy, EvaluateRes]],
+    List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]],
+]
+ReconnectResultsAndFailures = Tuple[
+    List[Tuple[ClientProxy, DisconnectRes]],
+    List[Union[Tuple[ClientProxy, DisconnectRes], BaseException]],
+]
 
 seed_val = 2024
 seed_everything(seed_val)
@@ -51,18 +83,33 @@ def get_on_evaluate_config(config: Dict[str, Scalar])->Callable:
     return evaluate_config_fn
 
 
-def get_evaluate_fn(model, testloader, device, cfg: Dict[str, Scalar])->Callable:
+def get_evaluate_fn(model, testloader, device, cfg: Dict[str, Scalar], output_dir:str)->Callable:
+    save_model = cfg.save_model
     def evaluate_fn(server_round:int, parameters:NDArray, config):
         model.to(device)
         set_parameters(model, parameters)
         loss, accuracy = test(model, testloader, device, verbose=False)
+        if save_model:
+            if server_round%50 == 0: # Save model every ... rounds
+                torch.save(model.state_dict(), Path(output_dir, f"model_{server_round}.pt"))
         return float(loss), {"accuracy": float(accuracy)}
     return evaluate_fn
 
+def write_time_csv(path, round, call, status):
+    with open(path, 'a', newline='') as f:
+        writer = csv.writer(f)
+        if f.tell()==0:
+            writer.writerow(["round", "timestamp","call","status"])
+        now = datetime.datetime.now()
+        writer.writerow([round, now.strftime("%Y-%m-%d %H:%M:%S.%f"), call, status])
+
+
 class CustomServer(fl.server.Server):
-    def __init__(self,wait_round:int,*args, **kwargs):
+    def __init__(self,wait_round:int, path_log:str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.wait_round = wait_round
+        self.path_log = path_log
+    
         
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         """Run federated averaging for a number of rounds."""
@@ -91,13 +138,15 @@ class CustomServer(fl.server.Server):
         min_val_loss = float("inf")
         max_metric_dis = 0.
         round_no_improve = 0
-        
+        path = Path(self.path_log, "rounds_time.csv")
         for current_round in range(1, num_rounds + 1):
             # Train model and replace previous global model
+            write_time_csv(path, current_round, "fit", "start fit call")
             res_fit = self.fit_round(
                 server_round=current_round,
                 timeout=timeout,
             )
+            write_time_csv(path, current_round, "fit", "res fit received")
             if res_fit is not None:
                 parameters_prime, fit_metrics, _ = res_fit  # fit_metrics_aggregated
                 if parameters_prime:
@@ -105,9 +154,12 @@ class CustomServer(fl.server.Server):
                 history.add_metrics_distributed_fit(
                     server_round=current_round, metrics=fit_metrics
                 )
+            write_time_csv(path, current_round, "fit", "res fit aggregated")
 
             # Evaluate model using strategy implementation
+            write_time_csv(path, current_round, "evaluate", "central evaluate call")
             res_cen = self.strategy.evaluate(current_round, parameters=self.parameters)
+            write_time_csv(path, current_round, "evaluate", "central evaluated")
             if res_cen is not None:
                 loss_cen, metrics_cen = res_cen
                 log(
@@ -122,10 +174,12 @@ class CustomServer(fl.server.Server):
                 history.add_metrics_centralized(
                     server_round=current_round, metrics=metrics_cen
                 )
-
+            write_time_csv(path, current_round, "evaluate", "central evaluate end")
 
             # Evaluate model on a sample of available clients
+            write_time_csv(path, current_round, "evaluate", "distributed evaluate call")
             res_fed = self.evaluate_round(server_round=current_round, timeout=timeout)
+            write_time_csv(path, current_round, "evaluate", "distributed evaluated")
             if res_fed is not None:
                 loss_fed, evaluate_metrics_fed, _ = res_fed
                 key_metrics = list(evaluate_metrics_fed.keys())
@@ -137,6 +191,7 @@ class CustomServer(fl.server.Server):
                     history.add_metrics_distributed(
                         server_round=current_round, metrics=evaluate_metrics_fed
                     )
+                    write_time_csv(path, current_round, "evaluate", "distributed evaluate end")
                     # Early Stopping
                     if current_round >= 50: # Start Early Stopping after 100 rounds
                         if acc > max_metric_dis:
@@ -186,27 +241,17 @@ def main(cfg:DictConfig):
                            initial_parameters=initial_parameters,
                            on_fit_config_fn=get_on_fit_config(cfg.client),
                            evaluate_metrics_aggregation_fn=weighted_average,
-                           evaluate_fn=get_evaluate_fn(model, testloader,device,cfg.params),
+                           evaluate_fn=get_evaluate_fn(model, testloader,device,cfg.params,output_dir),
                            on_evaluate_config_fn=get_on_evaluate_config(cfg.client)
                         )
     
-    # strategy = FedYogi(initial_parameters=initial_parameters,
-    #                     fraction_fit=cfg.params.fraction_fit,
-    #                     fraction_evaluate=cfg.params.fraction_evaluate,
-    #                     on_evaluate_config_fn=get_on_evaluate_config(cfg.client),
-    #                     on_fit_config_fn=get_on_fit_config(cfg.client),
-    #                     evaluate_metrics_aggregation_fn=weighted_average,
-    #                     evaluate_fn=get_evaluate_fn(model, testloader,device,cfg.client),
-    #                     min_fit_clients=cfg.params.num_clients_per_round_fit,
-    #                     min_evaluate_clients=cfg.params.num_clients_per_round_eval,
-    #                     eta=cfg.params.lr,
-    #                     eta_l=cfg.client.lr,
-    #                     tau=0.001)
     
     print(strategy.__repr__())
     customserver = CustomServer(wait_round=cfg.params.wait_round, 
+                                path_log = output_dir,
                                 client_manager=fl.server.SimpleClientManager(), 
-                                strategy=strategy)
+                                strategy=strategy,
+                                )
     
     hist = fl.server.start_server(
         server_address=str(server_address)+":"+str(server_port),

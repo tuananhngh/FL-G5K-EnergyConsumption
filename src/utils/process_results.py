@@ -528,11 +528,11 @@ def config_drop(config:Dict[str,str])->Dict[str,str]:
 
 
 if __name__ == "__main__":  
-    result_plot = {#"loss": ["results","server_round","loss","losses_centralized","losses_distributed"],}
-                    "accuracy": ["results","server_round","accuracy","acc_centralized","acc_distributed"]}
+    result_plot = {"loss": ["results","server_round","loss","losses_centralized","losses_distributed"],}
+                    #"accuracy": ["results","server_round","accuracy","acc_centralized","acc_distributed"]}
     
     #path_to_output = "/home/tunguyen/energyfl/outputslabelskew" # /fedavg/labelskew"
-    path_to_output = "/home/tunguyen/energyfl/outputcifar10/fedadam/labelskew"
+    path_to_output = "/home/tunguyen/energyfl/outputcifar10/10clients/fedavg/labelskew"
     summary_path = os.path.join(path_to_output,"experiment_summary.csv")
     summaryfile = read_summaryfile(summary_path)
     summaryfile = match_folder_csv(summaryfile, path_to_output)
