@@ -1,0 +1,17 @@
+strategy:
+  _target_: flwr.server.strategy.FedAvg
+  min_available_clients: ${num_clients_per_round_fit}
+  min_evaluate_clients: ${num_clients_per_round_eval}
+path_to_data: ../data
+num_rounds: 1000
+num_clients: 100
+batch_size: 50
+num_classes: 10
+num_clients_per_round_fit: 2
+num_clients_per_round_eval: 2
+num_groups: 32
+wait_round: 30
+config_fit:
+  server_lr: 0.01
+  lr: 0.0316
+  local_epochs: 5

@@ -1,0 +1,4 @@
+_target_ : strategy.fedsfw.FedSFW
+min_available_clients : ${num_clients_per_round_fit}
+min_evaluate_clients : ${num_clients_per_round_eval}
+sparse_prop : ${sparse_constraints.sparse_prop}

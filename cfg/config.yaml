@@ -1,0 +1,46 @@
+path_to_data: "../data" # path to the data directory
+num_rounds: 1000 # number of FL rounds in the experiment
+num_clients: 10 # number of total clients available (this is also the number of partitions we need to create)
+batch_size: 64 # batch size to use by clients during training
+num_classes: 10 # number of classes in our dataset (we use MNIST) -- this tells the model how to setup its output fully-connected layer
+num_clients_per_round_fit: 2 # number of clients to involve in each fit round (fit  round = clients receive the model from the server and do local training)
+num_clients_per_round_eval: 2 # number of clients to involve in each evaluate round (evaluate round = client only evaluate the model sent by the server on their local dataset without training it)
+num_groups : 32
+wait_round : 50
+iid : False
+config_fit: # a config that each client will receive (this is send by the server) when they are sampled. This allows you to dynamically configure the training on the client side as the simulation progresses
+  server_lr : 0.01
+  #lr: 0.0316 # learning rate to use by the clients
+  #lr : 0.0316
+  lr : 0.01
+  local_epochs: 1 # number of training epochs each clients does in a fit() round
+
+sparse_constraints:
+  K : 300
+  K_frac : 0.2
+  mode : 'radius'
+  sparse_prop : 0.8
+
+lp_constraints:
+  ord : 1
+  mode: 'initialization'
+
+
+defaults:
+  - constraints : k_sparse
+  - optimizers : SFW
+  - strategy : fedsfw
+  - _self_ 
+
+hydra:
+  mode : MULTIRUN
+  run:
+      dir: /srv/storage/energyfl@storage1.toulouse.grid5000.fr/Simulation/cifar10/sfw/${now:%Y-%m-%d %H-%M-%S}
+  sweep :
+    dir : /srv/storage/energyfl@storage1.toulouse.grid5000.fr/Simulation/cifar10/sfw/multirun/${now:%Y-%m-%d %H-%M-%S}
+    subdir : ${hydra.job.override_dirname}
+  sweeper:
+    params:
+      config_fit.lr : 0.01
+      sparse_constraints.K_frac : 0.1
+      sparse_constraints.sparse_prop : 0.0

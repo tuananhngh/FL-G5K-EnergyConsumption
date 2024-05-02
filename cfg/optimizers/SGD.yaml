@@ -1,0 +1,4 @@
+_target_ : optimizers.ConstraintsOpt.SGD
+lr : ${config_fit.lr}
+momentum : 0.9
+nesterov : False

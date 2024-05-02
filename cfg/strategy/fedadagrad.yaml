@@ -1,0 +1,6 @@
+_target_ : flwr.server.strategy.FedAdagrad
+min_available_clients : ${num_clients_per_round_fit}
+min_evaluate_clients : ${num_clients_per_round_eval}
+eta : 0.1
+eta_l : 0.0316
+tau : 0.03

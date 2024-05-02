@@ -1,0 +1,4 @@
+_target_ : flwr.server.strategy.FedAvg
+min_available_clients : ${num_clients_per_round_fit}
+min_evaluate_clients : ${num_clients_per_round_eval}
+

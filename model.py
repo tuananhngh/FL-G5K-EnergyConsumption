@@ -1,8 +1,20 @@
+from unittest import result
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import logging
 
+def convert_bn_to_gn(module, num_groups=64):
+    if isinstance(module, nn.BatchNorm2d):
+        num_channels = module.num_features
+        if num_channels % num_groups == 0:
+            return nn.GroupNorm(num_groups, num_channels)
+        else:
+            return nn.GroupNorm(1, num_channels)
+    else:
+        for name, child_module in module.named_children():
+            module.add_module(name, convert_bn_to_gn(child_module, num_groups))
+        return module
 
 class SimpleNet(torch.nn.Module):
     def __init__(self):
@@ -74,7 +86,7 @@ def train(model, trainloader, epochs, optimizer, device, verbose=False):
             epoch_loss += loss_val.item()
             total_sample += labels.size(0)
             correct += (torch.max(outputs.data, 1)[1] == labels).sum().item()
-        epoch_loss /= len(trainloader.dataset)
+        epoch_loss /= len(trainloader)
         epoch_acc = correct / total_sample
         # # Validation metrics
         # val_loss, val_acc = test(model, valloader, verbose=False)
@@ -86,22 +98,59 @@ def train(model, trainloader, epochs, optimizer, device, verbose=False):
         #     logging.info("Epoch: {} | Client : {} | Loss: {} | Accuracy: {}".format(epoch, client_id, val_loss, val_acc))
     return result
 
-def test(model, testloader, verbose=False):
+def train_constraints(model, 
+                      trainloader, 
+                      epochs, 
+                      optimizer,
+                      constraints,
+                      device,
+                      verbose=False):
+    model.to(device)
     criterion = nn.CrossEntropyLoss()
-    model.to("cpu")
+    model.train()
+    for epoch in range(epochs):
+        epoch_loss, total_sample, correct = 0.0,0.0,0.0
+        for batch in trainloader:
+            images, labels = batch
+            images, labels = images.to(device), labels.to(device)
+            optimizer.zero_grad()
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step(constraints)
+            
+            # Metrics
+            epoch_loss += loss.item()
+            total_sample += labels.size(0)
+            correct += (torch.max(outputs.data, 1)[1] == labels).sum().item()
+        epoch_loss /= len(trainloader)
+        epoch_acc = correct / len(trainloader.dataset) 
+        results = {"train_loss":epoch_loss, "train_acc":epoch_acc}
+    return results
+
+def test(model, testloader,verbose=False):
+    criterion = nn.CrossEntropyLoss()
+    #model.to(device)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.eval()
     val_loss, total_sample, correct = 0.0, 0.0, 0.0
     with torch.no_grad():
         for images, labels in testloader:
-            #images, labels = images.to(device), labels.to(device)
+            images, labels = images.to(device), labels.to(device)
             outputs = model(images)
             loss = criterion(outputs, labels)
             val_loss += loss.item()
             total_sample += labels.size(0)
             correct += (torch.max(outputs.data, 1)[1] == labels).sum().item()
-        avg_loss = val_loss/len(testloader.dataset)
+        avg_loss = val_loss/len(testloader)
         accuracy = correct/total_sample
         if verbose:
             logging.info("Loss: {} | Accuracy: {}".format(avg_loss, accuracy))
     return avg_loss, accuracy
 
+def check_device(neural_net):
+    is_model_on_gpu = next(neural_net.parameters()).is_cuda
+    if is_model_on_gpu:
+        print("Model is on GPU")
+    else:
+        print("Model is on CPU")
