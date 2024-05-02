@@ -87,8 +87,9 @@ class Experiment(Engine):
                 nodes:List[Host], 
                 repository_dir:str,
                 group_storage:str="energyfl",
-                output_dir:str="outputs",
+                output_dir:str="outputs2",
                 sleep:int=30,
+                summary_name:str="experiment_summary2.csv",
                 **kwargs
                 ):
             """
@@ -117,7 +118,7 @@ class Experiment(Engine):
             
             self.extra_args = Box(kwargs)
             self.jetson_sensor_monitor_file = os.path.join(self.repository_dir, "src", "energy", "jetson_monitoring_energy.py")
-            self.exp_csv_file = os.path.join(self.local_output, self.output_dir, "experiment_summary1.csv")
+            self.exp_csv_file = os.path.join(self.local_output, self.output_dir, summary_name)
             logger.info(("Server : {} \n Clients: {}".format(self.server, self.client_hosts)))
         
     def __setattr__(self, __name: str, __value: Any) -> None:
@@ -210,6 +211,14 @@ class Experiment(Engine):
         cmd = f"python3 {self.jetson_sensor_monitor_file} --log-dir {hparams.tmp_result_folder} >> {hparams.tmp_result_folder}/logs.log 2>&1" #TO VERIFY IF LOG CORRECTLY CREATED
         jtop_processes = execute_command_on_server_and_clients(self.nodes, cmd, background=True)
         return jtop_processes
+    
+    def _cmd_network(self, hparams:Box)->List[SshProcess]:
+        """
+        Start network monitoring
+        """
+        cmd = f"nethogs -d 1 -t | while IFS= read -r line; do echo \"$(date +'%Y-%m-%d %H:%M:%S.%6N') $line\"; done >> {hparams.tmp_result_folder}/network.log 2>&1"
+        nethogs_processes = execute_command_on_server_and_clients(self.nodes, cmd, background=True)
+        return nethogs_processes
         
     def _params_to_dict(self, params:Dict)->Dict:
         """
@@ -269,12 +278,18 @@ class Experiment(Engine):
         """
         Kill server and client processes when ended.
         """
-        if self.run_server.ended:
-            self.run_server.kill()
+        self.run_server.kill()
         for run_client in self.run_clients:
-            if run_client.ended:
                 run_client.kill()
         logger.info("ALL PROCESSES KILLED")
+        
+    def _delete_tmp_files(self, hparams:Box)->None:
+        """
+        Delete temporary files on the server and clients.
+        """
+        cmd = f"rm -rf {hparams.tmp_result_folder}"
+        _ = execute_command_on_server_and_clients(self.nodes, cmd, background=False)
+        logger.info("TMP FILES DELETED")
     
     def frontend_dry_run(self):
         """
@@ -292,8 +307,10 @@ class Experiment(Engine):
             #curr_run_args = self._run_dir_setup()
             cmd_args = self._cmd_args(params) 
             hparams = self._get_hyperparams()
+            self._cmd_host_logs(hparams)
             #hparams.exp_datetime = curr_run_args.exp_datetime
-            #jtop_processes = self._cmd_host_energy(hparams)
+            jtop_processes = self._cmd_host_energy(hparams)
+            network_processes = self._cmd_network(hparams)
             hparams.merge_update(**self._params_to_dict(params))
             logger.info("HYPERPARAMS DONE")
             hparams.timestamps.end_experiment = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_%f")
@@ -308,7 +325,8 @@ class Experiment(Engine):
         self.run_clients=[]
         nb_host = len(self.client_hosts)
         client_idx = np.arange(nb_clients)
-        client_per_host = np.split(client_idx, nb_host)
+        client_per_host = np.array_split(client_idx, nb_host)
+        print("CLIENT PER HOST : {}".format(client_per_host))
         for (host, cid_in_host) in zip(self.client_hosts, client_per_host):
             hparams[f"{host.address}".split('.')[0]] = str(cid_in_host)
             for cid in cid_in_host:
@@ -319,7 +337,8 @@ class Experiment(Engine):
         
     def one_client_per_host(self, hparams, cmd_args):
         self.run_clients = []
-        for (host, cid) in zip(self.client_hosts, range(self.client_hosts)):
+        client_idx = np.arange(len(self.client_hosts))
+        for (host, cid) in zip(self.client_hosts, client_idx):
             client_cmd = f"cd {self.repository_dir};"\
                 f"python3 src/client.py {cmd_args} comm.host={hparams.comm.host} hydra.run.dir={hparams.tmp_result_folder} client.cid={cid} >> {hparams.tmp_result_folder}/logs.log 2>&1"
             run_client = SshProcess(client_cmd, host=host, connection_params={'user': 'root'})
@@ -356,6 +375,7 @@ class Experiment(Engine):
             
             #TEST CASE FOR SSH
             nb_clients = hparams.data.num_clients
+            print("NB CLIENTS : {}".format(nb_clients))
             if multiple_clients_per_host:
                 self.multiple_clients_per_host(nb_clients, hparams, cmd_args)
             else :
@@ -372,6 +392,7 @@ class Experiment(Engine):
             
             logger.info("START MONITORING")
             jtop_processes = self._cmd_host_energy(hparams)
+            network_processes = self._cmd_network(hparams)
             hparams.timestamps.start_experiment_before_sleep = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_%f")
             time.sleep(hparams.sleep_duration)
             hparams.timestamps.start_experiment = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_%f")
@@ -394,15 +415,19 @@ class Experiment(Engine):
             for proc in jtop_processes:
                 proc.kill()
             logger.info("JTOP PROCESSES FINISHED AND KILLED")
+        
+            for proc in network_processes:
+                proc.kill()
+            logger.info("NETWORK PROCESSES FINISHED AND KILLED")
             
             # UPDATE PARAMS IN HYPERPARAMS
             logger.info("SAVE TMP FILES AND PARAMETERS TO FRONTEND")
             hparams.merge_update(**self._params_to_dict(params))
             
-            server_cp_cmd = f"mkdir -p {hparams.result_folder}/server; cp -r {hparams.tmp_result_folder}/* {hparams.result_folder}/server"
+            server_cp_cmd = f"mkdir -p {hparams.result_folder}/server; cp -r {hparams.tmp_result_folder}/* {hparams.result_folder}/server;rm -rf {hparams.tmp_result_folder}"
             execute_command_on_server_and_clients([self.server], server_cp_cmd, background=False)
             for cid in range(len(self.client_hosts)):
-                client_cp_cmd = f"mkdir -p {hparams.result_folder}/client_host_{cid}; cp -r {hparams.tmp_result_folder}/* {hparams.result_folder}/client_host_{cid}"
+                client_cp_cmd = f"mkdir -p {hparams.result_folder}/client_host_{cid}; cp -r {hparams.tmp_result_folder}/* {hparams.result_folder}/client_host_{cid};rm -rf {hparams.tmp_result_folder}"
                 execute_command_on_server_and_clients([self.client_hosts[cid]], client_cp_cmd, background=False)
             logger.info("FINISHED SAVING TO FRONTEND")
             
@@ -423,19 +448,28 @@ class Experiment(Engine):
         
 
 if __name__ == "__main__":
-    nodes = get_oar_job_nodes(448947, "toulouse")
+    nodes = get_oar_job_nodes(450617, "toulouse")
+    
+    partition = "label_skew"
+    strategy = "fedavg"
 
     params = {
-        "params.num_rounds":[100],
-        "data.num_clients": [10],
-        "data.alpha": [0.1], #[1,2,5,10],
-        "data.partition":["iid"],
-        "client.lr" : [1e-2],#,1e-2],
-        "client.local_epochs": [1],
+        "params.num_rounds":[200],
+        "params.fraction_fit":[1], #0.1 is enough for 100 client
+        "params.fraction_evaluate":[1], #0.5 is enough for 100 client
+        "params.num_groups":[32],
+        "params.wait_round":[200],
+        "params.lr":[1e-2],
+        "params.save_model":[True], #Test this feature before running multiple rounds, change save period to 50
+        "data.batch_size": [64],
+        "data.alpha": [0.5], #[1,2,5,10],
+        "data.partition":[partition],
+        "client.lr" : [0.0316],
+        "client.local_epochs": [3,5],
         "client.decay_rate": [1],
-        "client.decay_steps": [10],
+        "client.decay_steps": [1],
         "neuralnet":["ResNet18"],
-        "strategy": ["fedavg"],
+        "strategy": [strategy],
         "optimizer": ["SGD"],
     }
 
@@ -444,16 +478,19 @@ if __name__ == "__main__":
     to_remove = ["client.cid",
                  "client.dry_run",
                  "data.partition_dir",
+                 "data.dataloaders",
                  "params.num_classes",
                  "tmp_result_folder",
                  "exp_datetime",
                  "hydra.run.dir",]
-
+    
     Exps = Experiment(
         params=params,
         nodes=nodes,
         repository_dir=repository_dir,
         sleep=30,
-        key_to_remove=to_remove)
+        key_to_remove=to_remove,
+        output_dir=f"outputcifar10/10clients/comm/{strategy}/{partition.replace('_','')}",
+        summary_name="experiment_summary.csv")
     #Exps.frontend_dry_run()
-    Exps.run()
+    Exps.run(multiple_clients_per_host=False)

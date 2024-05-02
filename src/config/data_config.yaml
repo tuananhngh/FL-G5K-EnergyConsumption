@@ -4,11 +4,13 @@ data :
   partition_dir : /srv/storage/energyfl@storage1.toulouse.grid5000.fr/FLDATA/${data.data_name}/ParitionedData/${data.partition}/${data.num_clients}clients/alpha${data.alpha}
   batch_size : 128
   validation_split : 10
-  num_clients : 100
-  alpha : 0.1
+  num_clients : 10
+  alpha : 0.5
   dataloaders : False # True if save partitioned data as dataloaders
   partition : iid  # (possible_value : label_skew, iid, sample_skew)
 
 hydra:
   run:
-    dir : ${data.partition_dir} 
+    dir : ${data.partition_dir} data  
+
+

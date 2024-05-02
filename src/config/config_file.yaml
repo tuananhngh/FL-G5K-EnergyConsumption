@@ -3,29 +3,33 @@ params :
   num_rounds : 5
   num_clients_per_round_fit : 2
   num_clients_per_round_eval : 2
-  min_fit_clients : 2
-  fraction_fit : 0.8
-  fraction_evaluate : 1.0
+  min_available_clients : 2
+  fraction_fit : 0.1
+  fraction_evaluate : 0.3
+  wait_round : 5
+  lr : 0.01
+  num_groups : 16
+  save_model : False
 
 # Mount Storage : "/srv/storage/energyfl@storage1.toulouse.grid5000.fr"
 # /home/tunguyen/energyfl
 data :
   data_name : CIFAR10 # (possible_value : CelebA, CIFAR10, CIFAR100, MNIST, FashionMNIST, TinyImageNet)
   partition_dir : /srv/storage/energyfl@storage1.toulouse.grid5000.fr/FLDATA/${data.data_name}/ParitionedData/${data.partition}/${data.num_clients}clients/alpha${data.alpha}
-  batch_size : 128
+  batch_size : 50
   validation_split : 20
   num_clients : 10
   alpha : 0.1
   dataloaders : True # Load the dataset to dataloader object
-  partition : iid # (possible_value : label_skew, iid, sample_skew)
+  partition : label_skew # (possible_value : label_skew, iid, sample_skew)
 
 client:
-  lr : 0.1
-  local_epochs : 1
+  lr : 0.001
+  local_epochs : 3
   cid : 0
   dry_run : False
-  decay_rate : 0.5 #decay=1 equal constant
-  decay_steps : 10
+  decay_rate : 1 #decay=1 equal constant
+  decay_steps : 1
 
 comm :
   host : '[::]'
@@ -33,8 +37,8 @@ comm :
 
 
 defaults:
-  - neuralnet : MobileNetV2Small
-  - strategy : fedavg
+  - neuralnet : MobileNetV3Small
+  - strategy : fedadam
   - optimizer : SGD
   - _self_ 
 
