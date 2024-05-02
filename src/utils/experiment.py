@@ -18,6 +18,7 @@ import os
 import logging
 import time
 import shutil
+import argparse
 
 
 logger = logging.getLogger("MyEXP")
@@ -448,17 +449,21 @@ class Experiment(Engine):
         
 
 if __name__ == "__main__":
-    nodes = get_oar_job_nodes(450617, "toulouse")
+    nodes = get_oar_job_nodes(450645, "toulouse")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--strategy", type=str)
+    args = parser.parse_args()
     
     partition = "label_skew"
-    strategy = "fedavg"
-
+    #strategy = "fedadam"
+    strategy = args.strategy
+    
     params = {
-        "params.num_rounds":[200],
+        "params.num_rounds":[100],
         "params.fraction_fit":[1], #0.1 is enough for 100 client
         "params.fraction_evaluate":[1], #0.5 is enough for 100 client
         "params.num_groups":[32],
-        "params.wait_round":[200],
+        "params.wait_round":[100],
         "params.lr":[1e-2],
         "params.save_model":[True], #Test this feature before running multiple rounds, change save period to 50
         "data.batch_size": [64],
