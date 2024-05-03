@@ -31,7 +31,6 @@ def compute_energy_within_range(power_df, start_time, end_time):
         energy_df = power_df[(power_df["timestamp"]>=start_time) & (power_df["timestamp"]<=end_time)]
     except TypeError as err:
         print(f"Error: {err}")
-        print(power_df)
         power_df["timestamp"] = pd.to_datetime(power_df["timestamp"], format='mixed')
         energy_df = power_df[(power_df["timestamp"]>=start_time) & (power_df["timestamp"]<=end_time)]
     
@@ -135,13 +134,13 @@ def compute_exp_energy(config, outputs_path):
     print(f"Processing experiment {experiment_folder}")
     
     host_summary_path = os.path.join(experiment_folder, "energy_hosts_summary.csv")
-    if os.path.exists(host_summary_path):
-        host_summary = pd.read_csv(host_summary_path)
-    else: 
-        host_summary = compute_exp_energy_per_host(experiment_summary)
-        if host_summary is None:
-            return None, None
-        host_summary.to_csv(host_summary_path, index=False)
+    # if os.path.exists(host_summary_path):
+    #     host_summary = pd.read_csv(host_summary_path)
+    # else: 
+    host_summary = compute_exp_energy_per_host(experiment_summary)
+    if host_summary is None:
+        return None, None
+    host_summary.to_csv(host_summary_path, index=False)
     
     clients_J, clients_kWh = host_summary[host_summary["role"] == "client"][["energy_J", "energy_kWh"]].sum()
     server_J, server_kWh = host_summary[host_summary["role"] == "server"][["energy_J", "energy_kWh"]].sum()
@@ -334,7 +333,12 @@ def concat_client_training_perf(result, hostmetadata, config):
     training_results = training_results.merge(pd.DataFrame(config).T, on="exp_id")
     return training_results
 
-def aggregate_round_stats(logs, outputs_paths):
+def aggregate_round_stats(
+    logs,
+    outputs_paths,
+    summary_parquet_file="global_summary.parquet",
+    round_parquet_file="round_summary.parquet",
+    ):
     """
     Aggregate experiment and round statistics from multiple experiments.
 
@@ -354,7 +358,7 @@ def aggregate_round_stats(logs, outputs_paths):
         results = pd.concat([results, summary], ignore_index=True)
     results["total_kWh"] = results["clients_kWh"] + results["server_kWh"]
     results.drop(columns=["result_folder_y", "result_folder_x"], inplace=True)
-    results.to_parquet(os.path.join(logs,"global_summary.parquet"), index=False)
+    results.to_parquet(os.path.join(logs,summary_parquet_file), index=False)
 
     round_results = pd.DataFrame()
     for index, config in results.iterrows():
@@ -365,7 +369,7 @@ def aggregate_round_stats(logs, outputs_paths):
         
         training_results = concat_client_training_perf(result, hostmetadata, config)
         if training_results is None:
-            break
+            continue
         # Get start and end time of each round
         host_round_time = training_results[["hostname", "server_round", "Client ID", "Start Time", "End Time"]].copy()
         host_round_time = host_round_time.groupby(["hostname", "server_round"]).agg({"Start Time":"min", "End Time":"max"}).reset_index()
@@ -402,7 +406,7 @@ def aggregate_round_stats(logs, outputs_paths):
         # concat
         round_results = pd.concat([round_results, training_results])
         print("Finished aggregating round stats from experiment "+config_exp_id)
-    round_results.to_parquet(os.path.join(logs,"round_summary.parquet"), index=False)
+    round_results.to_parquet(os.path.join(logs,round_parquet_file), index=False)
     return results, round_results
 
 def preprocess(paths):

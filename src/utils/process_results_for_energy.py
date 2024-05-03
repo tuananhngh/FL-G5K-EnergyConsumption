@@ -66,12 +66,12 @@ class EnergyResult:
         """
         self.exp_info = summaryfile
         self.path_to_result = summaryfile["result_folder"]
-        self.date_time_format = "%Y-%m-%d %H:%M:%S.%f" #.%f
+        self.date_time_format = "%Y-%m-%d %H:%M:%S" #.%f
         
     def _folder_still_exist(self):
         return os.path.exists(self.path_to_result)
 
-    def _get_client_in_host(self) -> List[Tuple[str, List[int]]]:
+    def _get_clients_in_host(self) -> List[Tuple[str, List[int]]]:
         """
         Get the client information for each host.
 
@@ -107,7 +107,7 @@ class EnergyResult:
         return hostmetainfo
     
     def _match_host_estats(self) -> Dict[str, str]:
-        estats = [x for x,_ in self._get_client_in_host()]
+        estats = [x for x,_ in self._get_clients_in_host()]
         hosts = [x for x,_ in self._get_selectedclient_in_host()]
         if len(estats) != len(hosts):
             print(estats, hosts)
@@ -204,7 +204,10 @@ class EnergyResult:
             - hostname: A list of hostnames.
             - energy: A list of energy dataframes for each host.
         """
-        hosts = self._get_client_in_host()
+        if "estats" in self.exp_info.keys():
+            hosts = self._get_clients_in_host()
+        else:
+            hosts = [x for x in sorted(os.listdir(self.exp_info["result_folder"])) if "client_host" in x]
         hostname, energy = [], []
         for hid in range(len(hosts)):
             hostinfo = self._read_client_host(hid)
@@ -265,8 +268,7 @@ class EnergyResult:
         return server
     
     def client_host_energy(self):
-        hostname, energy = self._get_each_host_energy()
-        return hostname, energy
+        return self._get_each_host_energy()
     
 def read_summaryfile(path_summary):
     usr_home = path_summary.replace('/',' ').split()
