@@ -1,0 +1,4 @@
+_target_ : optimizers.ConstraintsOpt.SFW
+lr : ${config_fit.lr}
+rescale: 'diameter'
+momentum : 0.9

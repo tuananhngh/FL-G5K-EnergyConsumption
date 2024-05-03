@@ -24,6 +24,8 @@ from logging import DEBUG, INFO
 from flwr.common.logger import log
 from utils.models import convert_bn_to_gn
 from flwr.server.strategy import FedAvg, FedYogi, FedAdam
+from optimizers.ConstraintsSet import make_feasible
+from utils.serialization import ndarrays_to_sparse_parameters, sparse_parameters_to_ndarrays
 
 from flwr.common import (
     Code,
@@ -231,7 +233,12 @@ def main(cfg:DictConfig):
     model = instantiate(cfg.neuralnet)
     model = convert_bn_to_gn(model, num_groups=cfg.params.num_groups)
     model_parameters = get_parameters(model)
-    initial_parameters = ndarrays_to_parameters(model_parameters)
+    if cfg.constraints is not None:
+        constraints = instantiate(cfg.constraints, model=model)
+        make_feasible(model,constraints)
+        initial_parameters = ndarrays_to_sparse_parameters(model_parameters)
+    else:
+        initial_parameters = ndarrays_to_parameters(model_parameters)
     
     
     #Load TestData

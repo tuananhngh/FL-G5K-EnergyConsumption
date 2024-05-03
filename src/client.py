@@ -141,11 +141,9 @@ def main(cfg:DictConfig):
     # save client pid
     save_client_pid(pid, client_id)
     
-    #dataconfig = DataSetHandler(cfg.data)
-    #trainloaders, valloaders, testloader = dataconfig()
     trainloader, valloader = load_clientdata_from_file(cfg.data, client_id)
     print(len(trainloader.dataset))
-    #trainloader, valloader, testloader = load_dataloader(client_id, path_to_data)
+
     model = instantiate(cfg.neuralnet)
     model = convert_bn_to_gn(model, num_groups=cfg.params.num_groups)
     optimizer = cfg.optimizer

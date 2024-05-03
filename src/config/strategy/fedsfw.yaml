@@ -1,0 +1,7 @@
+_target_ : strategy.fedsfw.FedSFW
+fraction_fit : ${params.fraction_fit}
+fraction_evaluate: ${params.fraction_evaluate}
+min_fit_clients : ${params.num_clients_per_round_fit}
+min_available_clients : ${params.min_available_clients}
+min_evaluate_clients : ${params.num_clients_per_round_eval}
+sparse_prop : ${sparse_constraints.sparse_prop}

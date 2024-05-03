@@ -71,6 +71,43 @@ def train(model, trainloader, valloader, epochs, optimizer, device):
     }
     return results
 
+def train_constraints(model, 
+                      trainloader, 
+                      valloader,
+                      epochs, 
+                      optimizer,
+                      constraints,
+                      device,
+                      verbose=False):
+    model.to(device)
+    check_device(model)
+    model.train()
+    criterion = nn.CrossEntropyLoss()
+    total_samples = len(trainloader.dataset)
+    for _ in tqdm(range(epochs)):
+        epoch_loss, correct_prediction = 0, 0
+        for batch in trainloader:
+            images, labels = batch
+            images, labels = images.to(device), labels.to(device)
+            optimizer.zero_grad()
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step(constraints)
+            
+            # Metrics
+            epoch_loss += loss.item()
+            correct_prediction += (torch.max(outputs.data, 1)[1] == labels).sum().item()
+        epoch_loss = epoch_loss/len(trainloader)
+        epoch_acc = correct_prediction / total_samples
+    val_loss, val_acc = validation(model, valloader, device)
+    results = {"train_loss":epoch_loss,
+               "train_acc":epoch_acc,
+               "val_loss":val_loss,
+               "val_acc":val_acc
+    }
+    return results
+
 def validation(model, dataloader, device):
     criterion = nn.CrossEntropyLoss()
     model.to(device)

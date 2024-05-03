@@ -31,6 +31,12 @@ client:
   decay_rate : 1 #decay=1 equal constant
   decay_steps : 1
 
+sparse_constraints:
+  K : 300
+  K_frac : 0.1
+  mode : 'radius'
+  sparse_prop : 0.8
+
 comm :
   host : '[::]'
   port : 8080
@@ -38,8 +44,9 @@ comm :
 
 defaults:
   - neuralnet : MobileNetV3Small
-  - strategy : fedadam
+  - strategy : fedsfw
   - optimizer : SGD
+  - constraints : None # (possible_value : None, k_sparse, lp_norm)
   - _self_ 
 
 hydra:

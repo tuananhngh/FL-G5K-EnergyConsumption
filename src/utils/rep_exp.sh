@@ -12,6 +12,7 @@
 
 # List of strategies
 strategies=("fedadam" "fedadagrad" "fedyogi")
+strategies=
 
 # Loop over strategies
 for strategy in ${strategies[@]}

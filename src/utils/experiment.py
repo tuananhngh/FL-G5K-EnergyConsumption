@@ -344,6 +344,19 @@ class Experiment(Engine):
                 f"python3 src/client.py {cmd_args} comm.host={hparams.comm.host} hydra.run.dir={hparams.tmp_result_folder} client.cid={cid} >> {hparams.tmp_result_folder}/logs.log 2>&1"
             run_client = SshProcess(client_cmd, host=host, connection_params={'user': 'root'})
             self.run_clients.append(run_client)
+            
+    def one_client_per_host_fw(self, hparams, cmd_args):
+        self.run_clients = []
+        client_idx = np.arange(len(self.client_hosts))
+        for (host, cid) in zip(self.client_hosts, client_idx):
+            client_cmd = f"cd {self.repository_dir};"\
+                f"python3 src/client_sparse.py {cmd_args} comm.host={hparams.comm.host} hydra.run.dir={hparams.tmp_result_folder} client.cid={cid} >> {hparams.tmp_result_folder}/logs.log 2>&1"
+            run_client = SshProcess(client_cmd, host=host, connection_params={'user': 'root'})
+            self.run_clients.append(run_client)
+        
+    def sparse_condition(self, params) -> bool:
+        condition = (params["constraints"] is not None) & (params["strategy"] == "fedsfw") & (params['optimizer']=="SFW")
+        return condition
     
             
     def run(self, multiple_clients_per_host=True):
@@ -380,17 +393,12 @@ class Experiment(Engine):
             if multiple_clients_per_host:
                 self.multiple_clients_per_host(nb_clients, hparams, cmd_args)
             else :
-                self.one_client_per_host(hparams, cmd_args)
-            
-            # TO UNCOMMENTED IF 1 CLIENT PER HOST
-            # self.run_clients = []
-            # for (host, cid) in zip(self.client_hosts, range(len(self.client_hosts))):
-            #     client_cmd = f"cd {self.repository_dir};"\
-            #         f"python3 src/client.py {cmd_args} comm.host={hparams.comm.host} hydra.run.dir={hparams.tmp_result_folder} client.cid={cid} >> {hparams.tmp_result_folder}/logs.log 2>&1"
-            #     run_client = SshProcess(client_cmd, host=host, connection_params={'user': 'root'})
-            #     self.run_clients.append(run_client)
-            # TO UNCOMMENTED
-            
+                if self.sparse_condition(params):
+                    self.one_client_per_host_fw(hparams, cmd_args)
+                else: 
+                    
+                    self.one_client_per_host(hparams, cmd_args)
+                
             logger.info("START MONITORING")
             jtop_processes = self._cmd_host_energy(hparams)
             network_processes = self._cmd_network(hparams)
@@ -449,33 +457,37 @@ class Experiment(Engine):
         
 
 if __name__ == "__main__":
-    nodes = get_oar_job_nodes(450645, "toulouse")
+    nodes = get_oar_job_nodes(450674, "toulouse")
     parser = argparse.ArgumentParser()
     parser.add_argument("--strategy", type=str)
     args = parser.parse_args()
     
     partition = "label_skew"
     #strategy = "fedadam"
-    strategy = args.strategy
+    #strategy = args.strategy
+    strategy = 'fedsfw'
     
     params = {
-        "params.num_rounds":[100],
+        "params.num_rounds":[1000],
         "params.fraction_fit":[1], #0.1 is enough for 100 client
         "params.fraction_evaluate":[1], #0.5 is enough for 100 client
         "params.num_groups":[32],
-        "params.wait_round":[100],
+        "params.wait_round":[50],
         "params.lr":[1e-2],
-        "params.save_model":[True], #Test this feature before running multiple rounds, change save period to 50
+        "params.save_model":[False], #Test this feature before running multiple rounds, change save period to 50
         "data.batch_size": [64],
         "data.alpha": [0.5], #[1,2,5,10],
         "data.partition":[partition],
-        "client.lr" : [0.0316],
-        "client.local_epochs": [3,5],
+        "client.lr" : [0.0316, 0.01], #0.0316 for fl, 0.01 for fw 
+        "client.local_epochs": [1],
         "client.decay_rate": [1],
         "client.decay_steps": [1],
         "neuralnet":["ResNet18"],
-        "strategy": [strategy],
-        "optimizer": ["SGD"],
+        "strategy": [strategy], 
+        "optimizer": ["SFW"],
+        "constraints" : ['k_sparse'],
+        "sparse_constraints.sparse_prop" : [0.8],
+        "sparse_constraints.K_frac" : [0.1],
     }
 
     repository_dir = "/home/tunguyen/jetson-test"

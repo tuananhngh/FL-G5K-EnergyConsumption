@@ -1,0 +1,3 @@
+_target_ : optimizers.ConstraintsSet.create_lp_norm_constraints
+p : ${lp_constraints.ord}
+mode : ${lp_constraints.mode}
