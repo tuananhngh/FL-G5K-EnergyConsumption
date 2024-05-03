@@ -66,7 +66,7 @@ class EnergyResult:
         """
         self.exp_info = summaryfile
         self.path_to_result = summaryfile["result_folder"]
-        self.date_time_format = "%Y-%m-%d %H:%M:%S" #.%f
+        self.date_time_format = "%Y-%m-%d %H:%M:%S.%f" #.%f
         
     def _folder_still_exist(self):
         return os.path.exists(self.path_to_result)

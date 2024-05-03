@@ -1,5 +1,5 @@
 params : 
-  num_classes : 10
+  num_classes : 1000
   num_rounds : 5
   num_clients_per_round_fit : 2
   num_clients_per_round_eval : 2
@@ -7,14 +7,14 @@ params :
   fraction_fit : 0.1
   fraction_evaluate : 0.3
   wait_round : 5
-  lr : 0.01
+  lr : 0.001
   num_groups : 16
   save_model : False
 
 # Mount Storage : "/srv/storage/energyfl@storage1.toulouse.grid5000.fr"
 # /home/tunguyen/energyfl
 data :
-  data_name : CIFAR10 # (possible_value : CelebA, CIFAR10, CIFAR100, MNIST, FashionMNIST, TinyImageNet)
+  data_name : ImageNet # (possible_value : CelebA, CIFAR10, CIFAR100, MNIST, FashionMNIST, TinyImageNet)
   partition_dir : /srv/storage/energyfl@storage1.toulouse.grid5000.fr/FLDATA/${data.data_name}/ParitionedData/${data.partition}/${data.num_clients}clients/alpha${data.alpha}
   batch_size : 50
   validation_split : 20
@@ -52,7 +52,3 @@ defaults:
 hydra:
   run:
     dir: ../outputs/${now:%Y-%m-%d}_${now:%H-%M-%S}/${hydra.job.name}_${client.cid}/
-  
-  
-
-  

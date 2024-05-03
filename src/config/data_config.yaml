@@ -1,8 +1,8 @@
 data :
-  data_name : CIFAR10 # (possible_value : CIFAR10, CIFAR100, MNIST, FashionMNIST)
-  download_dir : /srv/storage/energyfl@storage1.toulouse.grid5000.fr/FLDATA/${data.data_name}
-  partition_dir : /srv/storage/energyfl@storage1.toulouse.grid5000.fr/FLDATA/${data.data_name}/ParitionedData/${data.partition}/${data.num_clients}clients/alpha${data.alpha}
-  batch_size : 128
+  data_name : ImageNet1k # (possible_value : CIFAR10, CIFAR100, MNIST, FashionMNIST)
+  download_dir : /srv/storage/energyfl@storage1.toulouse.grid5000.fr/imagenet-1k/
+  partition_dir : /srv/storage/energyfl@storage1.toulouse.grid5000.fr/imagenet-1k/${data.data_name}/ParitionedData/${data.partition}/${data.num_clients}clients/alpha${data.alpha}
+  batch_size : 192
   validation_split : 10
   num_clients : 10
   alpha : 0.5
