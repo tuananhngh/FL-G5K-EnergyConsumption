@@ -44,9 +44,9 @@ comm :
 
 defaults:
   - neuralnet : MobileNetV3Small
-  - strategy : fedsfw
+  - strategy : fedavg
   - optimizer : SGD
-  - constraints : None # (possible_value : None, k_sparse, lp_norm)
+  - constraints : null  # (possible_value : null, k_sparse, lp_norm)
   - _self_ 
 
 hydra:

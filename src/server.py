@@ -233,11 +233,14 @@ def main(cfg:DictConfig):
     model = instantiate(cfg.neuralnet)
     model = convert_bn_to_gn(model, num_groups=cfg.params.num_groups)
     model_parameters = get_parameters(model)
-    if cfg.constraints is not None:
+    
+    if 'constraints' in cfg.keys():
+        logging.info("Applying constraints")
         constraints = instantiate(cfg.constraints, model=model)
         make_feasible(model,constraints)
         initial_parameters = ndarrays_to_sparse_parameters(model_parameters)
     else:
+        logging.info("No constraints specified")
         initial_parameters = ndarrays_to_parameters(model_parameters)
     
     

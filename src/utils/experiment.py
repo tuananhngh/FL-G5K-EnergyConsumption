@@ -355,10 +355,9 @@ class Experiment(Engine):
             self.run_clients.append(run_client)
         
     def sparse_condition(self, params) -> bool:
-        condition = (params["constraints"] is not None) & (params["strategy"] == "fedsfw") & (params['optimizer']=="SFW")
+        condition = ("constraints" in params.keys()) & (params["strategy"] == "fedsfw") & (params['optimizer']=="SFW")
         return condition
     
-            
     def run(self, multiple_clients_per_host=True):
         """
         Run experiments
@@ -382,11 +381,11 @@ class Experiment(Engine):
             self._cmd_host_logs(hparams)
 
             logger.info("SSH PYTHON CMD TO SERVER AND CLIENTS")
+            
             # DEFINE SERVER & CLIENT SSH PROCESSES
             server_cmd = f"cd {self.repository_dir};"\
                 f"python3 src/server.py {cmd_args} comm.host={hparams.comm.host} hydra.run.dir={hparams.tmp_result_folder} >> {hparams.tmp_result_folder}/logs.log 2>&1"
             self.run_server = SshProcess(server_cmd, host=self.server, connection_params={'user': 'root'})
-            
             #TEST CASE FOR SSH
             nb_clients = hparams.data.num_clients
             print("NB CLIENTS : {}".format(nb_clients))
@@ -395,8 +394,7 @@ class Experiment(Engine):
             else :
                 if self.sparse_condition(params):
                     self.one_client_per_host_fw(hparams, cmd_args)
-                else: 
-                    
+                else:
                     self.one_client_per_host(hparams, cmd_args)
                 
             logger.info("START MONITORING")
@@ -457,7 +455,7 @@ class Experiment(Engine):
         
 
 if __name__ == "__main__":
-    nodes = get_oar_job_nodes(450674, "toulouse")
+    nodes = get_oar_job_nodes(450706, "toulouse")
     parser = argparse.ArgumentParser()
     parser.add_argument("--strategy", type=str)
     args = parser.parse_args()
@@ -472,22 +470,22 @@ if __name__ == "__main__":
         "params.fraction_fit":[1], #0.1 is enough for 100 client
         "params.fraction_evaluate":[1], #0.5 is enough for 100 client
         "params.num_groups":[32],
-        "params.wait_round":[50],
+        "params.wait_round":[30],
         "params.lr":[1e-2],
         "params.save_model":[False], #Test this feature before running multiple rounds, change save period to 50
         "data.batch_size": [64],
-        "data.alpha": [0.5], #[1,2,5,10],
+        "data.alpha": [0.5], 
         "data.partition":[partition],
-        "client.lr" : [0.0316, 0.01], #0.0316 for fl, 0.01 for fw 
-        "client.local_epochs": [1],
+        "client.lr" : [0.01], #0.0316 for fl, 0.01 for fw 
+        "client.local_epochs": [1,3,5],
         "client.decay_rate": [1],
         "client.decay_steps": [1],
         "neuralnet":["ResNet18"],
         "strategy": [strategy], 
         "optimizer": ["SFW"],
-        "constraints" : ['k_sparse'],
+        "constraints" : ["k_sparse"], #remove if no constraints is applied
         "sparse_constraints.sparse_prop" : [0.8],
-        "sparse_constraints.K_frac" : [0.1],
+        "sparse_constraints.K_frac" : [0.2, 0.3],
     }
 
     repository_dir = "/home/tunguyen/jetson-test"
