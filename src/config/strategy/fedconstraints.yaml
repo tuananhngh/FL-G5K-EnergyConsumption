@@ -1,4 +1,4 @@
-_target_ : strategy.fedsfw.FedSFW
+_target_ : strategy.fedconstraints.FedConstraints
 fraction_fit : ${params.fraction_fit}
 fraction_evaluate: ${params.fraction_evaluate}
 min_fit_clients : ${params.num_clients_per_round_fit}

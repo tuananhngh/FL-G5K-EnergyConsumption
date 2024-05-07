@@ -6,7 +6,7 @@ import hydra
 import logging
 import os
 
-from utils.training import train, test, seed_everything
+from utils.training import train, test, seed_everything, train_constraints
 from utils.datahandler import load_clientdata_from_file
 from utils.models import convert_bn_to_gn
 from pathlib import Path
@@ -23,7 +23,7 @@ seed_val = 2024
 seed_everything(seed_val)
 
 class Client(fl.client.NumPyClient):
-    def __init__(self, model, trainloader, valloader, device, outputdir, cid, optimizer, save_model) -> None:
+    def __init__(self, model, trainloader, valloader, device, outputdir, cid, optimizer, save_model, constraints) -> None:
         self.trainloader = trainloader
         self.model = model
         self.valloader = valloader
@@ -32,6 +32,7 @@ class Client(fl.client.NumPyClient):
         self.cid=cid
         self.optim = optimizer
         self.save_model = save_model #feature not implemented for client yet
+        self.constraints = constraints
     
     def set_parameters(self, parameters:NDArrays)->None:
         #key = [k for k in self.model.state_dict().keys()]
@@ -69,7 +70,21 @@ class Client(fl.client.NumPyClient):
                 writer.writerow(["Client ID", "Server Round", "Start Time", "End Time","LR", "Local Epochs"])
             start_time = datetime.datetime.now()
             log(INFO, "CLIENT {} FIT ROUND {}".format(self.cid,server_round))
-            result = train(self.model, self.trainloader, self.valloader, local_epochs, optim, self.device)
+            if self.constraints is not None:
+                result = train_constraints(self.model, 
+                                       self.trainloader, 
+                                       self.valloader,
+                                       local_epochs, 
+                                       optim, 
+                                       self.constraints, 
+                                       self.device)
+            else:
+                result = train(self.model, 
+                               self.trainloader, 
+                               self.valloader, 
+                               local_epochs, 
+                               optim, 
+                               self.device)
             end_time = datetime.datetime.now()
             log(INFO, "CLIENT {} END FIT ROUND {}".format(self.cid,server_round))
             writer.writerow([self.cid, server_round, start_time.strftime("%Y-%m-%d %H:%M:%S.%f"), end_time.strftime("%Y-%m-%d %H:%M:%S.%f"), lr, local_epochs])
@@ -87,12 +102,23 @@ class Client(fl.client.NumPyClient):
         self.write_time_csv(path_comm, self.cid, config["server_round"], "fit", "end")
         return parameters_prime, num_samples, result
     
+    def save_sparsity(self, params:NDArrays, server_round:int):
+        sparsity_dict = {}
+        for i,weight in enumerate(params):
+            if len(weight.shape) > 1:
+                sparsity = np.count_nonzero(weight)/weight.size
+                sparsity_dict[f'layer_{i}'] = sparsity
+        with open(os.path.join(self.outputdir,'sparsity.log'), 'a') as f:
+            f.write(f"Sparsity {server_round} : "+str(sparsity_dict) + "\n")
+    
     def evaluate(self, parameters: NDArrays, config: Dict[str, Scalar]) -> Tuple[float, int, Dict[str, Scalar]]:
         """Evaluate the locally held test dataset."""
         path_comm = Path(self.outputdir, f'client_{self.cid}_comm.csv')
         self.write_time_csv(path_comm, self.cid, config["server_round"], "evaluate", "start")
         steps = None #config["test_steps"]
         server_round = config["server_round"]
+         #save sparsity
+        self.save_sparsity(parameters, server_round)
         self.set_parameters(parameters)
         loss, accuracy = test(self.model, self.valloader, self.device, steps=steps,verbose=True) 
         
@@ -147,7 +173,11 @@ def main(cfg:DictConfig):
     model = instantiate(cfg.neuralnet)
     model = convert_bn_to_gn(model, num_groups=cfg.params.num_groups)
     optimizer = cfg.optimizer
-    client = Client(model, trainloader, valloader, device, output_dir, client_id, optimizer, save_model)
+    if "constraints" in cfg.keys():
+        constraints = instantiate(cfg.constraints, model)
+    else:
+        constraints = None
+    client = Client(model, trainloader, valloader, device, output_dir, client_id, optimizer, save_model,constraints)
     if dry_run:
         res = client.client_dry_run(model, client_id, trainloader, valloader, cfg.client_params, device)
         logging.info(res)

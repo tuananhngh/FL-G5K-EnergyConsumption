@@ -19,7 +19,7 @@ data :
   batch_size : 50
   validation_split : 20
   num_clients : 10
-  alpha : 0.1
+  alpha : 0.5
   dataloaders : True # Load the dataset to dataloader object
   partition : label_skew # (possible_value : label_skew, iid, sample_skew)
 
@@ -37,15 +37,19 @@ sparse_constraints:
   mode : 'radius'
   sparse_prop : 0.8
 
+lp_constraints:
+  ord : 1
+  mode : 'radius'
+
 comm :
-  host : '[::]'
+  host : 172.16.121.10
   port : 8080
 
 
 defaults:
   - neuralnet : MobileNetV3Small
-  - strategy : fedavg
-  - optimizer : SGD
+  - strategy : fedconstraints
+  - optimizer : PSGD
   - constraints : null  # (possible_value : null, k_sparse, lp_norm)
   - _self_ 
 

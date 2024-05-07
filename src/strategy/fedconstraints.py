@@ -21,7 +21,7 @@ import logging
 import numpy as np
 import os
 
-class FedSFW(FedAvg):
+class FedConstraints(FedAvg):
     def __init__(
         self,
         *,
@@ -99,11 +99,12 @@ class FedSFW(FedAvg):
     ) -> Optional[Parameters]:
         """Initialize global model parameters."""
         initial_parameters = self.initial_parameters
-        #initial_parameters = sparse_parameters_to_ndarrays(initial_parameters) #type: ignore
-        self.init_params = sparse_parameters_to_ndarrays(initial_parameters) #type: ignore
-        zeros_out = self.zero_parameters(self.init_params, prop=self.prop)
+        initial_parameters = parameters_to_ndarrays(initial_parameters) #type: ignore
+        #self.init_params = sparse_parameters_to_ndarrays(initial_parameters) #type: ignore
+        zeros_out = self.zero_parameters(initial_parameters, prop=self.prop)
         self.initial_parameters = None  # Don't keep initial parameters in memory
-        initial_parameters = ndarrays_to_sparse_parameters(zeros_out)
+        initial_parameters = ndarrays_to_parameters(zeros_out)
+        #initial_parameters = ndarrays_to_sparse_parameters(zeros_out)
         return initial_parameters    
     
     def evaluate(
@@ -115,7 +116,8 @@ class FedSFW(FedAvg):
             return None
 
         # We deserialize using our custom method
-        parameters_ndarrays = sparse_parameters_to_ndarrays(parameters)
+        #parameters_ndarrays = sparse_parameters_to_ndarrays(parameters)
+        parameters_ndarrays = parameters_to_ndarrays(parameters)
 
         eval_res = self.evaluate_fn(server_round, parameters_ndarrays, {})
         if eval_res is None:
@@ -146,7 +148,7 @@ class FedSFW(FedAvg):
         # We deserialize each of the results with our custom method
         
         weights_results = [
-            (sparse_parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
+            (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
             for _, fit_res in results
         ]
         aggregate_params = aggregate(weights_results)        
@@ -154,7 +156,7 @@ class FedSFW(FedAvg):
         #     logging.info(f"Weight size : {sparse_agg.size} Sparsity : {np.count_nonzero(sparse_agg)/sparse_agg.size}")
                 
         # We serialize the aggregated result using our custom method
-        parameters_aggregated = ndarrays_to_sparse_parameters(aggregate_params)
+        parameters_aggregated = ndarrays_to_parameters(aggregate_params)
         
         #parameters_aggregated_nosparse = ndarrays_to_sparse_parameters(aggregate_params)
         

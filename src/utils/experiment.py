@@ -355,8 +355,10 @@ class Experiment(Engine):
             self.run_clients.append(run_client)
         
     def sparse_condition(self, params) -> bool:
-        condition = ("constraints" in params.keys()) & (params["strategy"] == "fedsfw") & (params['optimizer']=="SFW")
-        return condition
+        condition = ("constraints" in params.keys()) & (params["strategy"] == "fedsfw")
+        condition2 = condition & (params["optimizer"] == "SFW")
+        condition2 = False
+        return condition2
     
     def run(self, multiple_clients_per_host=True):
         """
@@ -395,6 +397,7 @@ class Experiment(Engine):
                 if self.sparse_condition(params):
                     self.one_client_per_host_fw(hparams, cmd_args)
                 else:
+                    logging.info("NO SPARSE CONDITION")
                     self.one_client_per_host(hparams, cmd_args)
                 
             logger.info("START MONITORING")
@@ -455,7 +458,7 @@ class Experiment(Engine):
         
 
 if __name__ == "__main__":
-    nodes = get_oar_job_nodes(450706, "toulouse")
+    nodes = get_oar_job_nodes(450719, "toulouse")
     parser = argparse.ArgumentParser()
     parser.add_argument("--strategy", type=str)
     args = parser.parse_args()
@@ -463,8 +466,9 @@ if __name__ == "__main__":
     partition = "label_skew"
     #strategy = "fedadam"
     #strategy = args.strategy
-    strategy = 'fedsfw'
-    
+    strategy = 'fedconstraints'
+    #run fedadagrad with 1 local epochs
+    #run fedsfw with 1,3,5 but 0.2 or 0.3 K_frac and 0.0316
     params = {
         "params.num_rounds":[1000],
         "params.fraction_fit":[1], #0.1 is enough for 100 client
@@ -476,16 +480,16 @@ if __name__ == "__main__":
         "data.batch_size": [64],
         "data.alpha": [0.5], 
         "data.partition":[partition],
-        "client.lr" : [0.01], #0.0316 for fl, 0.01 for fw 
-        "client.local_epochs": [1,3,5],
+        "client.lr" : [0.0316], #0.0316 for fl, 0.01 for fw 
+        "client.local_epochs": [1], #take care of this parameter
         "client.decay_rate": [1],
         "client.decay_steps": [1],
         "neuralnet":["ResNet18"],
-        "strategy": [strategy], 
-        "optimizer": ["SFW"],
-        "constraints" : ["k_sparse"], #remove if no constraints is applied
-        "sparse_constraints.sparse_prop" : [0.8],
-        "sparse_constraints.K_frac" : [0.2, 0.3],
+        "strategy": [strategy], #take care of this parameter
+        "optimizer": ["SFW", "PSGD"], #take care of this parameter
+        "constraints" : ["lp_norm"], #remove if no constraints is applied
+        "sparse_constraints.sparse_prop" : [0, 0.5], #take care of this parameter
+        #"sparse_constraints.K_frac" : [0.1], #take care of this parameter
     }
 
     repository_dir = "/home/tunguyen/jetson-test"
