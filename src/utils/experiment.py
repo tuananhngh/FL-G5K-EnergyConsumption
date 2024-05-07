@@ -394,11 +394,7 @@ class Experiment(Engine):
             if multiple_clients_per_host:
                 self.multiple_clients_per_host(nb_clients, hparams, cmd_args)
             else :
-                if self.sparse_condition(params):
-                    self.one_client_per_host_fw(hparams, cmd_args)
-                else:
-                    logging.info("NO SPARSE CONDITION")
-                    self.one_client_per_host(hparams, cmd_args)
+                self.one_client_per_host(hparams, cmd_args)
                 
             logger.info("START MONITORING")
             jtop_processes = self._cmd_host_energy(hparams)
@@ -486,7 +482,7 @@ if __name__ == "__main__":
         "client.decay_steps": [1],
         "neuralnet":["ResNet18"],
         "strategy": [strategy], #take care of this parameter
-        "optimizer": ["SFW", "PSGD"], #take care of this parameter
+        "optimizer": ["SFW"], #take care of this parameter
         "constraints" : ["lp_norm"], #remove if no constraints is applied
         "sparse_constraints.sparse_prop" : [0, 0.5], #take care of this parameter
         #"sparse_constraints.K_frac" : [0.1], #take care of this parameter

@@ -61,7 +61,6 @@ class Client(fl.client.NumPyClient):
         lr = config["lr"]
         server_round= config["server_round"]
         optim = instantiate(self.optim, self.model.parameters(), lr=lr)
-        #optim = torch.optim.SGD(self.model.parameters(), lr=lr)
         
         path = Path(self.outputdir, f'fittimes_client_{self.cid}.csv')
         with open(path, 'a', newline='') as f:
