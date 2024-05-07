@@ -102,14 +102,6 @@ class Client(fl.client.NumPyClient):
         self.write_time_csv(path_comm, self.cid, config["server_round"], "fit", "end")
         return parameters_prime, num_samples, result
     
-    def save_sparsity(self, params:NDArrays, server_round:int):
-        sparsity_dict = {}
-        for i,weight in enumerate(params):
-            if len(weight.shape) > 1:
-                sparsity = np.count_nonzero(weight)/weight.size
-                sparsity_dict[f'layer_{i}'] = sparsity
-        with open(os.path.join(self.outputdir,'sparsity.log'), 'a') as f:
-            f.write(f"Sparsity {server_round} : "+str(sparsity_dict) + "\n")
     
     def evaluate(self, parameters: NDArrays, config: Dict[str, Scalar]) -> Tuple[float, int, Dict[str, Scalar]]:
         """Evaluate the locally held test dataset."""
@@ -117,8 +109,7 @@ class Client(fl.client.NumPyClient):
         self.write_time_csv(path_comm, self.cid, config["server_round"], "evaluate", "start")
         steps = None #config["test_steps"]
         server_round = config["server_round"]
-         #save sparsity
-        self.save_sparsity(parameters, server_round)
+
         self.set_parameters(parameters)
         loss, accuracy = test(self.model, self.valloader, self.device, steps=steps,verbose=True) 
         
