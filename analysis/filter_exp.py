@@ -3,12 +3,12 @@ import pandas as pd
 from box import Box
 import json
 import re
-from typing import Callable
+from typing import Callable, Dict
 
 
 def read_summaryfile(output_dir:str, usr_homedir:str, condition:Callable = None):
     path_summary = os.path.join(output_dir, "experiment_summary.csv")
-    usr_home = path_summary.replace('/',' ').split()
+    #usr_home = path_summary.replace('/',' ').split()
     #usr_homedir = f"{usr_home[0]}/{usr_home[1]}"
     summary = pd.read_csv(
         path_summary, 
@@ -21,7 +21,7 @@ def read_summaryfile(output_dir:str, usr_homedir:str, condition:Callable = None)
         date_format='%Y-%m-%d_%H-%M-%S_%f')
     summary = match_folder_csv(summary, output_dir)
     # Filter by parameters
-    summary["result_folder"] = summary["result_folder"].apply(lambda x: x.replace("root",usr_homedir))
+    summary["result_folder"] = summary["result_folder"].apply(lambda x: x.replace("/root",usr_homedir))
     if condition is not None: 
         summary = summary.loc[condition(summary)]
         # summary = summary.loc[
@@ -108,7 +108,7 @@ def create_epochs_dict(by_epochs):
     return epochs_dict
 
 
-def create_json_file(strategies, parent_path, usr_homedir:str, condition:Callable, split='labelskew'):
+def create_json_file(strategies, parent_path, usr_homedir:str, condition:Callable, split='labelskew')->Dict[str, Dict[str, Dict[str, Dict]]]:
     strategy_dict = {}
     epoch_list = [1,3,5]
     for strategy in strategies:

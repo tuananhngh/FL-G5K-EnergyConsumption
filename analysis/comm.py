@@ -18,16 +18,16 @@ client_list = ['client_0', 'client_1', 'client_2', 'client_3', 'client_4', 'clie
 parent_path = "/Users/Slaton/Documents/grenoble-code/fl-flower/energyfl/outputcifar10/10clients/comm/fedsfw/labelskew"
 user = '/Users/Slaton/Documents/grenoble-code/fl-flower/'
 
-summary = read_summaryfile(parent_path, condition=None)
+summary = read_summaryfile(parent_path,usr_homedir=user, condition=None)
 first_exp = summary.iloc[0]
-exp_path = first_exp['result_folder'].replace("/Users/Slaton/", user)
+exp_path = first_exp['result_folder']#.replace("/Users/Slaton/", user)
 files = read_server_clients_data(exp_path)
 
 exp_duration = first_exp['timestamps.end_experiment'] - first_exp['timestamps.start_experiment']
 
 server_round_time = process_rounds_time(files.server.time)
 
-def process_data(client_list, files):
+def process_network_data(client_list, files):
     hosts_send = {}
     hosts_receive = {}
     hosts_round_time = {}
@@ -42,7 +42,7 @@ def process_data(client_list, files):
     return send_df, receive_df
 
 
-def avg_send_receive(send_df, receive_df):
+def melt_send_receive(send_df, receive_df):
     mydf = []
     for (stat,df) in zip(['send','receive'],[send_df, receive_df]):
         df['round'] = df.index

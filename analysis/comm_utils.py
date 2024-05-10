@@ -268,6 +268,45 @@ def read_server_clients_data(exp_path):
     outputs['server'] = Box(processes=server_processes, energy=server_energy, time=server_time, network=server_network, df=server_df)
     return outputs
 
+def process_network_data(client_list, files):
+    hosts_send = {}
+    hosts_receive = {}
+    hosts_round_time = {}
+    for client in client_list:
+        host_stat = process_host_round_time(files_holder=files, host=client)
+        hosts_send[client] = host_stat['send']
+        hosts_receive[client] = host_stat['receive']
+        hosts_round_time[client] = host_stat['round time']
+    # Client 
+    send_df = pd.DataFrame(hosts_send)
+    receive_df = pd.DataFrame(hosts_receive)
+    return send_df, receive_df
+
+
+def melt_send_receive_df(send_df, receive_df):
+    mydf = []
+    for (stat,df) in zip(['send','receive'],[send_df, receive_df]):
+        df['round'] = df.index
+        df_melt = df.melt(id_vars='round',var_name='client',value_name='value')
+        df_melt['status'] = stat
+        mydf.append(df_melt)
+    concat_df = pd.concat([mydf[0], mydf[1]])
+    concat_df['client'] = concat_df['client'].str.replace('client_','Client ')
+    return concat_df
+
+def sum_send_receive(send_df, receive_df):
+    mydf = []
+    for (stat,df) in zip(['send','receive'],[send_df, receive_df]):
+        sum_status = df.sum(axis=0)
+        sum_status = sum_status.drop('round')
+        sum_status = sum_status.reset_index()
+        sum_status.columns = ['client', 'value']
+        sum_status['status'] = stat
+        mydf.append(sum_status)
+    sum_status = pd.concat([mydf[0], mydf[1]])
+    sum_status['client'] = sum_status['client'].str.replace('client_','Client ')
+    return sum_status
+
 def boxplot_message_size_client(df:pd.DataFrame, message_type:str='send'):
     """
     This function plots a boxplot of the average message size for each host.
@@ -285,9 +324,6 @@ def boxplot_message_size_client(df:pd.DataFrame, message_type:str='send'):
     plt.ylabel('MB')
     
     
-    
-    
-
 
 def plot_multples_clients(file_holder):
     server_time = file_holder.server.time
