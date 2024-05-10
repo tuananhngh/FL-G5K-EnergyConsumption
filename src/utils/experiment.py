@@ -344,21 +344,7 @@ class Experiment(Engine):
                 f"python3 src/client.py {cmd_args} comm.host={hparams.comm.host} hydra.run.dir={hparams.tmp_result_folder} client.cid={cid} >> {hparams.tmp_result_folder}/logs.log 2>&1"
             run_client = SshProcess(client_cmd, host=host, connection_params={'user': 'root'})
             self.run_clients.append(run_client)
-            
-    def one_client_per_host_fw(self, hparams, cmd_args):
-        self.run_clients = []
-        client_idx = np.arange(len(self.client_hosts))
-        for (host, cid) in zip(self.client_hosts, client_idx):
-            client_cmd = f"cd {self.repository_dir};"\
-                f"python3 src/client_sparse.py {cmd_args} comm.host={hparams.comm.host} hydra.run.dir={hparams.tmp_result_folder} client.cid={cid} >> {hparams.tmp_result_folder}/logs.log 2>&1"
-            run_client = SshProcess(client_cmd, host=host, connection_params={'user': 'root'})
-            self.run_clients.append(run_client)
         
-    def sparse_condition(self, params) -> bool:
-        condition = ("constraints" in params.keys()) & (params["strategy"] == "fedsfw")
-        condition2 = condition & (params["optimizer"] == "SFW")
-        condition2 = False
-        return condition2
     
     def run(self, multiple_clients_per_host=True):
         """
