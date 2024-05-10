@@ -35,11 +35,10 @@ sparse_constraints:
   K : 300
   K_frac : 0.1
   mode : 'radius'
-  sparse_prop : 0.8
 
 lp_constraints:
-  ord : 1
-  mode : 'radius'
+  ord : 2
+  mode : 'initialization'
 
 comm :
   host : 172.16.121.10

@@ -454,7 +454,7 @@ class Experiment(Engine):
         
 
 if __name__ == "__main__":
-    nodes = get_oar_job_nodes(450719, "toulouse")
+    nodes = get_oar_job_nodes(450773, "toulouse")
     parser = argparse.ArgumentParser()
     parser.add_argument("--strategy", type=str)
     args = parser.parse_args()
@@ -477,14 +477,15 @@ if __name__ == "__main__":
         "data.alpha": [0.5], 
         "data.partition":[partition],
         "client.lr" : [0.0316], #0.0316 for fl, 0.01 for fw 
-        "client.local_epochs": [1], #take care of this parameter
+        "client.local_epochs": [5], #take care of this parameter
         "client.decay_rate": [1],
         "client.decay_steps": [1],
         "neuralnet":["ResNet18"],
         "strategy": [strategy], #take care of this parameter
         "optimizer": ["SFW"], #take care of this parameter
         "constraints" : ["lp_norm"], #remove if no constraints is applied
-        "sparse_constraints.sparse_prop" : [0, 0.5], #take care of this parameter
+        "lp_constraints.ord" : [2],
+        #"sparse_constraints.sparse_prop" : [0, 0.5], #take care of this parameter
         #"sparse_constraints.K_frac" : [0.1], #take care of this parameter
     }
 
@@ -505,7 +506,7 @@ if __name__ == "__main__":
         repository_dir=repository_dir,
         sleep=30,
         key_to_remove=to_remove,
-        output_dir=f"outputcifar10/10clients/comm/{strategy}/{partition.replace('_','')}",
+        output_dir=f"outputcifar10/10clients/{strategy}/{partition.replace('_','')}",
         summary_name="experiment_summary.csv")
     #Exps.frontend_dry_run()
     Exps.run(multiple_clients_per_host=False)

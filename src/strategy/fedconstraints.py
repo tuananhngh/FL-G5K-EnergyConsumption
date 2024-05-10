@@ -42,8 +42,7 @@ class FedConstraints(FedAvg):
         initial_parameters: Optional[Parameters] = None,
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        #info_path : Optional[str] = None,
-        sparse_prop : float = 0.8
+        
     ) -> None:
         """Custom FedAvg strategy with sparse matrices.
 
@@ -91,21 +90,14 @@ class FedConstraints(FedAvg):
             fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         )
-        #self.info_path = info_path
-        self.prop = sparse_prop
         
     def initialize_parameters(
         self, client_manager: ClientManager
     ) -> Optional[Parameters]:
         """Initialize global model parameters."""
         initial_parameters = self.initial_parameters
-        initial_parameters = parameters_to_ndarrays(initial_parameters) #type: ignore
-        #self.init_params = sparse_parameters_to_ndarrays(initial_parameters) #type: ignore
-        zeros_out = self.zero_parameters(initial_parameters, prop=self.prop)
         self.initial_parameters = None  # Don't keep initial parameters in memory
-        initial_parameters = ndarrays_to_parameters(zeros_out)
-        #initial_parameters = ndarrays_to_sparse_parameters(zeros_out)
-        return initial_parameters    
+        return initial_parameters  
     
     def evaluate(
         self, server_round: int, parameters: Parameters
@@ -114,11 +106,7 @@ class FedConstraints(FedAvg):
         if self.evaluate_fn is None:
             # No evaluation function provided
             return None
-
-        # We deserialize using our custom method
-        #parameters_ndarrays = sparse_parameters_to_ndarrays(parameters)
         parameters_ndarrays = parameters_to_ndarrays(parameters)
-
         eval_res = self.evaluate_fn(server_round, parameters_ndarrays, {})
         if eval_res is None:
             return None

@@ -532,7 +532,7 @@ if __name__ == "__main__":
                     "accuracy": ["results","server_round","accuracy","acc_centralized","acc_distributed"]}
     
     #path_to_output = "/home/tunguyen/energyfl/outputslabelskew" # /fedavg/labelskew"
-    path_to_output = "/home/tunguyen/energyfl/outputcifar10/10clients/comm/fedconstraints/labelskew"
+    path_to_output = "/home/tunguyen/energyfl/outputcifar10/10clients/fedconstraints/labelskew"
     summary_path = os.path.join(path_to_output,"experiment_summary.csv")
     summaryfile = read_summaryfile(summary_path)
     summaryfile = match_folder_csv(summaryfile, path_to_output)
