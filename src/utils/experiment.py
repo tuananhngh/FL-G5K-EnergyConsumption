@@ -440,21 +440,22 @@ class Experiment(Engine):
         
 
 if __name__ == "__main__":
-    nodes = get_oar_job_nodes(450773, "toulouse")
+    nodes = get_oar_job_nodes(450857, "toulouse")
     parser = argparse.ArgumentParser()
     parser.add_argument("--strategy", type=str)
     args = parser.parse_args()
     
     partition = "label_skew"
-    #strategy = "fedadam"
+    strategy = "fedadam"
     #strategy = args.strategy
-    strategy = 'fedconstraints'
+    #strategy = 'fedavg_adam'
     #run fedadagrad with 1 local epochs
     #run fedsfw with 1,3,5 but 0.2 or 0.3 K_frac and 0.0316
+    # Next run is with 100 clients and 32
     params = {
         "params.num_rounds":[1000],
-        "params.fraction_fit":[1], #0.1 is enough for 100 client
-        "params.fraction_evaluate":[1], #0.5 is enough for 100 client
+        "params.fraction_fit":[0.1], #0.1 is enough for 100 client
+        "params.fraction_evaluate":[0.5], #0.5 is enough for 100 client
         "params.num_groups":[32],
         "params.wait_round":[30],
         "params.lr":[1e-2],
@@ -462,15 +463,16 @@ if __name__ == "__main__":
         "data.batch_size": [64],
         "data.alpha": [0.5], 
         "data.partition":[partition],
-        "client.lr" : [0.0316], #0.0316 for fl, 0.01 for fw 
-        "client.local_epochs": [5], #take care of this parameter
+        "data.num_clients":[100],
+        "client.lr" : [0.0316], #0.0316 for fl, 0.01 for fw 0.001 for adam optimizer
+        "client.local_epochs": [1,5], #take care of this parameter # 2 times local epochs equal 0.001 for fedavg_adam
         "client.decay_rate": [1],
         "client.decay_steps": [1],
         "neuralnet":["ResNet18"],
         "strategy": [strategy], #take care of this parameter
-        "optimizer": ["SFW"], #take care of this parameter
-        "constraints" : ["lp_norm"], #remove if no constraints is applied
-        "lp_constraints.ord" : [2],
+        "optimizer": ["SGD"], #take care of this parameter
+        #"constraints" : ["lp_norm"], #remove if no constraints is applied
+        #"lp_constraints.ord" : [2],
         #"sparse_constraints.sparse_prop" : [0, 0.5], #take care of this parameter
         #"sparse_constraints.K_frac" : [0.1], #take care of this parameter
     }
@@ -492,7 +494,7 @@ if __name__ == "__main__":
         repository_dir=repository_dir,
         sleep=30,
         key_to_remove=to_remove,
-        output_dir=f"outputcifar10/10clients/{strategy}/{partition.replace('_','')}",
+        output_dir=f"outputcifar10/100clients/fractionfit/{strategy}/{partition.replace('_','')}",
         summary_name="experiment_summary.csv")
     #Exps.frontend_dry_run()
-    Exps.run(multiple_clients_per_host=False)
+    Exps.run(multiple_clients_per_host=True)

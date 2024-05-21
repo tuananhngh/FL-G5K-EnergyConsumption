@@ -1,5 +1,5 @@
 #!/bin/bash 
-num_runs=3
+num_runs=5
 # strategy="random"
 for ((i=1; i<=$num_runs; i++))
 do 
@@ -19,4 +19,4 @@ done
 #     # Call python script with the current strategy
 #     python experiment.py --strategy $strategy
 #     sleep 5
-# done
+# done 

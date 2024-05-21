@@ -1,6 +1,8 @@
 import csv
 import datetime
 from itertools import accumulate
+
+from flwr.server.criterion import Criterion
 from utils.training import get_parameters, test, seed_everything, set_parameters
 from utils.datahandler import load_testdata_from_file
 import hydra
@@ -11,6 +13,8 @@ import logging
 import torch
 import pickle 
 import timeit
+import threading
+import random
 from collections import OrderedDict
 from pathlib import Path
 from omegaconf import DictConfig, OmegaConf
@@ -104,6 +108,48 @@ def write_time_csv(path, round, call, status):
             writer.writerow(["round", "timestamp","call","status"])
         now = datetime.datetime.now()
         writer.writerow([round, now.strftime("%Y-%m-%d %H:%M:%S.%f"), call, status])
+        
+        
+class CustomSimpleClientManager(fl.server.SimpleClientManager):
+    def __init__(self)->None:
+        super().__init__()
+        
+    def sample(
+        self,
+        num_clients: int, #client participe in training
+        min_num_clients: Optional[int] = None,
+        criterion: Optional[Criterion] = None,
+    ) -> List[ClientProxy]:
+        """Sample a number of Flower ClientProxy instances."""
+        # Block until at least num_clients are connected.
+        if min_num_clients is None:
+            min_num_clients = num_clients
+        self.wait_for(min_num_clients)
+        # Sample clients which meet the criterion
+        available_cids = list(self.clients)
+        if criterion is not None:
+            available_cids = [
+                cid for cid in available_cids if criterion.select(self.clients[cid])
+            ]
+
+        if num_clients > len(available_cids):
+            log(
+                INFO,
+                "Sampling failed: number of available clients"
+                " (%s) is less than number of requested clients (%s).",
+                len(available_cids),
+                num_clients,
+            )
+            return []
+        nb_available_clients = len(available_cids)
+        if nb_available_clients <= 10:
+            sampled_cids = random.sample(available_cids, num_clients)
+        else:
+            # Sample clients such that only 1 client per device is selected
+            client_chunks = np.array_split(available_cids, 10)
+            sampled_cids = [random.choice(chunk) for chunk in client_chunks]
+        return [self.clients[cid] for cid in sampled_cids]
+        
 
 
 class CustomServer(fl.server.Server):
@@ -260,7 +306,7 @@ def main(cfg:DictConfig):
     print(strategy.__repr__())
     customserver = CustomServer(wait_round=cfg.params.wait_round, 
                                 path_log = output_dir,
-                                client_manager=fl.server.SimpleClientManager(), 
+                                client_manager=fl.server.SimpleClientManager(), #change to SimpleClientManagerCustom for 100 clients
                                 strategy=strategy,
                                 )
     
