@@ -157,7 +157,7 @@ def main(cfg:DictConfig):
     # save client pid
     save_client_pid(pid, client_id)
     
-    trainloader, valloader = load_clientdata_from_file(cfg.data, client_id)
+    trainloader, valloader = load_clientdata_from_file(cfg.data, client_id) #Put this into fit call
     print(len(trainloader.dataset))
 
     model = instantiate(cfg.neuralnet)

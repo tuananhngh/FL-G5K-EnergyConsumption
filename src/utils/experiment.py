@@ -440,7 +440,7 @@ class Experiment(Engine):
         
 
 if __name__ == "__main__":
-    nodes = get_oar_job_nodes(450857, "toulouse")
+    nodes = get_oar_job_nodes(450875, "toulouse")
     parser = argparse.ArgumentParser()
     parser.add_argument("--strategy", type=str)
     args = parser.parse_args()
@@ -453,8 +453,8 @@ if __name__ == "__main__":
     #run fedsfw with 1,3,5 but 0.2 or 0.3 K_frac and 0.0316
     # Next run is with 100 clients and 32
     params = {
-        "params.num_rounds":[1000],
-        "params.fraction_fit":[0.1], #0.1 is enough for 100 client
+        "params.num_rounds":[2],
+        "params.fraction_fit":[0.2], #0.1 is enough for 100 client
         "params.fraction_evaluate":[0.5], #0.5 is enough for 100 client
         "params.num_groups":[32],
         "params.wait_round":[30],
@@ -463,7 +463,6 @@ if __name__ == "__main__":
         "data.batch_size": [64],
         "data.alpha": [0.5], 
         "data.partition":[partition],
-        "data.num_clients":[100],
         "client.lr" : [0.0316], #0.0316 for fl, 0.01 for fw 0.001 for adam optimizer
         "client.local_epochs": [1,5], #take care of this parameter # 2 times local epochs equal 0.001 for fedavg_adam
         "client.decay_rate": [1],
