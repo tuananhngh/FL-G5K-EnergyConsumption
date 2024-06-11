@@ -1,0 +1,35 @@
+- Note on computation results of the experiments from global summary adn round summary file:
+_ fedadam 1 epoch take 125 rounds and 5 epoch takes 45 rounds, but kwh in 5 local epoch is higher than 1 local epochs. 
+_ If we look only at the total fittimes of all clients for every round, don't see anomaly as Wh of 5 local epoch is higher than 1 local epochs (normal) 
+_ Look at experiment time seem normal as 5 local epochs takes less time than 1 local epochs
+_ Look at experiment time ratio between 5 and 1 local epoch is less pronounced for fedadam and fedyogi
+_ at local client level, total kwh for training time for all client is higher for 5 local epochs than 1 local epochs. But again the ratio in fedadam and fedyogi is more pronounced. 
+
+Client-wise analysis need to match with datapartition, plot already done. At least total fittime is not homogeneous across clients.
+
+fedadam experiment on the night of 9/4 to 10/4: Host 2 does not have energy file. Need to re-run these experiments. These experiment corresponding to local epochs 1.
+
+See each host computation time/round and compare between epochs 1 and 5.Explain why fedadagrad and fedconstraints has more total client training energy in 1 epoch than in 5 epochs for inter strategies setting. See 2 figures from get_client_wise_strategy_plot.
+
+_ In global summary, the clients kWh and other energy results are computed by experiment first then averaging over experiments. So for experiment with more round to reachs 75%, its still be accounted. The time and round to reach 75% is averaged over number of experiments. Should also reported the worse time experiments to reach 75%. add std for each averaging
+
+_ variation between client fitcall energy. It depends a lot on the host. FedConstraint with fw has higher fit call energy due to l2 constraints. 
+
+_ add to global summary and round summary other energy measure such as gpu%, cpu%, memory%, disk% and network% for each client. 
+
+_ Observation on global summary : Client kwh for adaptive fl is higher than fedavg and fedconstraints when running high local epoch. As most of time is SGD, it means that the fedopt require more rounds to reach target accuracy for 5 loca epochs. Looking at the client fit call summary, the avg fitcall is exactly the same for sgd optimizer, but it require more number of round to reach target, which confirms the observation. The results are not exactly the same for one local epochs as rounds to target are similar for fedadam, fedavg and fedyogi but very high for adagrad and constraints. 
+
+_ Question : Which component or FL setting requires more energy?
+
+_ Data size of each clients influence the energy consumption on the fit call. Which explain the variation on energy for on each clients. Because : use same batch size for all clients but with differents datasize result in a different number of iteration at each local epoch, thus client with more data will do more iteration and thus more energy. Next step, look at the energy evolution for each client at each round and see if the energy consumption is increasing or decreasing. => This open door to look into personalized FL setting (personalized local epochs, and parameter) to reduce client's energy consumption
+
+_ fitcall time figure : show that the time is homogenous over training round as except for the first call where the clients need to load the data into caches. There's little variation between SGD base optimizer strategy, sfw with l2 takes take more time to fitcall and adam base optimizer need more time: confirm by the table (see plot of get_client_wise_strategy_round_time_plot). Round number is average round to attaint 75% accuracy.
+
+_ feconstrait has lowest round number to reach acc, but the highest fitcall time for each round as its a constraitn on l2 norm. However, when looking at the total energy consumption on 5 local epochs, its the most energy efficient mostly because of low round time. It's not the case for only 1 local epochs as the fitcall time is higher but the round number is amongst the highest. 
+
+_ Can we relate the fitcall time and energy.?
+
+_ Client energy consumption depends mainly on two parameters: optimizer, data size and local epochs. For strategy, depends mainly on how fast the convergence the strategy give for a given setting.
+
+_ Analysis also round time for fedavg, fedavg_adam and fedconstraints. 
+Need to retun fedavg with 5 local epochs to have roundtime data on server-side. 
