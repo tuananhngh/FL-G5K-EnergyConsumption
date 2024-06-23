@@ -322,44 +322,26 @@ class Experiment(Engine):
             debug_hp = self._hyperparams_to_csv(hparams)
         shutil.rmtree(sweep_dir) 
         
-    def multiple_clients_per_host(self, nb_clients, hparams, cmd_args):
-        self.run_clients=[]
-        nb_host = len(self.client_hosts)
-        client_idx = np.arange(nb_clients)
-        client_per_host = np.array_split(client_idx, nb_host)
-        print("CLIENT PER HOST : {}".format(client_per_host))
-        for (host, cid_in_host) in zip(self.client_hosts, client_per_host):
-            hparams[f"{host.address}".split('.')[0]] = str(cid_in_host)
-            for cid in cid_in_host:
-                client_cmd = f"cd {self.repository_dir};"\
-                    f"python3 src/client.py {cmd_args} comm.host={hparams.comm.host} hydra.run.dir={hparams.tmp_result_folder} client.cid={cid} >> {hparams.tmp_result_folder}/logs.log 2>&1"
-                run_client = SshProcess(client_cmd, host=host, connection_params={'user':'root'})
-                self.run_clients.append(run_client)
         
     def one_client_per_host(self, hparams, cmd_args):
         self.run_clients = []
-        client_idx = np.arange(len(self.client_hosts))
-        for (host, cid) in zip(self.client_hosts, client_idx):
+        #client_idx = np.arange(len(self.client_hosts))
+        for host in self.client_hosts:
             client_cmd = f"cd {self.repository_dir};"\
-                f"python3 src/client.py {cmd_args} comm.host={hparams.comm.host} hydra.run.dir={hparams.tmp_result_folder} client.cid={cid} >> {hparams.tmp_result_folder}/logs.log 2>&1"
+                f"python3 src/client.py {cmd_args} comm.host={hparams.comm.host} hydra.run.dir={hparams.tmp_result_folder} >> {hparams.tmp_result_folder}/logs.log 2>&1"
             run_client = SshProcess(client_cmd, host=host, connection_params={'user': 'root'})
             self.run_clients.append(run_client)
             
-    def one_client_per_host_fw(self, hparams, cmd_args):
-        self.run_clients = []
-        client_idx = np.arange(len(self.client_hosts))
-        for (host, cid) in zip(self.client_hosts, client_idx):
-            client_cmd = f"cd {self.repository_dir};"\
-                f"python3 src/client_sparse.py {cmd_args} comm.host={hparams.comm.host} hydra.run.dir={hparams.tmp_result_folder} client.cid={cid} >> {hparams.tmp_result_folder}/logs.log 2>&1"
-            run_client = SshProcess(client_cmd, host=host, connection_params={'user': 'root'})
-            self.run_clients.append(run_client)
+    def clear_cache(self):
+        """
+        Clear cache on the server and clients.
+        """
+        cmd = "sync; echo 3 > /proc/sys/vm/drop_caches"
+        _ = execute_command_on_server_and_clients(self.nodes, cmd, background=False)
+        logger.info("CACHE CLEARED")
         
-    def sparse_condition(self, params) -> bool:
-        condition = (params["constraints"] is not None) & (params["strategy"] == "fedsfw") & (params['optimizer']=="SFW")
-        return condition
     
-            
-    def run(self, multiple_clients_per_host=True):
+    def run(self):
         """
         Run experiments
         """
@@ -382,22 +364,15 @@ class Experiment(Engine):
             self._cmd_host_logs(hparams)
 
             logger.info("SSH PYTHON CMD TO SERVER AND CLIENTS")
+            
             # DEFINE SERVER & CLIENT SSH PROCESSES
             server_cmd = f"cd {self.repository_dir};"\
                 f"python3 src/server.py {cmd_args} comm.host={hparams.comm.host} hydra.run.dir={hparams.tmp_result_folder} >> {hparams.tmp_result_folder}/logs.log 2>&1"
             self.run_server = SshProcess(server_cmd, host=self.server, connection_params={'user': 'root'})
-            
             #TEST CASE FOR SSH
-            nb_clients = hparams.data.num_clients
-            print("NB CLIENTS : {}".format(nb_clients))
-            if multiple_clients_per_host:
-                self.multiple_clients_per_host(nb_clients, hparams, cmd_args)
-            else :
-                if self.sparse_condition(params):
-                    self.one_client_per_host_fw(hparams, cmd_args)
-                else: 
-                    
-                    self.one_client_per_host(hparams, cmd_args)
+            #nb_clients = hparams.data.num_clients
+            #print("NB CLIENTS : {}".format(nb_clients))
+            self.one_client_per_host(hparams, cmd_args)
                 
             logger.info("START MONITORING")
             jtop_processes = self._cmd_host_energy(hparams)
@@ -449,51 +424,57 @@ class Experiment(Engine):
             #params["exp_count"] = exp_count    
             exp_count += 1
         
-            self.kill_all()
+            #self.kill_all()
             
+            self.clear_cache()
+            self.kill_all()
         logger.info("ALL EXPERIMENTS DONE")
         shutil.rmtree(sweep_dir)
         #return debug_hp
         
 
 if __name__ == "__main__":
-    nodes = get_oar_job_nodes(450674, "toulouse")
+    nodes = get_oar_job_nodes(451448, "toulouse")
     parser = argparse.ArgumentParser()
     parser.add_argument("--strategy", type=str)
+    parser.add_argument("--nb_clients", type=int)
     args = parser.parse_args()
-    
+    #nb_clients = args.nb_clients
+    nb_clients = 70
     partition = "label_skew"
-    #strategy = "fedadam"
+    strategy = "fedadam"
     #strategy = args.strategy
-    strategy = 'fedsfw'
-    
+    #strategy = 'fedavg_adam'
+    #run fedadagrad with 1 local epochs
+    #run fedsfw with 1,3,5 but 0.2 or 0.3 K_frac and 0.0316
     params = {
-        "params.num_rounds":[1000],
+        "params.num_rounds":[2000],
         "params.fraction_fit":[1], #0.1 is enough for 100 client
         "params.fraction_evaluate":[1], #0.5 is enough for 100 client
         "params.num_groups":[32],
-        "params.wait_round":[50],
+        "params.wait_round":[1000],
         "params.lr":[1e-2],
         "params.save_model":[False], #Test this feature before running multiple rounds, change save period to 50
         "data.batch_size": [64],
-        "data.alpha": [0.5], #[1,2,5,10],
+        "data.alpha": [0.5], 
+        "data.num_clients": [nb_clients],
         "data.partition":[partition],
-        "client.lr" : [0.0316, 0.01], #0.0316 for fl, 0.01 for fw 
-        "client.local_epochs": [1],
+        "client.lr" : [0.0316], #0.0316 for fl, 0.01 for fw 0.001 for adam optimizer
+        "client.local_epochs": [1], #take care of this parameter # 2 times local epochs equal 0.001 for fedavg_adam
         "client.decay_rate": [1],
         "client.decay_steps": [1],
         "neuralnet":["ResNet18"],
-        "strategy": [strategy], 
-        "optimizer": ["SFW"],
-        "constraints" : ['k_sparse'],
-        "sparse_constraints.sparse_prop" : [0.8],
-        "sparse_constraints.K_frac" : [0.1],
+        "strategy": [strategy], #take care of this parameter
+        "optimizer": ["SGD"], #take care of this parameter
+        #"constraints" : ["lp_norm"], #remove if no constraints is applied
+        #"lp_constraints.ord" : [2],
+        #"sparse_constraints.sparse_prop" : [0, 0.5], #take care of this parameter
+        #"sparse_constraints.K_frac" : [0.1], #take care of this parameter
     }
 
-    repository_dir = "/home/tunguyen/jetson-test"
+    repository_dir = "/home/tunguyen/jetson-multiclient"
 
-    to_remove = ["client.cid",
-                 "client.dry_run",
+    to_remove = ["client.dry_run",
                  "data.partition_dir",
                  "data.dataloaders",
                  "params.num_classes",
@@ -507,7 +488,8 @@ if __name__ == "__main__":
         repository_dir=repository_dir,
         sleep=30,
         key_to_remove=to_remove,
-        output_dir=f"outputcifar10/10clients/comm/{strategy}/{partition.replace('_','')}",
+        output_dir=f"outputcifar10/{nb_clients}clients/fractionfit2/{strategy}/{partition.replace('_','')}",
         summary_name="experiment_summary.csv")
+    #Exps.clear_cache()
     #Exps.frontend_dry_run()
-    Exps.run(multiple_clients_per_host=False)
+    Exps.run()

@@ -1,6 +1,8 @@
 import csv
 import datetime
 from itertools import accumulate
+
+from flwr.server.criterion import Criterion
 from utils.training import get_parameters, test, seed_everything, set_parameters
 from utils.datahandler import load_testdata_from_file
 import hydra
@@ -11,6 +13,8 @@ import logging
 import torch
 import pickle 
 import timeit
+import threading
+import random
 from collections import OrderedDict
 from pathlib import Path
 from omegaconf import DictConfig, OmegaConf
@@ -104,13 +108,113 @@ def write_time_csv(path, round, call, status):
             writer.writerow(["round", "timestamp","call","status"])
         now = datetime.datetime.now()
         writer.writerow([round, now.strftime("%Y-%m-%d %H:%M:%S.%f"), call, status])
+        
+class CustomSimpleClientManager(fl.server.SimpleClientManager):
+    def __init__(self)->None:
+        super().__init__()
+        
+    # def clients_map(self) -> None:
+    #     """Map clients to user defined id"""
+    #     available_cids = sorted(list(self.clients))
+    #     num_clients = len(available_cids)
+    #     self.mapping = {cprox:uid for cprox, uid in zip(available_cids, range(num_clients))}
+        
+    def sample(
+        self,
+        num_clients: int, #client participe in training
+        min_num_clients: Optional[int] = None,
+        criterion: Optional[Criterion] = None,
+    ) -> List[Tuple[ClientProxy,int]]:
+        """Sample a number of Flower ClientProxy instances."""
+        # Block until at least num_clients are connected.
+        if min_num_clients is None:
+            min_num_clients = num_clients
+        self.wait_for(min_num_clients)
+        
+        # Map clients to user defined id
+        available_cids = list(self.clients)
+        available_cids = sorted(available_cids)
+        nb_available_cids = len(available_cids)
+        mapping = {cid:user_id for cid, user_id in zip(available_cids, range(nb_available_cids))}
+        
+        # Sample clients which meet the criterion
+        if criterion is not None:
+            available_cids = [
+                cid for cid in available_cids if criterion.select(self.clients[cid])
+            ]
 
+        if num_clients > len(available_cids):
+            log(
+                INFO,
+                "Sampling failed: number of available clients"
+                " (%s) is less than number of requested clients (%s).",
+                len(available_cids),
+                num_clients,
+            )
+            return []
+        sampled_cids = random.sample(available_cids, num_clients)
+        user_cids = [mapping[cid] for cid in sampled_cids]
+        clients_and_id = [(self.clients[cid],user_cid) for cid,user_cid in zip(sampled_cids, user_cids)]
+        return clients_and_id
+        
+        
 
 class CustomServer(fl.server.Server):
     def __init__(self,wait_round:int, path_log:str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.wait_round = wait_round
         self.path_log = path_log
+        
+    def fit_round(
+        self,
+        server_round: int,
+        timeout: Optional[float],
+    ) -> Optional[
+        Tuple[Optional[Parameters], Dict[str, Scalar], FitResultsAndFailures]
+    ]:
+        """Perform a single round of federated averaging."""
+        # Get clients and their respective instructions from strategy
+        client_instructions = self.strategy.configure_fit(
+            server_round=server_round,
+            parameters=self.parameters,
+            client_manager=self._client_manager,
+        )
+        
+        #log(INFO, f"Client instruction : Len {len(client_instructions)} {client_instructions[0][1].config} {client_instructions[1][1].config}")
+
+        if not client_instructions:
+            log(INFO, "fit_round %s: no clients selected, cancel", server_round)
+            return None
+        log(
+            DEBUG,
+            "fit_round %s: strategy sampled %s clients (out of %s)",
+            server_round,
+            len(client_instructions),
+            self._client_manager.num_available(),
+        )
+
+        # Collect `fit` results from all clients participating in this round
+        results, failures = fl.server.server.fit_clients(
+            client_instructions=client_instructions,
+            max_workers=self.max_workers,
+            timeout=timeout,
+        )
+        log(
+            DEBUG,
+            "fit_round %s received %s results and %s failures",
+            server_round,
+            len(results),
+            len(failures),
+        )
+
+        # Aggregate training results
+        aggregated_result: Tuple[
+            Optional[Parameters],
+            Dict[str, Scalar],
+        ] = self.strategy.aggregate_fit(server_round, results, failures)
+
+        parameters_aggregated, metrics_aggregated = aggregated_result
+        return parameters_aggregated, metrics_aggregated, (results, failures)
     
         
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
@@ -195,15 +299,19 @@ class CustomServer(fl.server.Server):
                     )
                     write_time_csv(path, current_round, "evaluate", "distributed evaluate end")
                     # Early Stopping
-                    if current_round >= 50: # Start Early Stopping after 100 rounds
-                        if acc > max_metric_dis:
-                            round_no_improve = 0
-                            max_metric_dis = acc
-                        else:
-                            round_no_improve += 1
-                            if round_no_improve == self.wait_round:
-                                log(INFO, "EARLY STOPPING")
-                                break
+                    if acc > 0.75 + 1e-6:
+                        log(INFO, "EARLY STOPPING, ACCURACY > 0.75")
+                        break
+                    else:
+                        if current_round >= 100: # Start Early Stopping after 100 rounds
+                            if acc > max_metric_dis:
+                                round_no_improve = 0
+                                max_metric_dis = acc
+                            else:
+                                round_no_improve += 1
+                                if round_no_improve == self.wait_round:
+                                    log(INFO, "EARLY STOPPING")
+                                    break
                         # if loss_fed < min_val_loss:
                         #     round_no_improve = 0
                         #     min_val_loss = loss_fed
@@ -232,12 +340,16 @@ def main(cfg:DictConfig):
     # Get initial parameters
     model = instantiate(cfg.neuralnet)
     model = convert_bn_to_gn(model, num_groups=cfg.params.num_groups)
-    model_parameters = get_parameters(model)
-    if cfg.constraints is not None:
+    print(cfg.optimizer)
+    if 'constraints' in cfg.keys():
+        logging.info("Applying constraints")
         constraints = instantiate(cfg.constraints, model=model)
         make_feasible(model,constraints)
-        initial_parameters = ndarrays_to_sparse_parameters(model_parameters)
+        model_parameters = get_parameters(model)
+        initial_parameters = ndarrays_to_parameters(model_parameters)
     else:
+        logging.info("No constraints specified")
+        model_parameters = get_parameters(model)
         initial_parameters = ndarrays_to_parameters(model_parameters)
     
     
@@ -256,7 +368,8 @@ def main(cfg:DictConfig):
     print(strategy.__repr__())
     customserver = CustomServer(wait_round=cfg.params.wait_round, 
                                 path_log = output_dir,
-                                client_manager=fl.server.SimpleClientManager(), 
+                                #client_manager=CustomSimpleClientManager(), #change to SimpleClientManagerCustom for 100 clients
+                                client_manager = fl.server.SimpleClientManager(),
                                 strategy=strategy,
                                 )
     

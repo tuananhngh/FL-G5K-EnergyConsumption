@@ -1,8 +1,7 @@
-_target_ : strategy.fedavgsampling.FedAvgSampling
+_target_ : strategy.fedconstraints.FedConstraints
 fraction_fit : ${params.fraction_fit}
 fraction_evaluate: ${params.fraction_evaluate}
 min_fit_clients : ${params.num_clients_per_round_fit}
 min_available_clients : ${params.min_available_clients}
 min_evaluate_clients : ${params.num_clients_per_round_eval}
 num_clients : ${data.num_clients}
-

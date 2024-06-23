@@ -4,10 +4,21 @@ import csv
 import os
 import re
 import matplotlib.pyplot as plt
+from box import Box
+import seaborn as sns
 
 #exp_path = "comm/fedavg/labelskew/2024-04-26_01-39-25"
 
 def load_server_data(exp_path):
+    """
+    This function loads server data from various CSV and log files located in the specified experiment path.
+    
+    Args:
+        exp_path (str): The path to the experiment directory.
+        
+    Returns:
+        tuple: A tuple containing pandas DataFrames for processes, energy, rounds_time, network_df, and server_log_df.
+    """
     parent_path = os.path.join(exp_path, "server")
     network_log = os.path.join(parent_path, "network.log")
     processes_csv = os.path.join(parent_path, "processes.csv")
@@ -24,6 +35,16 @@ def load_server_data(exp_path):
     return processes, energy, rounds_time, network_df, server_log_df
 
 def load_client_data(exp_path, host_id):
+    """
+    This function loads client data from various CSV and log files located in the specified experiment path.
+    
+    Args:
+        exp_path (str): The path to the experiment directory.
+        host_id (int): The ID of the host for which to load the data.
+        
+    Returns:
+        tuple: A tuple containing pandas DataFrames for processes, fittimes, and energy.
+    """
     parent_path = os.path.join(exp_path,f"client_host_{host_id}")
     network_log = os.path.join(parent_path, "network.log")
     client_log = os.path.join(parent_path, "logs.log")
@@ -46,6 +67,15 @@ def load_client_data(exp_path, host_id):
 
 
 def network_log_to_csv(network_log):
+    """
+    This function reads a network log file and converts it into a pandas DataFrame.
+    
+    Args:
+        network_log (str): The path to the network log file.
+        
+    Returns:
+        pd.DataFrame: A DataFrame containing the timestamp, process name, send and receive data from the network log.
+    """
     data = []
     with open(network_log, "r") as f:
         lines = f.readlines()
@@ -65,6 +95,9 @@ def network_log_to_csv(network_log):
 
 
 def server_log_file_to_csv(path_to_log):
+    """
+    This function reads a server log file and converts it into a pandas DataFrame.
+    """
     data = []
     with open(path_to_log, 'r') as log_file:
         log_lines = log_file.readlines()        
@@ -79,6 +112,9 @@ def server_log_file_to_csv(path_to_log):
     return final_df
 
 def client_log_file_to_pdf(path_to_log):
+    """
+    This function reads a client log file and converts it into a pandas DataFrame.
+    """
     data = []
     with open(path_to_log, "r") as f:
         lines = f.readlines()
@@ -97,7 +133,7 @@ def client_log_file_to_pdf(path_to_log):
 
 def process_rounds_time(rounds_time, mode='round'):
     """
-    Take the rounds_time dataframe and return time taken for each round
+    Take the server rounds_time dataframe and return time taken for each round
     mode : ['round', 'fit', 'eval_dis', 'eval_cen', 'total']
     round : take total duration of each round from fit call to distributed_evaluated_aggregated
     fit : take duration of each round from fit call to fit aggregated
@@ -146,7 +182,7 @@ def filter_round_time(roundtime_df, tofilter_df):
         end_time = row["End Time"]
         df = tofilter_df[(tofilter_df["timestamp"] >= start_time) & (tofilter_df["timestamp"] <= end_time)].copy()
         df.loc[:, 'round'] = row["Server Round"]
-        df.loc[:, 'round time'] = (end_time - start_time).total_seconds()
+        df.loc [:, 'round time'] = (end_time - start_time).total_seconds()
         dfs.append(df)
     final_df = pd.concat(dfs)
     return final_df
@@ -183,3 +219,159 @@ def plot_send_receive_round(df, round_number=1):
     axs[0].set_ylabel("MB/s")
     axs[1].set_ylabel("MB/s")
     plt.show()
+    
+def process_host_round_time(files_holder, host:str):
+    """
+    This function processes the round time for a specific host in the experiment.
+    Args:
+        files_holder (SimpleNamespace): The SimpleNamespace object containing the server and client data.
+        host (str): The ID of the host for which to process the round time. (e.g., 'client_1')
+    """
+    server_round_time = process_rounds_time(files_holder.server.time, mode='round')
+    host_round_time = filter_round_time(server_round_time, files_holder[host].network)
+    send, receives = [], []
+    rounds = host_round_time['round'].unique()
+    rounds_time = host_round_time['round time'].unique()
+    for r in rounds:
+        send_r = host_round_time[host_round_time['round'] == r]['send'].sum()/1024
+        receive_r = host_round_time[host_round_time['round'] == r]['receive'].sum()/1024
+        send.append(send_r)
+        receives.append(receive_r)
+    host_statistics = pd.DataFrame({'round': rounds, 
+                                    'send': send, 
+                                    'receive': receives, 
+                                    'round time': rounds_time})
+    return host_statistics
+
+
+
+def read_server_clients_data(exp_path):
+    """
+    This function reads the server and clients data from the specified experiment path.
+    Args:
+        exp_path (str): The path to the experiment directory.
+    Returns:
+        Box: A Box object containing the server and clients data as pandas DataFrames.
+        process: The processes data.
+        energy: The energy data.
+        time: The time data.
+        network: The network data.
+        log: The log data.
+    """
+    host_ids = [int(name.split('_')[-1]) for name in os.listdir(exp_path) if 'client' in name]
+    outputs = Box()
+    for i in host_ids:
+        client_processes, client_fittimes, client_energy, client_network, client_df = load_client_data(exp_path, i)
+        outputs[f'client_{i}'] = Box(processes=client_processes, energy=client_energy, time=client_fittimes, network=client_network, log=client_df)
+    server_path = os.path.join(exp_path, 'server')
+    server_processes, server_energy, server_time, server_network, server_df = load_server_data(exp_path)
+    outputs['server'] = Box(processes=server_processes, energy=server_energy, time=server_time, network=server_network, df=server_df)
+    return outputs
+
+def process_network_data(client_list, files):
+    hosts_send = {}
+    hosts_receive = {}
+    hosts_round_time = {}
+    for client in client_list:
+        host_stat = process_host_round_time(files_holder=files, host=client)
+        hosts_send[client] = host_stat['send']
+        hosts_receive[client] = host_stat['receive']
+        hosts_round_time[client] = host_stat['round time']
+    # Client 
+    send_df = pd.DataFrame(hosts_send)
+    receive_df = pd.DataFrame(hosts_receive)
+    return send_df, receive_df
+
+
+def melt_send_receive_df(send_df, receive_df):
+    mydf = []
+    for (stat,df) in zip(['send','receive'],[send_df, receive_df]):
+        df['round'] = df.index
+        df_melt = df.melt(id_vars='round',var_name='client',value_name='value')
+        df_melt['status'] = stat
+        mydf.append(df_melt)
+    concat_df = pd.concat([mydf[0], mydf[1]])
+    concat_df['client'] = concat_df['client'].str.replace('client_','Client ')
+    return concat_df
+
+def sum_send_receive(send_df, receive_df):
+    mydf = []
+    for (stat,df) in zip(['send','receive'],[send_df, receive_df]):
+        sum_status = df.sum(axis=0)
+        sum_status = sum_status.drop('round')
+        sum_status = sum_status.reset_index()
+        sum_status.columns = ['client', 'value']
+        sum_status['status'] = stat
+        mydf.append(sum_status)
+    sum_status = pd.concat([mydf[0], mydf[1]])
+    sum_status['client'] = sum_status['client'].str.replace('client_','Client ')
+    return sum_status
+
+def boxplot_message_size_client(df:pd.DataFrame, message_type:str='send'):
+    """
+    This function plots a boxplot of the average message size for each host.
+    Args:
+        df (pd.DataFrame): The DataFrame containing the message size data for each round. 
+                         where each row is a message size for a specific round and column is the host.
+    Returns:
+        None
+    """
+    sns.set_theme(style="whitegrid")
+    plt.figure(figsize=(10, 6))
+    sns.boxplot(data=df)
+    plt.title(f'Average {message_type} message size')
+    plt.xlabel('Host')
+    plt.ylabel('MB')
+    
+    
+
+def plot_multples_clients(file_holder):
+    server_time = file_holder.server.time
+    clients = sorted([client for client in file_holder.keys() if 'client' in client])
+    server_round_time = process_rounds_time(server_time, mode='round')
+    server_filter = filter_round_time(server_round_time, file_holder.server.network)
+    
+    fig, axs = plt.subplots(2, 1, figsize=(20, 5))
+    rounds = server_filter['round'].unique()
+    for client in clients:
+        client_network = file_holder[client].network
+        client_filtered = filter_round_time(server_round_time, client_network)
+        sends, receives = [], []
+        for r in rounds:
+            send_sum = client_filtered[client_filtered['round'] == r].send.sum()/1024
+            recv_sum = client_filtered[client_filtered['round'] == r].receive.sum()/1024
+            sends.append(send_sum)
+            receives.append(recv_sum)
+        axs[0].plot(rounds, sends, label=f"{client}")#,marker='^', markevery=1, linewidth=2)
+        axs[1].plot(rounds, receives, label=f"{client}")#,marker='^', markevery=1, linewidth=2)
+    
+    axs[0].set_title("Send")
+    axs[1].set_title("Receive")
+    axs[0].set_ylabel("MB")
+    axs[1].set_ylabel("MB")
+    axs[1].set_xlabel("Round")
+    legend = fig.legend(clients, 
+                        loc="upper center", 
+                        bbox_to_anchor=(0.5, 1.0), 
+                        ncol=len(clients),
+                        fontsize=12,)
+    
+    fig_server, axs_server = plt.subplots(2, 1, figsize=(20, 5))
+    server_sends, server_receives = [], []
+    for r in rounds:
+        send_sum = server_filter[server_filter['round'] == r].send.sum()/1024
+        recv_sum = server_filter[server_filter['round'] == r].receive.sum()/1024
+        server_sends.append(send_sum)
+        server_receives.append(recv_sum)
+    axs_server[0].bar(rounds, server_sends, label="Server")#,marker='^', markevery=1, linewidth=2)
+    axs_server[1].bar(rounds, server_receives, label="Server")#,marker='^', markevery=1, linewidth=2)
+    axs_server[0].set_title("Send")
+    axs_server[1].set_title("Receive")
+    axs_server[0].set_ylabel("MB")
+    axs_server[1].set_ylabel("MB")
+    axs_server[0].set_xlabel("Round")
+    legend = fig_server.legend(["Server"], 
+                        loc="upper center", 
+                        bbox_to_anchor=(0.5, 1.0), 
+                        ncol=1,
+                        fontsize=12,)

@@ -1,15 +1,20 @@
-from logging import WARNING
+from logging import WARNING, INFO
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from flwr.common import FitRes, MetricsAggregationFn, NDArrays, Parameters, Scalar
 from flwr.common.logger import log
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.client_manager import ClientManager
-from flwr.server.strategy import FedAvg
+from flwr.server.strategy import FedAvg, FedAdam
 from flwr.server.strategy.aggregate import aggregate
 
-from utils.serialization import ndarrays_to_sparse_parameters, sparse_parameters_to_ndarrays
-from flwr.common import parameters_to_ndarrays, ndarrays_to_parameters
+from flwr.common import (
+    parameters_to_ndarrays, 
+    ndarrays_to_parameters,
+    FitIns,
+    FitRes,
+    EvaluateIns,
+)
 
 WARNING_MIN_AVAILABLE_CLIENTS_TOO_LOW = """
 Setting `min_available_clients` lower than `min_fit_clients` or
@@ -20,8 +25,11 @@ than or equal to the values of `min_fit_clients` and `min_evaluate_clients`.
 import logging
 import numpy as np
 import os
+import copy
+import random
 
-class FedSFW(FedAvg):
+
+class FedConstraints(FedAvg):
     def __init__(
         self,
         *,
@@ -42,8 +50,7 @@ class FedSFW(FedAvg):
         initial_parameters: Optional[Parameters] = None,
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        #info_path : Optional[str] = None,
-        sparse_prop : float = 0.8
+        num_clients : int = 10,
     ) -> None:
         """Custom FedAvg strategy with sparse matrices.
 
@@ -91,20 +98,15 @@ class FedSFW(FedAvg):
             fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         )
-        #self.info_path = info_path
-        self.prop = sparse_prop
+        self.num_clients = num_clients
         
     def initialize_parameters(
         self, client_manager: ClientManager
     ) -> Optional[Parameters]:
         """Initialize global model parameters."""
         initial_parameters = self.initial_parameters
-        #initial_parameters = sparse_parameters_to_ndarrays(initial_parameters) #type: ignore
-        self.init_params = sparse_parameters_to_ndarrays(initial_parameters) #type: ignore
-        zeros_out = self.zero_parameters(self.init_params, prop=self.prop)
         self.initial_parameters = None  # Don't keep initial parameters in memory
-        initial_parameters = ndarrays_to_sparse_parameters(zeros_out)
-        return initial_parameters    
+        return initial_parameters  
     
     def evaluate(
         self, server_round: int, parameters: Parameters
@@ -113,22 +115,12 @@ class FedSFW(FedAvg):
         if self.evaluate_fn is None:
             # No evaluation function provided
             return None
-
-        # We deserialize using our custom method
-        parameters_ndarrays = sparse_parameters_to_ndarrays(parameters)
-
+        parameters_ndarrays = parameters_to_ndarrays(parameters)
         eval_res = self.evaluate_fn(server_round, parameters_ndarrays, {})
         if eval_res is None:
             return None
         loss, metrics = eval_res
         return loss, metrics
-    
-    def zero_parameters(self, parameters:NDArrays, prop:float=0.5) -> NDArrays:
-        """Zero out the parameters."""
-        for param in parameters:
-            mask = np.random.choice([True,False], size=param.shape, p=[prop,1-prop])
-            param[mask] = 0
-        return parameters
             
     def aggregate_fit(
         self,
@@ -146,7 +138,7 @@ class FedSFW(FedAvg):
         # We deserialize each of the results with our custom method
         
         weights_results = [
-            (sparse_parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
+            (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
             for _, fit_res in results
         ]
         aggregate_params = aggregate(weights_results)        
@@ -154,7 +146,7 @@ class FedSFW(FedAvg):
         #     logging.info(f"Weight size : {sparse_agg.size} Sparsity : {np.count_nonzero(sparse_agg)/sparse_agg.size}")
                 
         # We serialize the aggregated result using our custom method
-        parameters_aggregated = ndarrays_to_sparse_parameters(aggregate_params)
+        parameters_aggregated = ndarrays_to_parameters(aggregate_params)
         
         #parameters_aggregated_nosparse = ndarrays_to_sparse_parameters(aggregate_params)
         
@@ -167,3 +159,39 @@ class FedSFW(FedAvg):
             log(WARNING, "No fit_metrics_aggregation_fn provided")
 
         return parameters_aggregated, metrics_aggregated
+    
+    def configure_fit(
+        self, server_round: int, parameters: Parameters, client_manager: ClientManager
+    ) -> List[Tuple[ClientProxy, FitIns]]:
+        """Configure the next round of training."""
+        client_instructions = super().configure_fit(server_round, parameters, client_manager)
+        sample_size = len(client_instructions)
+        num_available = client_manager.num_available()
+        choose_id = random.sample(range(self.num_clients),sample_size)
+        log(INFO, f"Client Fit IDs Round {server_round}: {choose_id} from {self.num_clients} clients")
+        sampled_client_instructions = []
+        for (cproxy, fitins),uid in zip(client_instructions,choose_id):
+            client_fitins = copy.deepcopy(fitins)
+            client_fitins.config['cid']=uid
+            sampled_client_instructions.append((cproxy, client_fitins))
+        #log(INFO, f"{sampled_client_instructions[0][0]} {sampled_client_instructions[0][1].config['cid']}, {sampled_client_instructions[1][0]} {sampled_client_instructions[1][1].config['cid']}" )
+        return sampled_client_instructions
+        
+ 
+        
+        
+    def configure_evaluate(self, server_round: int, parameters: Parameters, client_manager: ClientManager) -> List[Tuple[ClientProxy, EvaluateIns]]:
+        """Configure the next round of evaluation."""
+        # Do not configure federated evaluation if fraction eval is 0.
+        client_instructions = super().configure_evaluate(server_round, parameters, client_manager)
+        sample_size = len(client_instructions)
+        num_available = client_manager.num_available()
+        choose_id = random.sample(range(self.num_clients),sample_size)
+        
+        log(INFO, f"Client Evaluate IDs Round {server_round}: {choose_id} from {self.num_clients} clients")
+        sampled_client_instructions = []
+        for (cproxy, evaluateins),uid in zip(client_instructions,choose_id):
+            client_evalins = copy.deepcopy(evaluateins)
+            client_evalins.config['cid']=uid
+            sampled_client_instructions.append((cproxy, client_evalins))
+        return sampled_client_instructions

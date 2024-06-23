@@ -1,4 +1,4 @@
-_target_ : flwr.server.strategy.FedAdam
+_target_ : strategy.fedadamsampling.FedAdamSampling
 fraction_fit : ${params.fraction_fit}
 fraction_evaluate: ${params.fraction_evaluate}
 min_fit_clients : ${params.num_clients_per_round_fit}
@@ -7,3 +7,4 @@ min_evaluate_clients : ${params.num_clients_per_round_eval}
 eta : ${params.lr}
 eta_l : ${client.lr}
 tau : 0.001
+num_clients : ${data.num_clients}

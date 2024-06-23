@@ -5,3 +5,6 @@ __pycache__/
 src/utils/__pycache__/
 test.ipynb
 sweep/
+.DS_Store
+notes.txt
+src/.DS_Store

@@ -105,7 +105,7 @@ def load_clientdata_from_file(config:DictConfig, client_id:int)->Tuple[data.Data
     len_train = len(traindata) - len_val
     lengths = [len_train, len_val]
     train, val = data.random_split(traindata, lengths, torch.Generator().manual_seed(2024))
-    logging.info("CLIENT {} TRAIN_SAMPLES: {} VALIDATION_SAMPLES: {}".format(client_id, len(train), len(val)))
+    #logging.info("CLIENT {} TRAIN_SAMPLES: {} VALIDATION_SAMPLES: {}".format(client_id, len(train), len(val)))
     trainloader = data.DataLoader(train, batch_size=config.batch_size, shuffle=True)
     valloader = data.DataLoader(val, batch_size=config.batch_size, shuffle=True)
     return trainloader, valloader 

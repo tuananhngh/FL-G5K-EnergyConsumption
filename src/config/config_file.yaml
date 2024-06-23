@@ -4,8 +4,8 @@ params :
   num_clients_per_round_fit : 2
   num_clients_per_round_eval : 2
   min_available_clients : 2
-  fraction_fit : 0.1
-  fraction_evaluate : 0.3
+  fraction_fit : 0.2
+  fraction_evaluate : 1
   wait_round : 5
   lr : 0.001
   num_groups : 16
@@ -16,17 +16,16 @@ params :
 data :
   data_name : ImageNet # (possible_value : CelebA, CIFAR10, CIFAR100, MNIST, FashionMNIST, TinyImageNet)
   partition_dir : /srv/storage/energyfl@storage1.toulouse.grid5000.fr/FLDATA/${data.data_name}/ParitionedData/${data.partition}/${data.num_clients}clients/alpha${data.alpha}
-  batch_size : 50
+  batch_size : 64
   validation_split : 20
-  num_clients : 10
-  alpha : 0.1
+  num_clients : 50
+  alpha : 0.5
   dataloaders : True # Load the dataset to dataloader object
   partition : label_skew # (possible_value : label_skew, iid, sample_skew)
 
 client:
-  lr : 0.001
-  local_epochs : 3
-  cid : 0
+  lr : 0.0316
+  local_epochs : 1
   dry_run : False
   decay_rate : 1 #decay=1 equal constant
   decay_steps : 1
@@ -35,18 +34,21 @@ sparse_constraints:
   K : 300
   K_frac : 0.1
   mode : 'radius'
-  sparse_prop : 0.8
+
+lp_constraints:
+  ord : 2
+  mode : 'initialization'
 
 comm :
-  host : '[::]'
+  host : 172.16.121.10
   port : 8080
 
 
 defaults:
   - neuralnet : MobileNetV3Small
-  - strategy : fedsfw
+  - strategy : fedavg
   - optimizer : SGD
-  - constraints : None # (possible_value : None, k_sparse, lp_norm)
+  - constraints : null  # (possible_value : null, k_sparse, lp_norm)
   - _self_ 
 
 hydra:
