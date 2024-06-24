@@ -15,8 +15,8 @@ from torch.utils import data
 from flwr.server.strategy import FedAdam, FedAvg, FedProx
 from datasets import load_from_disk
 import sys
-sys.path.append("/Users/mathildepro/Documents/code_projects/ai-energy-consumption-framework/Jetson/utils")
-from utils.dataset import MyDataset
+#sys.path.append("/Users/mathildepro/Documents/code_projects/ai-energy-consumption-framework/Jetson/utils")
+from dataset import MyDataset
 
 
 class DataSetHandler:
@@ -34,6 +34,8 @@ class DataSetHandler:
         #self.output_dir = config["output_dir"]
         
         self.idx_map = {}
+        if not os.path.exists(self.partition_dir):
+            os.makedirs(self.partition_dir)
         
     def __call__(self):
         return self.get_data()
@@ -74,8 +76,11 @@ class DataSetHandler:
         return datasets, testdata
     
     def iid_partition(self, traindata) -> List[data.Subset]:
+        total_length = len(traindata)
         partition_size = len(traindata) // self.num_clients
-        lengths = [partition_size] * self.num_clients
+        remainder = total_length % self.num_clients
+        #lengths = [partition_size] * self.num_clients
+        lengths = [partition_size + 1 if i < remainder else partition_size for i in range(self.num_clients)]
         client_chunks = data.random_split(traindata, lengths=lengths, generator=torch.Generator().manual_seed(2024))
         for i in range(self.num_clients):
             self.idx_map.update({f"client_{i}": client_chunks[i].indices})
@@ -92,6 +97,38 @@ class DataSetHandler:
             self.datasets.append(data.Subset(traindata, datasetidx))
         logging.info("{} DataSamples Per Clients".format(partition_size))
         return self.datasets
+    
+    def plot_label_distribution(self, traindata):
+        # Initialize a list to hold the counts for each client
+        client_counts = {}
+        targets = np.array(traindata.targets)
+        nb_classes = len(np.unique(traindata.targets))
+        for key in self.idx_map.keys():
+            # Get the indices for this client
+            indices = self.idx_map[key]
+            labels = targets[indices]
+            counts = np.bincount(labels, minlength=nb_classes)  # Assuming 10 classes
+            client_counts[key] = counts
+
+        num_clients = len(client_counts)
+        num_cols = 2
+        num_rows = num_clients // num_cols + num_clients % num_cols
+         
+        # Plot the label distribution for each client
+        plt.figure(figsize=(10, num_rows * 5))
+        for i, (client, counts) in enumerate(client_counts.items()):
+            plt.subplot(num_rows, num_cols, i + 1)
+            plt.bar(np.arange(nb_classes), counts)
+            plt.title(f'{client} Label Distribution')
+            plt.xlabel('Class')
+            plt.ylabel('Count')
+        plt.tight_layout()
+        #plt.show()
+        output_dir = self.partition_dir
+        print("Image Saving at : ", output_dir)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        plt.savefig(f"{output_dir}/distribution_per_client.png")
 
     
     

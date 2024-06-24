@@ -1,7 +1,7 @@
 import logging
 import torch
-from datasets import load_dataset, load_from_disk
-from torch.utils.data import DataLoader
+from datasets import load_dataset, load_from_disk 
+from torch.utils.data import DataLoader, Dataset
 import torchvision.transforms as transforms
 
 ''' 
@@ -28,6 +28,8 @@ class MyDataset(torch.utils.data.Dataset):
         # Loads the dataset that needs to be transformed
         self.dataset = dataset[split]
         self.resolution = resolution
+        self.targets = self.dataset['label']
+        
 
     def __getitem__(self, idx):
         logging.debug("getting item")
@@ -77,28 +79,31 @@ def load_dataset_from_huggingface(storage_dir, dataset_name="imagenet-1k"):
     dataset.save_to_disk(storage_dir)
     return dataset
 
-if __name__ == "__main__":
-    storage_dir = "/srv/storage/energyfl@storage1.toulouse.grid5000.fr/imagenet-1k"
-    ds = load_from_disk(storage_dir)
-    # .to_iterable_dataset().shuffle().with_format("torch")
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225])
+# storage_dir = "/srv/storage/energyfl@storage1.toulouse.grid5000.fr/imagenet-1k"
+# ds = load_from_disk(storage_dir)
+# myds = MyDataset(ds, 'train', 256)
 
-    train_transforms = transforms.Compose([
-        transforms.RandomResizedCrop(256),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        normalize,
-    ])
+
+# if __name__ == "__main__":
+#     storage_dir = "/srv/storage/energyfl@storage1.toulouse.grid5000.fr/imagenet-1k"
+#     ds = load_from_disk(storage_dir)
+#     # .to_iterable_dataset().shuffle().with_format("torch")
+#     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+#                                      std=[0.229, 0.224, 0.225])
+
+#     train_transforms = transforms.Compose([
+#         transforms.RandomResizedCrop(256),
+#         transforms.RandomHorizontalFlip(),
+#         transforms.ToTensor(),
+#         normalize,
+#     ])
     
-    train_loader = DataLoader(
-        ds["train"].with_transform(train_transforms).with_format("torch"), batch_size=4, collate_fn=collate_fn
-        )
+#     train_loader = DataLoader(
+#         ds["train"].with_transform(train_transforms).with_format("torch"), batch_size=4, collate_fn=collate_fn)
+#     print(len(train_loader))
     
-    i=0
-    for images, labels in train_loader:
-        print(images[0])
-        print(labels[1])
-        i+=1
-        if i>5:
-            break
+#     for idx,(images, labels) in enumerate(train_loader):
+#         print(images[0].shape)
+#         print(labels[1].shape)
+#         if idx>5:
+#             break

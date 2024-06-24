@@ -1,13 +1,13 @@
 data :
-  data_name : ImageNet1k # (possible_value : CIFAR10, CIFAR100, MNIST, FashionMNIST)
-  download_dir : /srv/storage/energyfl@storage1.toulouse.grid5000.fr/imagenet-1k/
-  partition_dir : /srv/storage/energyfl@storage1.toulouse.grid5000.fr/imagenet-1k/${data.data_name}/ParitionedData/${data.partition}/${data.num_clients}clients/alpha${data.alpha}
+  data_name : imagenet-1k # (possible_value : CIFAR10, CIFAR100, MNIST, FashionMNIST)
+  download_dir : /srv/storage/energyfl@storage1.toulouse.grid5000.fr/${data.data_name}
+  partition_dir : /srv/storage/energyfl@storage1.toulouse.grid5000.fr/FLDATA/${data.data_name}/ParitionedData/${data.partition}/${data.num_clients}clients/alpha${data.alpha}
   batch_size : 192
   validation_split : 10
-  num_clients : 50
-  alpha : 0.5
+  num_clients : 100
+  alpha : 1
   dataloaders : False # True if save partitioned data as dataloaders
-  partition : label_skew  # (possible_value : label_skew, iid, sample_skew)
+  partition : iid  # (possible_value : label_skew, iid, sample_skew)
 
 hydra:
   run:

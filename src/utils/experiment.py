@@ -434,19 +434,15 @@ class Experiment(Engine):
         
 
 if __name__ == "__main__":
-    nodes = get_oar_job_nodes(451448, "toulouse")
+    nodes = get_oar_job_nodes(451642, "toulouse")
     parser = argparse.ArgumentParser()
     parser.add_argument("--strategy", type=str)
     parser.add_argument("--nb_clients", type=int)
     args = parser.parse_args()
     #nb_clients = args.nb_clients
-    nb_clients = 70
-    partition = "label_skew"
-    strategy = "fedadam"
-    #strategy = args.strategy
-    #strategy = 'fedavg_adam'
-    #run fedadagrad with 1 local epochs
-    #run fedsfw with 1,3,5 but 0.2 or 0.3 K_frac and 0.0316
+    nb_clients = 100
+    partition = "iid"
+    strategy = "fedavg"
     params = {
         "params.num_rounds":[2000],
         "params.fraction_fit":[1], #0.1 is enough for 100 client
@@ -455,24 +451,20 @@ if __name__ == "__main__":
         "params.wait_round":[1000],
         "params.lr":[1e-2],
         "params.save_model":[False], #Test this feature before running multiple rounds, change save period to 50
-        "data.batch_size": [64],
-        "data.alpha": [0.5], 
+        "data.batch_size": [256],
+        "data.alpha": [1], 
         "data.num_clients": [nb_clients],
         "data.partition":[partition],
         "client.lr" : [0.0316], #0.0316 for fl, 0.01 for fw 0.001 for adam optimizer
         "client.local_epochs": [1], #take care of this parameter # 2 times local epochs equal 0.001 for fedavg_adam
         "client.decay_rate": [1],
         "client.decay_steps": [1],
-        "neuralnet":["ResNet18"],
+        "neuralnet":["ResNet50"],
         "strategy": [strategy], #take care of this parameter
         "optimizer": ["SGD"], #take care of this parameter
-        #"constraints" : ["lp_norm"], #remove if no constraints is applied
-        #"lp_constraints.ord" : [2],
-        #"sparse_constraints.sparse_prop" : [0, 0.5], #take care of this parameter
-        #"sparse_constraints.K_frac" : [0.1], #take care of this parameter
     }
 
-    repository_dir = "/home/tunguyen/jetson-multiclient"
+    repository_dir = "/home/tunguyen/jetson-imagenet"
 
     to_remove = ["client.dry_run",
                  "data.partition_dir",
@@ -488,7 +480,7 @@ if __name__ == "__main__":
         repository_dir=repository_dir,
         sleep=30,
         key_to_remove=to_remove,
-        output_dir=f"outputcifar10/{nb_clients}clients/fractionfit2/{strategy}/{partition.replace('_','')}",
+        output_dir=f"imagenet/{nb_clients}clients/fractionfit/{strategy}/{partition.replace('_','')}",
         summary_name="experiment_summary.csv")
     #Exps.clear_cache()
     #Exps.frontend_dry_run()
