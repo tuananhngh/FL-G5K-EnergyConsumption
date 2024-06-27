@@ -38,6 +38,7 @@ class Client(fl.client.NumPyClient):
     def set_parameters(self, parameters:NDArrays)->None:
         params_dict = zip(self.model.state_dict().keys(), parameters)
         state_dict = OrderedDict({k:torch.Tensor(v) for k,v in params_dict})
+        #state_dict = OrderedDict({k:torch.Tensor(v) if v.shape != torch.Size([]) else torch.Tensor([0]) for k,v in params_dict})
         self.model.load_state_dict(state_dict, strict = True)
         
     def get_parameters(self, config: Dict[str, Scalar]) -> NDArrays:

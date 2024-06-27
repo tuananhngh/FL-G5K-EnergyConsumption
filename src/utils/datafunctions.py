@@ -63,14 +63,14 @@ def load_clientdata_from_file(config:DictConfig, client_id:int)->Tuple[data.Data
     train, val = data.random_split(traindata, lengths, torch.Generator().manual_seed(2024))
     #logging.info("CLIENT {} TRAIN_SAMPLES: {} VALIDATION_SAMPLES: {}".format(client_id, len(train), len(val)))
     trainloader = data.DataLoader(train, batch_size=config.batch_size, shuffle=True)
-    valloader = data.DataLoader(val, batch_size=config.batch_size, shuffle=True)
+    valloader = data.DataLoader(val, batch_size=config.batch_size, shuffle=False)
     return trainloader, valloader 
         
 def load_testdata_from_file(config:DictConfig):
     path_to_data = config.partition_dir
     testdata = torch.load(os.path.join(path_to_data,"testset.pt"))
     logging.info("TOTAL TEST SAMPLES : {}".format(len(testdata)))
-    testloader = data.DataLoader(testdata, batch_size=config.batch_size, shuffle=True)
+    testloader = data.DataLoader(testdata, batch_size=config.batch_size, shuffle=False)
     return testloader
 
 #ok = load_testdata_from_file(DictConfig({'partition_dir': '/home/tunguyen/jetson-imagenet/data', 'batch_size': 32}))

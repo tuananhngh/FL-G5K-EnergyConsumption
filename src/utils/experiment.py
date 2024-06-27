@@ -452,7 +452,7 @@ if __name__ == "__main__":
         "params.lr":[1e-2],
         "params.save_model":[False], # This is applied in server.py -> get_evaluate_fn()
         "params.load_checkpoint":[False], # This is applied in server.py -> main()
-        "data.batch_size": [256],
+        "data.batch_size": [32],
         "data.alpha": [1], 
         "data.num_clients": [nb_clients],
         "data.partition":[partition],
@@ -460,7 +460,7 @@ if __name__ == "__main__":
         "client.local_epochs": [1], #take care of this parameter # 2 times local epochs equal 0.001 for fedavg_adam
         "client.decay_rate": [1],
         "client.decay_steps": [1],
-        "neuralnet":["ResNet18"],
+        "neuralnet":["ResNet50"],
         "strategy": [strategy], 
         "optimizer": ["SGD"],
     }

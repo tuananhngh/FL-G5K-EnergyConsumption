@@ -242,7 +242,7 @@ def main(cfg:DictConfig):
     # Get initial parameters
     model = instantiate(cfg.neuralnet)
     model = convert_bn_to_gn(model, num_groups=cfg.params.num_groups)
-    if cfg.load_checkpoint:
+    if cfg.params.load_checkpoint:
         model = load_checkpoint(model, Path(output_dir, f"model_checkpoint.pt"))
     print(cfg.optimizer)
     if 'constraints' in cfg.keys():

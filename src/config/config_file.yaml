@@ -17,7 +17,7 @@ params :
 data :
   data_name : imagenet-1k # (possible_value : CelebA, CIFAR10, CIFAR100, MNIST, FashionMNIST, TinyImageNet)
   partition_dir : /srv/storage/energyfl@storage1.toulouse.grid5000.fr/FLDATA/${data.data_name}/ParitionedData/${data.partition}/${data.num_clients}clients/alpha${data.alpha}
-  batch_size : 256
+  batch_size : 32
   validation_split : 20
   num_clients : 100
   alpha : 1
@@ -46,7 +46,7 @@ comm :
 
 
 defaults:
-  - neuralnet : ResNet18
+  - neuralnet : ResNet50
   - strategy : fedavg
   - optimizer : SGD
   - constraints : null  # (possible_value : null, k_sparse, lp_norm)
