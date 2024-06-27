@@ -5,18 +5,12 @@ import torch
 import torchvision.transforms as transforms
 import logging
 import numpy as np
-import random
 import matplotlib.pyplot as plt
-from torch.distributions import Dirichlet
 #from flwr.common import NDArray, Scalar, Config
 from typing import Any, Dict, Tuple, List
-from torchvision import datasets
 from torch.utils import data
-from flwr.server.strategy import FedAdam, FedAvg, FedProx
 from datasets import load_from_disk
-import sys
-#sys.path.append("/Users/mathildepro/Documents/code_projects/ai-energy-consumption-framework/Jetson/utils")
-from dataset import MyDataset
+from datafunctions import MyDataset
 
 
 class DataSetHandler:

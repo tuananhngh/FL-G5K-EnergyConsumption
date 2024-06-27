@@ -13,7 +13,7 @@ extend: grid5000/from_grid5000_environment/ubuntul4t200435-arm64-custom.yaml
 global:
   grid5000_environment_import_name: ubuntul4t200435-big
   grid5000_environment_import_version: 2024011717
-  grid5000_environment_export_name: "ubuntul4t35-pytorch-estats-datasets"
+  grid5000_environment_export_name: "ubuntul4t35-pytorch-estats-datasets-2"
   grid5000_environment_export_alias: ""
   grid5000_environment_export_author: "tunguyen"
   # To install additional Ubuntu packages, just uncomment and modify the following line.
@@ -40,6 +40,9 @@ setup:
       - exec_in: python3 -m venv /venv-fl
     - install nethogs:
       - exec_in: apt-get install nethogs
+    - install libsndfile:
+      - exec_in: | 
+          apt-get install libsndfile1
     - upgrade_pip:
       - exec_in: | 
           pip install --upgrade pip
@@ -61,6 +64,9 @@ setup:
           pip install flwr-datasets
           pip install flwr-datasets[vision]
           pip install flwr-datasets[audio]
+    - install datasets:
+      - exec_in: | 
+          pip install datasets
     - install_hydra:
       - exec_in: | 
           pip install hydra-core

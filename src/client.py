@@ -7,7 +7,8 @@ import logging
 import os
 import gc
 from utils.training import train, test, seed_everything, train_constraints
-from utils.datahandler import load_clientdata_from_file
+#from utils.datahandler import load_clientdata_from_file
+from utils.datafunctions import load_clientdata_from_file
 from utils.models import convert_bn_to_gn
 from pathlib import Path
 from flwr.common import NDArrays, Scalar
@@ -18,6 +19,8 @@ from omegaconf import DictConfig, OmegaConf
 from hydra.utils import instantiate, HydraConfig
 from logging import INFO, DEBUG
 from flwr.common.logger import log
+import sys
+sys.path.append("/home/tunguyen/jetson-imagenet/src/utils")
 
 seed_val = 2024
 seed_everything(seed_val)

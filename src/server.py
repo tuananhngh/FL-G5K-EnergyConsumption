@@ -4,7 +4,7 @@ from itertools import accumulate
 
 from flwr.server.criterion import Criterion
 from utils.training import get_parameters, test, seed_everything, set_parameters
-from utils.datahandler import load_testdata_from_file
+from utils.datafunctions import load_testdata_from_file
 import hydra
 import os
 import numpy as np
@@ -15,6 +15,7 @@ import pickle
 import timeit
 import threading
 import random
+import warnings
 from collections import OrderedDict
 from pathlib import Path
 from omegaconf import DictConfig, OmegaConf
@@ -29,8 +30,9 @@ from flwr.common.logger import log
 from utils.models import convert_bn_to_gn
 from flwr.server.strategy import FedAvg, FedYogi, FedAdam
 from optimizers.ConstraintsSet import make_feasible
-from utils.serialization import ndarrays_to_sparse_parameters, sparse_parameters_to_ndarrays
-
+import sys
+sys.path.append("/home/tunguyen/jetson-imagenet/src/utils")
+from utils import datafunctions
 from flwr.common import (
     Code,
     DisconnectRes,
@@ -42,7 +44,7 @@ from flwr.common import (
     ReconnectIns,
     Scalar,
 )
-import concurrent.futures
+warnings.filterwarnings("ignore")
 from flwr.common.typing import GetParametersIns
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
@@ -88,6 +90,10 @@ def get_on_evaluate_config(config: Dict[str, Scalar])->Callable:
         return {'server_round': server_round}
     return evaluate_config_fn
 
+def load_checkpoint(model, path):
+    model.load_state_dict(torch.load(path))
+    return model
+
 
 def get_evaluate_fn(model, testloader, device, cfg: Dict[str, Scalar], output_dir:str)->Callable:
     save_model = cfg.save_model
@@ -97,7 +103,7 @@ def get_evaluate_fn(model, testloader, device, cfg: Dict[str, Scalar], output_di
         loss, accuracy = test(model, testloader, device, verbose=False)
         if save_model:
             if server_round%50 == 0: # Save model every ... rounds
-                torch.save(model.state_dict(), Path(output_dir, f"model_{server_round}.pt"))
+                torch.save(model.state_dict(), Path(output_dir, f"model_checkpoint.pt"))
         return float(loss), {"accuracy": float(accuracy)}
     return evaluate_fn
 
@@ -108,122 +114,27 @@ def write_time_csv(path, round, call, status):
             writer.writerow(["round", "timestamp","call","status"])
         now = datetime.datetime.now()
         writer.writerow([round, now.strftime("%Y-%m-%d %H:%M:%S.%f"), call, status])
-        
-class CustomSimpleClientManager(fl.server.SimpleClientManager):
-    def __init__(self)->None:
-        super().__init__()
-        
-    # def clients_map(self) -> None:
-    #     """Map clients to user defined id"""
-    #     available_cids = sorted(list(self.clients))
-    #     num_clients = len(available_cids)
-    #     self.mapping = {cprox:uid for cprox, uid in zip(available_cids, range(num_clients))}
-        
-    def sample(
-        self,
-        num_clients: int, #client participe in training
-        min_num_clients: Optional[int] = None,
-        criterion: Optional[Criterion] = None,
-    ) -> List[Tuple[ClientProxy,int]]:
-        """Sample a number of Flower ClientProxy instances."""
-        # Block until at least num_clients are connected.
-        if min_num_clients is None:
-            min_num_clients = num_clients
-        self.wait_for(min_num_clients)
-        
-        # Map clients to user defined id
-        available_cids = list(self.clients)
-        available_cids = sorted(available_cids)
-        nb_available_cids = len(available_cids)
-        mapping = {cid:user_id for cid, user_id in zip(available_cids, range(nb_available_cids))}
-        
-        # Sample clients which meet the criterion
-        if criterion is not None:
-            available_cids = [
-                cid for cid in available_cids if criterion.select(self.clients[cid])
-            ]
-
-        if num_clients > len(available_cids):
-            log(
-                INFO,
-                "Sampling failed: number of available clients"
-                " (%s) is less than number of requested clients (%s).",
-                len(available_cids),
-                num_clients,
-            )
-            return []
-        sampled_cids = random.sample(available_cids, num_clients)
-        user_cids = [mapping[cid] for cid in sampled_cids]
-        clients_and_id = [(self.clients[cid],user_cid) for cid,user_cid in zip(sampled_cids, user_cids)]
-        return clients_and_id
-        
-        
+    
+            
 
 class CustomServer(fl.server.Server):
-    def __init__(self,wait_round:int, path_log:str, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self,
+                 *,
+                 wait_round:int, 
+                 path_log:str,
+                 **kwargs):
         self.wait_round = wait_round
         self.path_log = path_log
+        super().__init__(**kwargs)
         
-    def fit_round(
-        self,
-        server_round: int,
-        timeout: Optional[float],
-    ) -> Optional[
-        Tuple[Optional[Parameters], Dict[str, Scalar], FitResultsAndFailures]
-    ]:
-        """Perform a single round of federated averaging."""
-        # Get clients and their respective instructions from strategy
-        client_instructions = self.strategy.configure_fit(
-            server_round=server_round,
-            parameters=self.parameters,
-            client_manager=self._client_manager,
-        )
-        
-        #log(INFO, f"Client instruction : Len {len(client_instructions)} {client_instructions[0][1].config} {client_instructions[1][1].config}")
-
-        if not client_instructions:
-            log(INFO, "fit_round %s: no clients selected, cancel", server_round)
-            return None
-        log(
-            DEBUG,
-            "fit_round %s: strategy sampled %s clients (out of %s)",
-            server_round,
-            len(client_instructions),
-            self._client_manager.num_available(),
-        )
-
-        # Collect `fit` results from all clients participating in this round
-        results, failures = fl.server.server.fit_clients(
-            client_instructions=client_instructions,
-            max_workers=self.max_workers,
-            timeout=timeout,
-        )
-        log(
-            DEBUG,
-            "fit_round %s received %s results and %s failures",
-            server_round,
-            len(results),
-            len(failures),
-        )
-
-        # Aggregate training results
-        aggregated_result: Tuple[
-            Optional[Parameters],
-            Dict[str, Scalar],
-        ] = self.strategy.aggregate_fit(server_round, results, failures)
-
-        parameters_aggregated, metrics_aggregated = aggregated_result
-        return parameters_aggregated, metrics_aggregated, (results, failures)
     
-        
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         """Run federated averaging for a number of rounds."""
         history = History()
 
         # Initialize parameters
         log(INFO, "Initializing global parameters")
-        self.parameters = self._get_initial_parameters(timeout=timeout)
+        self.parameters = self._get_initial_parameters(server_round=0, timeout=timeout)
         log(INFO, "Evaluating initial parameters")
         res = self.strategy.evaluate(0, parameters=self.parameters)
         if res is not None:
@@ -299,33 +210,24 @@ class CustomServer(fl.server.Server):
                     )
                     write_time_csv(path, current_round, "evaluate", "distributed evaluate end")
                     # Early Stopping
-                    if acc > 0.75 + 1e-6:
-                        log(INFO, "EARLY STOPPING, ACCURACY > 0.75")
-                        break
-                    else:
-                        if current_round >= 100: # Start Early Stopping after 100 rounds
-                            if acc > max_metric_dis:
-                                round_no_improve = 0
-                                max_metric_dis = acc
-                            else:
-                                round_no_improve += 1
-                                if round_no_improve == self.wait_round:
-                                    log(INFO, "EARLY STOPPING")
-                                    break
-                        # if loss_fed < min_val_loss:
-                        #     round_no_improve = 0
-                        #     min_val_loss = loss_fed
-                        # else:
-                        #     round_no_improve += 1
-                        #     if round_no_improve == self.wait_round:
-                        #         log(INFO, "EARLY STOPPING")
-                        #         break
-                    
+                    # if acc > 0.75 + 1e-6:
+                    #     log(INFO, "EARLY STOPPING, ACCURACY > 0.75")
+                    #     break
+                    # else:
+                    if current_round >= 100: # Start Early Stopping after 100 rounds
+                        if acc > max_metric_dis:
+                            round_no_improve = 0
+                            max_metric_dis = acc
+                        else:
+                            round_no_improve += 1
+                            if round_no_improve == self.wait_round:
+                                log(INFO, "EARLY STOPPING")
+                                break                    
         # Bookkeeping
         end_time = timeit.default_timer()
         elapsed = end_time - start_time
         log(INFO, "FL finished in %s", elapsed)
-        return history        
+        return history, elapsed   
 
 
 @hydra.main(config_path="config", config_name="config_file",version_base=None)
@@ -340,6 +242,8 @@ def main(cfg:DictConfig):
     # Get initial parameters
     model = instantiate(cfg.neuralnet)
     model = convert_bn_to_gn(model, num_groups=cfg.params.num_groups)
+    if cfg.load_checkpoint:
+        model = load_checkpoint(model, Path(output_dir, f"model_checkpoint.pt"))
     print(cfg.optimizer)
     if 'constraints' in cfg.keys():
         logging.info("Applying constraints")
@@ -351,6 +255,7 @@ def main(cfg:DictConfig):
         logging.info("No constraints specified")
         model_parameters = get_parameters(model)
         initial_parameters = ndarrays_to_parameters(model_parameters)
+
     
     
     #Load TestData
@@ -358,6 +263,7 @@ def main(cfg:DictConfig):
     
     strategy = instantiate(cfg.strategy,
                            initial_parameters=initial_parameters,
+                           accept_failures=False,
                            on_fit_config_fn=get_on_fit_config(cfg.client),
                            evaluate_metrics_aggregation_fn=weighted_average,
                            evaluate_fn=get_evaluate_fn(model, testloader,device,cfg.params,output_dir),
@@ -412,6 +318,4 @@ if __name__ == "__main__":
         main()
     except Exception as err:
         logging.error(err)
-    
-    
     

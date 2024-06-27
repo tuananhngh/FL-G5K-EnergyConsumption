@@ -1,0 +1,28 @@
+---
+arch: aarch64
+author: tunguyen
+boot:
+  initrd: /boot/initrd
+  kernel: /boot/Image
+  kernel_params: modprobe.blacklist=nouveau
+custom_variables:
+  BOOTLOADER_NO_GRUB_FROM_DEST: '1'
+  BOOTLOADER_NO_GRUB_MKCONFIG_FROM_DEST: '1'
+description: Custom ubuntul4t200435-big
+destructive: false
+filesystem: ext4
+image:
+  compression: zstd
+  file: local:///home/tunguyen/public//ubuntul4t35-pytorch-estats.tar.zst
+  kind: tar
+multipart: false
+name: ubuntul4t35-pytorch-estats-datasets-2
+os: linux
+partition_type: 131
+postinstalls:
+- archive: server:///grid5000/postinstalls/g5k-postinstall.tgz
+  compression: gzip
+  script: g5k-postinstall --net netplan --fstab nfs --restrict-user current --disk-aliases
+version: 2024062514
+visibility: shared
+

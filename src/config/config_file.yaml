@@ -1,15 +1,16 @@
 params : 
   num_classes : 1000
-  num_rounds : 5
+  num_rounds : 1
   num_clients_per_round_fit : 2
   num_clients_per_round_eval : 2
   min_available_clients : 2
-  fraction_fit : 0.2
+  fraction_fit : 1
   fraction_evaluate : 1
   wait_round : 5
   lr : 0.001
-  num_groups : 16
+  num_groups : 32
   save_model : False
+  load_checkpoint : False
 
 # Mount Storage : "/srv/storage/energyfl@storage1.toulouse.grid5000.fr"
 # /home/tunguyen/energyfl
@@ -40,17 +41,17 @@ lp_constraints:
   mode : 'initialization'
 
 comm :
-  host : 172.16.121.10
+  host : 172.16.121.7
   port : 8080
 
 
 defaults:
-  - neuralnet : MobileNetV3Small
+  - neuralnet : ResNet18
   - strategy : fedavg
   - optimizer : SGD
   - constraints : null  # (possible_value : null, k_sparse, lp_norm)
   - _self_ 
 
-hydra:
-  run:
-    dir: ../outputs/${now:%Y-%m-%d}_${now:%H-%M-%S}/${hydra.job.name}_${client.cid}/
+# hydra:
+#   run:
+#     dir: ../outputs/${now:%Y-%m-%d}_${now:%H-%M-%S}/${hydra.job.name}_${client.cid}/

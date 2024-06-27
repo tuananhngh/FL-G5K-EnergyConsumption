@@ -434,7 +434,7 @@ class Experiment(Engine):
         
 
 if __name__ == "__main__":
-    nodes = get_oar_job_nodes(451642, "toulouse")
+    nodes = get_oar_job_nodes(451662, "toulouse")
     parser = argparse.ArgumentParser()
     parser.add_argument("--strategy", type=str)
     parser.add_argument("--nb_clients", type=int)
@@ -444,13 +444,14 @@ if __name__ == "__main__":
     partition = "iid"
     strategy = "fedavg"
     params = {
-        "params.num_rounds":[2000],
+        "params.num_rounds":[5],
         "params.fraction_fit":[1], #0.1 is enough for 100 client
         "params.fraction_evaluate":[1], #0.5 is enough for 100 client
         "params.num_groups":[32],
         "params.wait_round":[1000],
         "params.lr":[1e-2],
-        "params.save_model":[False], #Test this feature before running multiple rounds, change save period to 50
+        "params.save_model":[False], # This is applied in server.py -> get_evaluate_fn()
+        "params.load_checkpoint":[False], # This is applied in server.py -> main()
         "data.batch_size": [256],
         "data.alpha": [1], 
         "data.num_clients": [nb_clients],
@@ -459,9 +460,9 @@ if __name__ == "__main__":
         "client.local_epochs": [1], #take care of this parameter # 2 times local epochs equal 0.001 for fedavg_adam
         "client.decay_rate": [1],
         "client.decay_steps": [1],
-        "neuralnet":["ResNet50"],
-        "strategy": [strategy], #take care of this parameter
-        "optimizer": ["SGD"], #take care of this parameter
+        "neuralnet":["ResNet18"],
+        "strategy": [strategy], 
+        "optimizer": ["SGD"],
     }
 
     repository_dir = "/home/tunguyen/jetson-imagenet"
@@ -480,7 +481,7 @@ if __name__ == "__main__":
         repository_dir=repository_dir,
         sleep=30,
         key_to_remove=to_remove,
-        output_dir=f"imagenet/{nb_clients}clients/fractionfit/{strategy}/{partition.replace('_','')}",
+        output_dir=f"outputimagenet/{nb_clients}clients/fractionfit/{strategy}/{partition.replace('_','')}",
         summary_name="experiment_summary.csv")
     #Exps.clear_cache()
     #Exps.frontend_dry_run()

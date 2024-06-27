@@ -1,6 +1,6 @@
 import logging
 import torch
-from datasets import load_dataset, load_from_disk 
+#from datasets import load_dataset, load_from_disk 
 from torch.utils.data import DataLoader, Dataset
 import torchvision.transforms as transforms
 
@@ -23,7 +23,7 @@ Returns: data, label
 __len__
 Returns: the length of the loaded dataset.
 '''
-class MyDataset(torch.utils.data.Dataset):
+class MyDataset(torch.utils.data.TensorDataset):
     def __init__(self, dataset, split="train", resolution=256):
         # Loads the dataset that needs to be transformed
         self.dataset = dataset[split]
@@ -73,11 +73,11 @@ class MyDataset(torch.utils.data.Dataset):
 # data = query()
 
 
-def load_dataset_from_huggingface(storage_dir, dataset_name="imagenet-1k"):
-    # If the dataset is gated/private, make sure you have run the hugingface-cli login command
-    dataset = load_dataset(dataset_name, cache_dir=storage_dir)
-    dataset.save_to_disk(storage_dir)
-    return dataset
+# def load_dataset_from_huggingface(storage_dir, dataset_name="imagenet-1k"):
+#     # If the dataset is gated/private, make sure you have run the hugingface-cli login command
+#     dataset = load_dataset(dataset_name, cache_dir=storage_dir)
+#     dataset.save_to_disk(storage_dir)
+#     return dataset
 
 # storage_dir = "/srv/storage/energyfl@storage1.toulouse.grid5000.fr/imagenet-1k"
 # ds = load_from_disk(storage_dir)
