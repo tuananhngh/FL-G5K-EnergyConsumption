@@ -2,6 +2,14 @@ kameleon_recipes/build/
 data/
 outputs/
 __pycache__/
-src/utils/__pycache__/
-test.ipynb
+**/__pycache__/
+*.pyc
 sweep/
+.DS_Store
+**/.DS_Store
+*.swp
+*.swo
+OAR.*
+*.pkl
+*.ipynb_checkpoints/
+**/.ipynb_checkpoints/

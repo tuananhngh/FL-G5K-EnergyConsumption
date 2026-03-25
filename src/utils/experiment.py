@@ -381,15 +381,6 @@ class Experiment(Engine):
             else :
                 self.one_client_per_host(hparams, cmd_args)
             
-            # TO UNCOMMENTED IF 1 CLIENT PER HOST
-            # self.run_clients = []
-            # for (host, cid) in zip(self.client_hosts, range(len(self.client_hosts))):
-            #     client_cmd = f"cd {self.repository_dir};"\
-            #         f"python3 src/client.py {cmd_args} comm.host={hparams.comm.host} hydra.run.dir={hparams.tmp_result_folder} client.cid={cid} >> {hparams.tmp_result_folder}/logs.log 2>&1"
-            #     run_client = SshProcess(client_cmd, host=host, connection_params={'user': 'root'})
-            #     self.run_clients.append(run_client)
-            # TO UNCOMMENTED
-            
             logger.info("START MONITORING")
             jtop_processes = self._cmd_host_energy(hparams)
             network_processes = self._cmd_network(hparams)
@@ -436,15 +427,12 @@ class Experiment(Engine):
             self._hyperparams_to_csv(hparams)
 
             logger.info("EXPERIMENT {} DONE".format(exp_count))
-            
-            #params["exp_count"] = exp_count    
             exp_count += 1
-        
+
             self.kill_all()
-            
+
         logger.info("ALL EXPERIMENTS DONE")
         shutil.rmtree(sweep_dir)
-        #return debug_hp
         
 
 if __name__ == "__main__":

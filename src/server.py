@@ -1,6 +1,5 @@
 import csv
 import datetime
-from itertools import accumulate
 from utils.training import get_parameters, test, seed_everything, set_parameters
 from utils.datahandler import load_testdata_from_file
 import hydra
@@ -9,50 +8,18 @@ import numpy as np
 import flwr as fl
 import logging
 import torch
-import pickle 
+import pickle
 import timeit
-from collections import OrderedDict
 from pathlib import Path
 from omegaconf import DictConfig, OmegaConf
 from hydra.core.hydra_config import HydraConfig
 from hydra.utils import instantiate
-from flwr.common import Metrics, NDArray, Scalar, ndarrays_to_parameters, FitIns, EvaluateRes
-from hydra.utils import instantiate
-from typing import Callable, Dict, Tuple, List, Optional, Union
+from flwr.common import Metrics, NDArray, Scalar, ndarrays_to_parameters
+from typing import Callable, Dict, Tuple, List, Optional
 from flwr.server.history import History
-from logging import DEBUG, INFO
+from logging import INFO
 from flwr.common.logger import log
 from utils.models import convert_bn_to_gn
-from flwr.server.strategy import FedAvg, FedYogi, FedAdam
-
-from flwr.common import (
-    Code,
-    DisconnectRes,
-    EvaluateIns,
-    EvaluateRes,
-    FitIns,
-    FitRes,
-    Parameters,
-    ReconnectIns,
-    Scalar,
-)
-import concurrent.futures
-from flwr.common.typing import GetParametersIns
-from flwr.server.client_manager import ClientManager
-from flwr.server.client_proxy import ClientProxy
-
-FitResultsAndFailures = Tuple[
-    List[Tuple[ClientProxy, FitRes]],
-    List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-]
-EvaluateResultsAndFailures = Tuple[
-    List[Tuple[ClientProxy, EvaluateRes]],
-    List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]],
-]
-ReconnectResultsAndFailures = Tuple[
-    List[Tuple[ClientProxy, DisconnectRes]],
-    List[Union[Tuple[ClientProxy, DisconnectRes], BaseException]],
-]
 
 seed_val = 2024
 seed_everything(seed_val)
@@ -135,7 +102,6 @@ class CustomServer(fl.server.Server):
         start_time = timeit.default_timer()
         
         # Early Stopping
-        min_val_loss = float("inf")
         max_metric_dis = 0.
         round_no_improve = 0
         path = Path(self.path_log, "rounds_time.csv")
@@ -193,7 +159,7 @@ class CustomServer(fl.server.Server):
                     )
                     write_time_csv(path, current_round, "evaluate", "distributed evaluate end")
                     # Early Stopping
-                    if current_round >= 50: # Start Early Stopping after 100 rounds
+                    if current_round >= 50:
                         if acc > max_metric_dis:
                             round_no_improve = 0
                             max_metric_dis = acc
@@ -202,14 +168,6 @@ class CustomServer(fl.server.Server):
                             if round_no_improve == self.wait_round:
                                 log(INFO, "EARLY STOPPING")
                                 break
-                        # if loss_fed < min_val_loss:
-                        #     round_no_improve = 0
-                        #     min_val_loss = loss_fed
-                        # else:
-                        #     round_no_improve += 1
-                        #     if round_no_improve == self.wait_round:
-                        #         log(INFO, "EARLY STOPPING")
-                        #         break
                     
         # Bookkeeping
         end_time = timeit.default_timer()
@@ -246,7 +204,6 @@ def main(cfg:DictConfig):
                         )
     
     
-    print(strategy.__repr__())
     customserver = CustomServer(wait_round=cfg.params.wait_round, 
                                 path_log = output_dir,
                                 client_manager=fl.server.SimpleClientManager(), 

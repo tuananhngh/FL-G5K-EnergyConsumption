@@ -8,11 +8,9 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 from torch.distributions import Dirichlet
-#from flwr.common import NDArray, Scalar, Config
 from typing import Any, Dict, Tuple, List
 from torchvision import datasets
 from torch.utils import data
-from flwr.server.strategy import FedAdam, FedAvg, FedProx
 
 
 class DataSetHandler:

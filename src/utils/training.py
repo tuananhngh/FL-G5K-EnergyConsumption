@@ -6,10 +6,9 @@ import logging
 import numpy as np
 import random
 from tqdm import tqdm
-from flwr.common import NDArray, Scalar, Config
-from typing import Any, Dict, Tuple, List
+from flwr.common import NDArray
+from typing import List
 from collections import OrderedDict
-from flwr.server.strategy import FedAdam, FedAvg, FedProx
 
 
 def seed_worker(worker_id):
